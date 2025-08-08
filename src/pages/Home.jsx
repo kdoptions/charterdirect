@@ -1,0 +1,421 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Search, 
+  Calendar, 
+  Ship, 
+  Users, 
+  Star,
+  MapPin,
+  Clock,
+  Shield,
+  Award,
+  ArrowRight,
+  CheckCircle
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+
+export default function Home() {
+  const [searchLocation, setSearchLocation] = React.useState("");
+
+  const featuredBoats = [
+    {
+      id: 1,
+      name: "Luxury Yacht Adelaide",
+      image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&h=300&fit=crop",
+      price: 450,
+      rating: 4.9,
+      guests: 12,
+      location: "Circular Quay"
+    },
+    {
+      id: 2, 
+      name: "Sunset Catamaran",
+      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=500&h=300&fit=crop",
+      price: 320,
+      rating: 4.8,
+      guests: 20,
+      location: "Darling Harbour"
+    },
+    {
+      id: 3,
+      name: "Party Pontoon",
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=300&fit=crop",
+      price: 280,
+      rating: 4.7,
+      guests: 15,
+      location: "Rose Bay"
+    }
+  ];
+
+  const steps = [
+    {
+      icon: Search,
+      title: "Search",
+      description: "Effortlessly explore a wide range of boats and yachts available across Sydney Harbour. Use our search tool to filter by location, type, and amenities."
+    },
+    {
+      icon: CheckCircle,
+      title: "Choose",
+      description: "Select from verified listings to find the boat that best meets your needs. Each listing features detailed photos and information."
+    },
+    {
+      icon: Calendar,
+      title: "Book",
+      description: "Reserve your chosen boat securely with our easy booking system. Confirm your dates, make your payment, and receive instant confirmation."
+    },
+    {
+      icon: Ship,
+      title: "Cruise",
+      description: "Pick up your boat or get picked up and hit the water! Whether it's an exciting new location or a familiar favorite, your adventure is ready to begin."
+    }
+  ];
+
+  return (
+    <div className="relative">
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(rgba(11, 20, 38, 0.4), rgba(30, 64, 175, 0.3)), url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1920&h=1080&fit=crop')`
+          }}
+        />
+        
+        <div className="relative z-10 text-center text-white max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            Charter Your Dream
+            <span className="block bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+              Sydney Harbour
+            </span>
+            <span className="block">Experience</span>
+          </h1>
+          
+          <p className="text-xl md:text-2xl mb-12 text-blue-100 max-w-3xl mx-auto leading-relaxed">
+            Discover premium boat rentals for unforgettable harbour cruises, 
+            celebrations, and adventures on Australia's most iconic waterway.
+          </p>
+
+          {/* Search Bar */}
+          <div className="glass-effect rounded-2xl p-6 max-w-4xl mx-auto mb-8">
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <Input
+                  placeholder="Where would you like to explore?"
+                  value={searchLocation}
+                  onChange={(e) => setSearchLocation(e.target.value)}
+                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <Input
+                  type="date"
+                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <Link to={createPageUrl("Search")}>
+                  <Button className="w-full h-14 text-lg luxury-gradient hover:opacity-90 transition-opacity duration-300">
+                    <Search className="w-5 h-5 mr-2" />
+                    Search Boats
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to={createPageUrl("Search")}>
+              <Button size="lg" className="luxury-gradient text-white hover:opacity-90 transition-opacity duration-300 px-8 py-4 text-lg">
+                Explore All Boats
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            <Link to={createPageUrl("ListBoat")}>
+              <Button size="lg" variant="outline" className="glass-effect text-white border-white/30 hover:bg-white/20 px-8 py-4 text-lg">
+                List Your Boat
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Floating elements */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-blue-400/20 rounded-full floating-animation hidden lg:block" />
+        <div className="absolute bottom-40 right-20 w-16 h-16 bg-cyan-300/20 rounded-full floating-animation animation-delay-2s hidden lg:block" />
+        <div className="absolute top-1/3 right-10 w-12 h-12 bg-indigo-400/20 rounded-full floating-animation animation-delay-4s hidden lg:block" />
+      </section>
+
+      {/* How It Works */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              How It Works
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              From discovery to departure, we've streamlined the entire boat charter experience
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, index) => (
+              <div key={index} className="text-center group">
+                <div className="relative mb-6">
+                  <div className="w-20 h-20 luxury-gradient rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                    <step.icon className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {index + 1}
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-4">{step.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Boats */}
+      <section className="py-24 bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Featured Vessels
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Handpicked premium boats ready for your next harbour adventure
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredBoats.map((boat) => (
+              <Card key={boat.id} className="group cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={boat.image} 
+                    alt={boat.name}
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 right-4 glass-effect rounded-lg px-3 py-1">
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="text-white font-semibold">{boat.rating}</span>
+                    </div>
+                  </div>
+                </div>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">{boat.name}</h3>
+                  <div className="flex items-center text-slate-600 mb-4">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span className="text-sm">{boat.location}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-4 text-sm text-slate-600">
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-1" />
+                        <span>{boat.guests} guests</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-slate-900">${boat.price}</div>
+                      <div className="text-sm text-slate-500">per hour</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-12 space-y-4">
+            <Link to={createPageUrl("Search")}>
+              <Button size="lg" className="luxury-gradient text-white hover:opacity-90 transition-opacity duration-300">
+                View All Boats
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            
+            {/* Demo Testing Section */}
+            <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">🧪 Demo Testing</h3>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Link to={createPageUrl("BoatDetails?id=4")}>
+                  <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                    🚢 Test Boat Details
+                  </Button>
+                </Link>
+                <Link to={createPageUrl("Booking?id=4")}>
+                  <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50">
+                    📅 Test Booking Flow
+                  </Button>
+                </Link>
+                <Link to={createPageUrl("OwnerDashboard")}>
+                  <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
+                    👨‍💼 Owner Dashboard
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                  onClick={async () => {
+                    const { Booking, Boat, User } = await import('@/api/entities');
+                    
+                    // Get all data
+                    const allBookings = await Booking.filter();
+                    const allBoats = await Boat.filter();
+                    const testOwner = await User.loginAsOwner();
+                    
+                    console.log('🔍 COMPREHENSIVE DEBUG:');
+                    console.log('Test Owner:', testOwner);
+                    console.log('All Boats:', allBoats);
+                    console.log('All Bookings:', allBookings);
+                    
+                    // Check which boats belong to test owner
+                    const ownerBoats = allBoats.filter(boat => boat.owner_id === testOwner.id);
+                    console.log('Owner Boats:', ownerBoats);
+                    
+                    // Check which bookings belong to owner's boats
+                    const ownerBookings = allBookings.filter(booking => 
+                      ownerBoats.some(boat => boat.id === booking.boat_id)
+                    );
+                    console.log('Owner Bookings:', ownerBookings);
+                    
+                    alert(`Debug complete! Owner has ${ownerBoats.length} boats and ${ownerBookings.length} bookings. Check console.`);
+                  }}
+                >
+                  🔍 Debug Bookings
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  onClick={async () => {
+                    const { Booking, Boat } = await import('@/api/entities');
+                    
+                    // First check what boats exist
+                    const boats = await Boat.filter();
+                    console.log('Available boats:', boats);
+                    
+                    // Find the test boat first
+                    const testBoat = boats.find(boat => boat.owner_id === "test-owner-1");
+                    console.log("Test boat found:", testBoat);
+                    
+                    if (!testBoat) {
+                      alert("No test boat found for test-owner-1!");
+                      return;
+                    }
+                    
+                    const testBooking = await Booking.create({
+                      boat_id: testBoat.id, // Use the actual boat ID
+                      customer_id: "test-customer",
+                      start_date: "2024-01-20",
+                      end_date: "2024-01-20",
+                      start_time: "14:00",
+                      end_time: "18:00",
+                      guests: 6,
+                      total_hours: 4,
+                      base_price: 380,
+                      total_amount: 1520,
+                      customer_name: "Test Customer",
+                      customer_email: "test@example.com",
+                      customer_phone: "+61 400 123 456",
+                      special_requests: "Test booking created via debug button"
+                    });
+                    console.log('✅ Test booking created:', testBooking);
+                    
+                    // Verify the booking was stored
+                    const allBookings = await Booking.filter();
+                    console.log('All bookings after creation:', allBookings);
+                    
+                    alert(`Test booking created! Boat ID: ${testBooking.boat_id}. Total bookings: ${allBookings.length}`);
+                  }}
+                >
+                  🧪 Create Test Booking
+                </Button>
+              </div>
+              <p className="text-sm text-blue-600 mt-3">
+                Use these buttons to test the complete booking and approval workflow
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Why Choose SydneyCharter
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              The premier destination for luxury boat rentals on Sydney Harbour
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Verified & Insured</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Every boat is thoroughly vetted and all operators maintain proper licensing and comprehensive liability insurance for your peace of mind.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Clock className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Instant Booking</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Book your perfect vessel instantly with our streamlined reservation system. No waiting, no hassles - just smooth sailing ahead.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Award className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Premium Fleet</h3>
+              <p className="text-slate-600 leading-relaxed">
+                From luxury yachts to party pontoons, our curated selection ensures you'll find the perfect vessel for any occasion or celebration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 luxury-gradient">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Ready to Set Sail?
+          </h2>
+          <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
+            Join thousands of satisfied customers who've discovered the magic of Sydney Harbour with our premium boat charter service.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Link to={createPageUrl("Search")}>
+              <Button size="lg" className="bg-white text-blue-900 hover:bg-blue-50 transition-colors duration-300 px-8 py-4 text-lg">
+                Start Your Journey
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            <Link to={createPageUrl("ListBoat")}>
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20 px-8 py-4 text-lg">
+                Earn with Your Boat
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
