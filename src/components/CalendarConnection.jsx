@@ -20,6 +20,7 @@ export default function CalendarConnection({ userId, onConnectionChange }) {
 
   const checkExistingConnection = async () => {
     try {
+      
       // Check localStorage for existing tokens
       const tokens = localStorage.getItem(`google_tokens_${userId}`);
       if (tokens) {
@@ -146,6 +147,9 @@ export default function CalendarConnection({ userId, onConnectionChange }) {
     }
   };
 
+  // Debug logging
+  console.log('🎨 CalendarConnection render - connectionStatus:', connectionStatus);
+  
   return (
     <Card className="w-full">
       <CardHeader>

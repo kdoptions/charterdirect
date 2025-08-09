@@ -26,7 +26,8 @@ export const Boat = {
           { name: "Afternoon", start_time: "14:00", end_time: "18:00", duration_hours: 4 }
         ],
         google_calendar_id: "primary",
-        owner_id: "owner-1"
+        owner_id: "owner-1",
+        down_payment_percentage: 25
       },
       {
         id: "2",
@@ -48,7 +49,8 @@ export const Boat = {
           { name: "Full Day", start_time: "10:00", end_time: "18:00", duration_hours: 8 }
         ],
         google_calendar_id: "boat-bookings@group.calendar.google.com",
-        owner_id: "owner-2"
+        owner_id: "owner-2",
+        down_payment_percentage: 30
       },
       {
         id: "3",
@@ -72,7 +74,8 @@ export const Boat = {
           { name: "Evening", start_time: "19:00", end_time: "23:00", duration_hours: 4 }
         ],
         google_calendar_id: "primary",
-        owner_id: "owner-3"
+        owner_id: "owner-3",
+        down_payment_percentage: 20
       },
       {
         id: "4",
@@ -96,7 +99,8 @@ export const Boat = {
           { name: "Evening", start_time: "19:00", end_time: "23:00", duration_hours: 4 }
         ],
         google_calendar_id: "test-owner@group.calendar.google.com",
-        owner_id: "test-owner-1"
+        owner_id: "test-owner-1",
+        down_payment_percentage: 25
       }
     ];
     

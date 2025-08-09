@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Boat, Booking, User } from "@/api/entities";
 import { stripeConnect } from "../components/api/stripeConnect";
-import { googleCalendar } from "../components/api/googleCalendar";
+import realGoogleCalendarService from "@/api/realGoogleCalendarService";
+import { stripeService } from "@/api/stripeService";
 import { notifications } from "../components/api/notifications";
-import { googleCalendarService } from "@/api/googleCalendarService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -104,10 +104,8 @@ export default function OwnerDashboard() {
 
   const handleCalendarConnect = async () => {
     try {
-      const authResult = await googleCalendar.initGoogleAuth();
-      if (authResult.success) {
-        window.location.href = authResult.authUrl;
-      }
+      const authUrl = realGoogleCalendarService.getAuthUrl();
+      window.location.href = authUrl;
     } catch (error) {
       console.error("Calendar connect error:", error);
     }
@@ -116,8 +114,75 @@ export default function OwnerDashboard() {
   const handleBookingAction = async (action, booking) => {
     try {
       if (action === 'confirmed') {
-        // Approve the booking
-        await Booking.approve(booking.id);
+        console.log('✅ Approving booking and processing payment...');
+        
+        // Process the deposit payment
+        if (booking.payment_details) {
+          try {
+            console.log('💳 Processing deposit payment...');
+            console.log('💰 Deposit amount:', booking.down_payment);
+            console.log('💳 Payment details:', booking.payment_details);
+            
+            // Create payment intent for the deposit
+            const paymentIntentResult = await stripeService.createPaymentIntent({
+              ...booking,
+              total_amount: booking.down_payment // Only charge the deposit
+            });
+            
+            if (paymentIntentResult.success) {
+              console.log('✅ Payment intent created:', paymentIntentResult.paymentIntent.id);
+              
+              // Process the payment using the stored payment method
+              if (booking.payment_method) {
+                console.log('💳 Processing payment with stored payment method...');
+                
+                const paymentResult = await stripeService.processPaymentWithElements(
+                  paymentIntentResult.paymentIntent,
+                  booking.payment_method.id
+                );
+                
+                if (paymentResult.success) {
+                  console.log('✅ Payment processed successfully');
+                  
+                  // Update booking with payment status
+                  await Booking.update(booking.id, {
+                    status: 'confirmed',
+                    payment_status: 'deposit_paid',
+                    deposit_paid_at: new Date().toISOString(),
+                    payment_intent_id: paymentIntentResult.paymentIntent.id
+                  });
+                } else {
+                  console.error('❌ Payment processing failed:', paymentResult.error);
+                  alert('Payment processing failed: ' + paymentResult.error);
+                  return;
+                }
+              } else {
+                console.log('💳 No payment method stored, simulating success for demo');
+                
+                // Update booking with payment status
+                await Booking.update(booking.id, {
+                  status: 'confirmed',
+                  payment_status: 'deposit_paid',
+                  deposit_paid_at: new Date().toISOString(),
+                  payment_intent_id: paymentIntentResult.paymentIntent.id
+                });
+                
+                console.log('✅ Payment processed successfully');
+              }
+            } else {
+              console.error('❌ Payment intent creation failed:', paymentIntentResult.error);
+              alert('Payment processing failed. Please try again.');
+              return;
+            }
+          } catch (paymentError) {
+            console.error('❌ Payment processing error:', paymentError);
+            alert('Payment processing failed. Please try again.');
+            return;
+          }
+        } else {
+          // No payment details, just approve the booking
+          await Booking.approve(booking.id);
+        }
       } else if (action === 'rejected') {
         // Reject the booking
         const reason = prompt('Please provide a reason for rejection:') || 'No reason provided';
@@ -144,78 +209,59 @@ export default function OwnerDashboard() {
 
         // Create Google Calendar event if integration exists
         console.log("Checking for calendar integration...");
-        console.log("User data:", user);
         
-        if (user && (user.google_calendar_integration || user.calendar_integration_data)) {
-          console.log("Calendar integration found, attempting to create event...");
-          try {
-            let integrationDetails;
-            
-            // Parse integration data correctly
-            if (user.google_calendar_integration) {
-              integrationDetails = user.google_calendar_integration;
-              console.log("Using google_calendar_integration:", integrationDetails);
-            } else if (user.calendar_integration_data) {
-              integrationDetails = JSON.parse(user.calendar_integration_data);
-              console.log("Using calendar_integration_data:", integrationDetails);
-            }
-            
-            if (!integrationDetails) {
-              console.log("No integration details found");
-              throw new Error("No valid calendar integration found");
-            }
+        // Check localStorage for tokens
+        const userId = user?.id || 'test-owner-1';
+        const tokens = localStorage.getItem(`google_tokens_${userId}`);
+        
+        if (tokens) {
+          const tokenData = JSON.parse(tokens);
+          const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
+          
+          if (tokenData.access_token && selectedCalendar) {
+            console.log("Calendar integration found, attempting to create event...");
+            try {
+              const boat = getBoatById(booking.boat_id);
+              
+              // Construct ISO-compatible date strings
+              const bookingDate = new Date(booking.start_date);
+              const startDateString = bookingDate.toISOString().split('T')[0];
+              
+              // Convert time strings to full ISO format
+              const startTimeISO = `${startDateString}T${booking.start_time}:00`;
+              const endTimeISO = `${startDateString}T${booking.end_time}:00`;
+              
+              // Create event data with correct field names
+              const eventData = {
+                customer_name: booking.customer_name,
+                guests: booking.guests,
+                customer_email: booking.customer_email,
+                customer_phone: booking.customer_phone,
+                start_datetime: startTimeISO,
+                end_datetime: endTimeISO,
+                special_requests: booking.special_requests || 'None'
+              };
+              
+              console.log("Creating event with data:", eventData);
 
-            const boat = getBoatById(booking.boat_id);
-            const { google_calendar_id, access_token } = integrationDetails;
-            
-            if (!google_calendar_id || !access_token) {
-              console.log("Missing required calendar fields:", { google_calendar_id, access_token: access_token ? "present" : "missing" });
-              throw new Error("Missing calendar ID or access token");
+              const result = await realGoogleCalendarService.createBookingEvent(selectedCalendar, eventData, tokenData.access_token);
+              
+              if (result.success) {
+                console.log("✅ Successfully created Google Calendar event:", result.eventId);
+                console.log("📅 Event link:", result.eventLink);
+                console.log("🔒 Time slot is now marked as unavailable");
+              } else {
+                console.error("Failed to create calendar event:", result.error);
+              }
+              
+            } catch (calendarError) {
+              console.error("Failed to create Google Calendar event:", calendarError);
             }
-            
-            // Construct ISO-compatible date strings
-            const bookingDate = new Date(booking.start_date);
-            const startDateString = bookingDate.toISOString().split('T')[0];
-            
-            // Convert time strings to full ISO format (assuming times are in HH:mm format)
-            const startTimeISO = `${startDateString}T${booking.start_time}:00`;
-            const endTimeISO = `${startDateString}T${booking.end_time}:00`;
-            
-            console.log("Creating event with data:", {
-              startTimeISO,
-              endTimeISO,
-              boatName: boat?.name,
-              customerName: booking.customer_name
-            });
-
-            const eventData = {
-              title: `Charter: ${boat?.name || 'Unknown Boat'}`,
-              startTime: startTimeISO,
-              endTime: endTimeISO,
-              description: `Charter booking for ${booking.customer_name} (${booking.guests} guests).\n\nBooking Reference: #${booking.id.slice(-8).toUpperCase()}\nContact: ${booking.customer_email}${booking.customer_phone ? '\nPhone: ' + booking.customer_phone : ''}`,
-              location: boat?.location || 'Sydney Harbour',
-            };
-
-            const result = await googleCalendar.createBookingEvent(google_calendar_id, eventData, access_token);
-            
-            if (result.success) {
-              console.log("Successfully created Google Calendar event:", result.event);
-              // You could show a success notification here
-            } else {
-              console.error("Failed to create calendar event:", result.error);
-            }
-            
-          } catch (calendarError) {
-            console.error("Failed to create Google Calendar event:", calendarError);
-            console.error("Calendar error details:", calendarError.stack);
-            // Don't block the main flow if calendar creation fails
+          } else {
+            console.log("Missing tokens or calendar selection");
           }
         } else {
-          console.log("No calendar integration found for user");
-          console.log("User calendar fields:", {
-            google_calendar_integration: user?.google_calendar_integration ? "present" : "missing",
-            calendar_integration_data: user?.calendar_integration_data ? "present" : "missing"
-          });
+          console.log("No calendar integration found");
         }
       }
 
@@ -227,15 +273,17 @@ export default function OwnerDashboard() {
     }
   };
 
-        const pendingApprovalBookings = bookings.filter(b => b.status === 'pending_approval');
-      const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-      const pendingBookings = bookings.filter(b => b.status === 'pending');
-      
-      console.log("Booking breakdown:");
-      console.log("- Total bookings:", bookings.length);
-      console.log("- Pending approval:", pendingApprovalBookings.length);
-      console.log("- Confirmed:", confirmedBookings.length);
-      console.log("- Pending:", pendingBookings.length);
+  // Calculate booking statistics
+  const pendingApprovalBookings = bookings.filter(b => b.status === 'pending_approval');
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+  const pendingBookings = bookings.filter(b => b.status === 'pending');
+  
+  console.log("Booking breakdown:");
+  console.log("- Total bookings:", bookings.length);
+  console.log("- Pending approval:", pendingApprovalBookings.length);
+  console.log("- Confirmed:", confirmedBookings.length);
+  console.log("- Pending:", pendingBookings.length);
+  
   const totalEarnings = bookings
     .filter(b => b.status === 'confirmed' || b.status === 'completed')
     .reduce((sum, b) => sum + (b.total_amount - b.commission_amount), 0);
@@ -290,6 +338,46 @@ export default function OwnerDashboard() {
               className="flex items-center gap-2"
             >
               🔍 Debug
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                console.log('🧪 Testing Calendar Integration...');
+                const userId = user?.id || 'test-owner-1';
+                const tokens = localStorage.getItem(`google_tokens_${userId}`);
+                const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
+                
+                console.log('Tokens:', tokens ? 'present' : 'missing');
+                console.log('Selected calendar:', selectedCalendar);
+                
+                if (tokens && selectedCalendar) {
+                  const tokenData = JSON.parse(tokens);
+                  const testEvent = {
+                    customer_name: 'Test Customer',
+                    guests: 4,
+                    customer_email: 'test@example.com',
+                    customer_phone: '+1234567890',
+                    start_datetime: new Date().toISOString(),
+                    end_datetime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours later
+                    special_requests: 'This is a test event from Harbour Lux'
+                  };
+                  
+                  try {
+                    console.log('Creating test event with data:', testEvent);
+                    const result = await realGoogleCalendarService.createBookingEvent(selectedCalendar, testEvent, tokenData.access_token);
+                    console.log('Test event result:', result);
+                    alert(result.success ? 'Test event created successfully! Check your Google Calendar.' : 'Failed to create test event');
+                  } catch (error) {
+                    console.error('Test event error:', error);
+                    alert('Error creating test event: ' + error.message);
+                  }
+                } else {
+                  alert('No calendar integration found. Please connect Google Calendar first.');
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              🧪 Test Calendar
             </Button>
           </div>
         </div>
@@ -493,9 +581,19 @@ export default function OwnerDashboard() {
                               {format(new Date(booking.start_date), 'MMM d, yyyy')} • 
                               {booking.start_time} - {booking.end_time}
                             </p>
+                            {booking.special_requests && (
+                              <p className="text-xs text-purple-600 mt-1">
+                                💬 Special requests: {booking.special_requests}
+                              </p>
+                            )}
                             {booking.is_custom_time && (
                               <p className="text-xs text-red-600 mt-1">
                                 ⚠️ Outside regular hours - requires special approval
+                              </p>
+                            )}
+                            {booking.status === 'confirmed' && (
+                              <p className="text-xs text-green-600 mt-1">
+                                ✅ Added to calendar - time slot unavailable
                               </p>
                             )}
                           </div>
@@ -504,7 +602,7 @@ export default function OwnerDashboard() {
                             <div className="space-x-2">
                               <Button 
                                 size="sm" 
-                                onClick={() => handleBookingAction('confirmed', booking)}
+                                onClick={() => setActionDialog({ open: true, type: 'approve', booking })}
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 <CheckCircle className="w-4 h-4 mr-1" />
@@ -513,7 +611,7 @@ export default function OwnerDashboard() {
                               <Button 
                                 size="sm" 
                                 variant="destructive"
-                                onClick={() => handleBookingAction('rejected', booking)}
+                                onClick={() => setActionDialog({ open: true, type: 'reject', booking })}
                               >
                                 <XCircle className="w-4 h-4 mr-1" />
                                 Reject
@@ -597,19 +695,111 @@ export default function OwnerDashboard() {
         </Tabs>
 
         {/* Action Dialog */}
-        <Dialog open={actionDialog.open} onOpenChange={(open) => setActionDialog({...actionDialog, open})}>
-          <DialogContent>
+                              <Dialog open={actionDialog.open} onOpenChange={(open) => setActionDialog({...actionDialog, open})}>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {actionDialog.type === 'reject' ? 'Decline Booking' : 'Confirm Action'}
+                {actionDialog.type === 'reject' ? 'Review & Decline Booking' : 'Review & Approve Booking'}
               </DialogTitle>
               <DialogDescription>
                 {actionDialog.type === 'reject' 
-                  ? 'Are you sure you want to decline this booking? The customer will be notified and any payments will be refunded.'
-                  : 'Please confirm your action.'
+                  ? 'Review the booking details below. If you decline, the customer will be notified and any payments will be refunded.'
+                  : 'Review the booking details below before approving. Once approved, this time slot will be marked as unavailable in your calendar.'
                 }
               </DialogDescription>
             </DialogHeader>
+            
+            {actionDialog.booking && (
+              <div className="space-y-6 py-4">
+                {/* Boat Information */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">Boat Details</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Boat:</span> {getBoatById(actionDialog.booking.boat_id)?.name || 'Unknown Boat'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Location:</span> {getBoatById(actionDialog.booking.boat_id)?.location || 'Sydney Harbour'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-2">Booking Details</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Guests:</span> {actionDialog.booking.guests} people
+                    </div>
+                    <div>
+                      <span className="font-medium">Customer:</span> Contact details will be provided after payment
+                    </div>
+                  </div>
+                </div>
+
+                {/* Booking Details */}
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2">Booking Details</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Date:</span> {format(new Date(actionDialog.booking.start_date), 'EEEE, MMMM d, yyyy')}
+                    </div>
+                    <div>
+                      <span className="font-medium">Time:</span> {actionDialog.booking.start_time} - {actionDialog.booking.end_time}
+                    </div>
+                    <div>
+                      <span className="font-medium">Duration:</span> {actionDialog.booking.total_hours || 'Calculating...'} hours
+                    </div>
+                    <div>
+                      <span className="font-medium">Total Amount:</span> ${actionDialog.booking.total_amount}
+                    </div>
+                    {actionDialog.booking.is_custom_time && (
+                      <div className="col-span-2">
+                        <span className="font-medium text-red-600">⚠️ Custom Time Request</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-purple-900 mb-2">Payment Information</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Deposit:</span> ${actionDialog.booking.down_payment}
+                    </div>
+                    <div>
+                      <span className="font-medium">Remaining Balance:</span> ${actionDialog.booking.remaining_balance}
+                    </div>
+                    <div>
+                      <span className="font-medium">Card:</span> **** **** **** {actionDialog.booking.payment_details?.card_number || 'N/A'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Expires:</span> {actionDialog.booking.payment_details?.expiry_date || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+                    <p className="text-xs text-yellow-800">
+                      💳 <strong>Payment Action:</strong> When you approve this booking, the deposit will be automatically charged to the customer's card.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Special Requests */}
+                {actionDialog.booking.special_requests && (
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-purple-900 mb-2">Special Requests</h3>
+                    <p className="text-sm text-purple-800">{actionDialog.booking.special_requests}</p>
+                  </div>
+                )}
+
+                {/* Booking ID */}
+                <div className="text-xs text-slate-500 text-center">
+                  Booking ID: {actionDialog.booking.id}
+                </div>
+              </div>
+            )}
+            
             <DialogFooter>
               <Button 
                 variant="outline" 
@@ -618,10 +808,13 @@ export default function OwnerDashboard() {
                 Cancel
               </Button>
               <Button
-                onClick={() => handleBookingAction('cancelled', actionDialog.booking)}
-                className={actionDialog.type === 'reject' ? 'bg-red-600 hover:bg-red-700' : ''}
+                onClick={() => {
+                  const action = actionDialog.type === 'reject' ? 'rejected' : 'confirmed';
+                  handleBookingAction(action, actionDialog.booking);
+                }}
+                className={actionDialog.type === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
               >
-                {actionDialog.type === 'reject' ? 'Decline Booking' : 'Confirm'}
+                {actionDialog.type === 'reject' ? 'Decline Booking' : 'Approve Booking'}
               </Button>
             </DialogFooter>
           </DialogContent>

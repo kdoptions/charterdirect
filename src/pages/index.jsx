@@ -113,7 +113,7 @@ function PagesContent() {
                 
                 <Route path="/StripeCallback" element={<StripeCallback />} />
                 
-                <Route path="/CalendarCallback" element={<CalendarCallback />} />
+                <Route path="/calendar-callback" element={<CalendarCallback />} />
                 
             </Routes>
         </Layout>

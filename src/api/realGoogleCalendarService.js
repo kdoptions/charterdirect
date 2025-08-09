@@ -5,7 +5,7 @@ class RealGoogleCalendarService {
   constructor() {
     this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     this.clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
-    this.redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5173/calendar-callback';
+    this.redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5174/calendar-callback';
     this.scope = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
   }
 
@@ -127,7 +127,6 @@ class RealGoogleCalendarService {
       },
       attendees: [
         { email: bookingData.customer_email },
-        { email: 'owner@harbourlux.com' }, // Boat owner email
       ],
       reminders: {
         useDefault: false,
