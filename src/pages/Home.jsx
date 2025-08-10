@@ -312,14 +312,19 @@ export default function Home() {
                     const testBooking = await Booking.create({
                       boat_id: testBoat.id, // Use the actual boat ID
                       customer_id: "test-customer",
-                      start_date: "2024-01-20",
-                      end_date: "2024-01-20",
-                      start_time: "14:00",
-                      end_time: "18:00",
+                      start_date: "2025-09-19",
+                      end_date: "2025-09-19",
+                      start_time: "16:00",
+                      end_time: "20:00",
                       guests: 6,
                       total_hours: 4,
                       base_price: 380,
                       total_amount: 1520,
+                      down_payment: 1520 * (testBoat.down_payment_percentage / 100), // Calculate based on boat's down payment %
+                      remaining_balance: 1520 - (1520 * (testBoat.down_payment_percentage / 100)),
+                      commission_amount: 1520 * 0.10, // 10% platform fee
+                      payment_status: 'deposit_paid', // Mark as deposit paid for testing
+                      platform_fee_collected: 1520 * 0.10,
                       customer_name: "Test Customer",
                       customer_email: "test@example.com",
                       customer_phone: "+61 400 123 456",

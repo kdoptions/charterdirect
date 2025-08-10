@@ -303,8 +303,16 @@ export default function Step2_Pricing({ data, updateData }) {
                 updateData({ down_payment_percentage: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ down_payment_percentage: parseInt(e.target.value, 10) || 30 })}
+            onBlur={(e) => {
+              const value = parseInt(e.target.value, 10) || 30;
+              // Ensure minimum 10% down payment
+              const validatedValue = Math.max(10, value);
+              updateData({ down_payment_percentage: validatedValue });
+            }}
+            min="10"
+            max="100"
           />
+          <p className="text-xs text-slate-500">Minimum 10% required</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="early_bird_discount">Early Bird Discount (%)</Label>

@@ -226,6 +226,26 @@ export const Booking = {
     };
   },
   
+  // Update a booking
+  update: async (bookingId, updateData) => {
+    console.log("Updating booking:", bookingId, "with data:", updateData);
+    
+    // Find and update the booking
+    const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
+    if (bookingIndex !== -1) {
+      mockBookings[bookingIndex] = {
+        ...mockBookings[bookingIndex],
+        ...updateData,
+        updated_at: new Date().toISOString()
+      };
+      console.log("✅ Booking updated successfully:", mockBookings[bookingIndex]);
+      return mockBookings[bookingIndex];
+    }
+    
+    console.warn("⚠️ Booking not found for update:", bookingId);
+    return null;
+  },
+
   // Get bookings for a boat owner
   getOwnerBookings: async (ownerId) => {
     return [
@@ -234,8 +254,8 @@ export const Booking = {
         boat_name: "Luxury Yacht Adelaide",
         customer_name: "John Smith",
         customer_email: "john@example.com",
-        start_date: "2024-01-15T14:00:00Z",
-        end_date: "2024-01-15T18:00:00Z",
+        start_date: "2025-09-18T16:00:00Z",
+        end_date: "2025-09-18T20:00:00Z",
         total_price: 1800,
         status: "confirmed",
         calendar_event_id: "event-1"
@@ -245,8 +265,8 @@ export const Booking = {
         boat_name: "Sunset Catamaran",
         customer_name: "Sarah Johnson",
         customer_email: "sarah@example.com",
-        start_date: "2024-01-20T10:00:00Z",
-        end_date: "2024-01-20T16:00:00Z",
+        start_date: "2025-09-19T16:00:00Z",
+        end_date: "2025-09-19T20:00:00Z",
         total_price: 1920,
         status: "confirmed",
         calendar_event_id: "event-2"

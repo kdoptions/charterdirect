@@ -134,12 +134,12 @@ Special Requests: ${bookingData.special_requests || 'None'}
       // For now, return mock availability data
       const mockBusyTimes = [
         {
-          start: '2024-01-15T14:00:00Z',
-          end: '2024-01-15T18:00:00Z'
+          start: '2025-09-18T16:00:00Z',
+          end: '2025-09-18T20:00:00Z'
         },
         {
-          start: '2024-01-20T10:00:00Z',
-          end: '2024-01-20T16:00:00Z'
+          start: '2025-09-19T16:00:00Z',
+          end: '2025-09-19T20:00:00Z'
         }
       ];
 
@@ -199,8 +199,8 @@ Special Requests: ${bookingData.special_requests || 'None'}
         {
           id: 'booking-1',
           title: '🚢 Luxury Yacht Adelaide - Booking #booking-1',
-          start: '2024-01-15T14:00:00Z',
-          end: '2024-01-15T18:00:00Z',
+          start: '2025-09-18T16:00:00Z',
+          end: '2025-09-18T20:00:00Z',
           customer: 'John Smith',
           guests: 8,
           totalPrice: 1800
@@ -208,8 +208,8 @@ Special Requests: ${bookingData.special_requests || 'None'}
         {
           id: 'booking-2',
           title: '🚢 Sunset Catamaran - Booking #booking-2',
-          start: '2024-01-20T10:00:00Z',
-          end: '2024-01-20T16:00:00Z',
+          start: '2025-09-19T16:00:00Z',
+          end: '2025-09-19T20:00:00Z',
           customer: 'Sarah Johnson',
           guests: 15,
           totalPrice: 1920

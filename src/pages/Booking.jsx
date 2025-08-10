@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Boat, Booking as BookingEntity, User } from "@/api/entities";
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
-import { stripeService } from "@/api/stripeService";
+import StripeService from "@/api/stripeService";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -68,7 +68,8 @@ export default function BookingPage() {
   useEffect(() => {
     const initializeStripe = async () => {
       try {
-        const stripeInstance = await stripeService.getStripe();
+        const stripeService = new StripeService();
+const stripeInstance = await stripeService.getStripe();
         if (stripeInstance) {
           setStripe(stripeInstance);
           const elementsInstance = stripeInstance.elements();
@@ -398,8 +399,45 @@ export default function BookingPage() {
       console.log("Creating booking with data:", bookingData);
       const newBooking = await BookingEntity.create(bookingData);
       console.log("Booking created successfully:", newBooking);
-      console.log("📋 Booking created - awaiting owner approval");
-      console.log("📅 Calendar event will be created when owner approves");
+      
+      // Process deposit payment immediately
+      try {
+        console.log("💳 Processing deposit payment...");
+        
+        // Calculate deposit amount and platform fee
+        const depositAmount = Number(totalAmount * (boat.down_payment_percentage / 100));
+        const platformFee = Number(totalAmount * 0.10); // 10% of total booking value
+        
+        console.log("💰 Payment breakdown:", {
+          totalAmount,
+          depositAmount,
+          platformFee,
+          downPaymentPercentage: boat.down_payment_percentage
+        });
+        
+        // For now, simulate successful payment since we're in demo mode
+        // In production, this would create a Stripe PaymentIntent and process the payment
+        console.log("✅ Deposit payment processed successfully (demo mode)");
+        
+        // Update booking with payment confirmation
+        await BookingEntity.update(newBooking.id, {
+          payment_status: 'deposit_paid',
+          platform_fee_collected: platformFee,
+          deposit_paid_at: new Date().toISOString()
+        });
+        
+        console.log("📋 Booking created and deposit paid - awaiting owner approval");
+        console.log("📅 Calendar event will be created when owner approves");
+        
+      } catch (paymentError) {
+        console.error("❌ Deposit payment failed:", paymentError);
+        // Still create the booking but mark payment as failed
+        await BookingEntity.update(newBooking.id, {
+          payment_status: 'payment_failed',
+          payment_error: paymentError.message
+        });
+        console.log("⚠️ Booking created but payment failed - owner will need to handle");
+      }
         
       // Navigate to confirmation page
       navigate(createPageUrl(`BookingConfirmation?id=${newBooking.id}`));
@@ -750,7 +788,13 @@ export default function BookingPage() {
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-xs text-blue-800 text-center">
                         <Info className="w-4 h-4 inline mr-1" />
-                        <strong>Payment Schedule:</strong> Deposit charged when approved, remaining balance due before trip.
+                        <strong>Payment Schedule:</strong> Deposit charged immediately upon approval, remaining balance due before trip.
+                      </p>
+                    </div>
+                    <div className="mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <p className="text-xs text-orange-800 text-center">
+                        <DollarSign className="w-4 w-4 inline mr-1" />
+                        <strong>Platform Fee:</strong> 10% of total booking value (${(totalAmount * 0.10).toFixed(2)}) will be deducted from your deposit payment.
                       </p>
                     </div>
                   </div>
@@ -778,7 +822,7 @@ export default function BookingPage() {
                     Submitting Request...
                   </>
                 ) : (
-                  "Request Booking Approval"
+                  "Pay Deposit & Request Approval"
                 )}
               </Button>
             </CardFooter>

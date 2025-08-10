@@ -39,7 +39,7 @@ export default function ListBoat() {
     special_pricing: [],
     weekend_price: 240,
     off_season_discount: 0,
-    down_payment_percentage: 30,
+    down_payment_percentage: 30, // Minimum 10%
     early_bird_discount: 0,
     early_bird_days: 14,
 
@@ -81,6 +81,14 @@ export default function ListBoat() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
+    
+    // Validate down payment percentage
+    if (formData.down_payment_percentage < 10) {
+      setError("Down payment percentage must be at least 10%");
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
       const user = await User.me();
       const finalData = {
