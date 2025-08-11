@@ -5,8 +5,23 @@ class RealGoogleCalendarService {
   constructor() {
     this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     this.clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
-    this.redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5174/calendar-callback';
+    
+    // Automatically detect the right redirect URI based on environment
+    this.redirectUri = this.getRedirectUri();
+    
     this.scope = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
+  }
+
+  // Automatically detect the right redirect URI
+  getRedirectUri() {
+    // If we're on Vercel (production), use the Vercel URL
+    if (window.location.hostname.includes('vercel.app')) {
+      return import.meta.env.VITE_VERCEL_GOOGLE_REDIRECT_URI || 
+             `https://${window.location.hostname}/calendar-callback`;
+    }
+    
+    // Otherwise use local development URL
+    return import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5174/calendar-callback';
   }
 
   // Initialize Google API

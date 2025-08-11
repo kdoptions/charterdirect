@@ -565,6 +565,17 @@ export default function OwnerDashboard() {
 
         {/* Integration Alerts */}
         <div className="grid md:grid-cols-2 gap-4 mb-8">
+          {/* TEST BUTTON - Should appear after deployment */}
+          <Alert>
+            <CreditCard className="h-4 w-4" />
+            <AlertDescription className="flex justify-between items-center">
+              <span>🚨 FORCE UPDATE: Latest Code Test - {new Date().toLocaleTimeString()}</span>
+              <Button onClick={setTestConnectedAccount} size="sm">
+                Set Test Account
+              </Button>
+            </AlertDescription>
+          </Alert>
+          
           {!stripeConnected && (
             <Alert>
               <CreditCard className="h-4 w-4" />
