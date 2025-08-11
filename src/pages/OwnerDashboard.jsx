@@ -133,11 +133,10 @@ export default function OwnerDashboard() {
 
   // Quick test function to set a connected account for development
   const setTestConnectedAccount = () => {
-    // For testing, you can use any test account ID format
-    // In production, this would be your real connected account ID from Stripe
-    const testAccount = 'acct_1TestConnectedAccount123'; // Replace with your actual test account ID
+    // Using your actual connected account ID from Stripe
+    const testAccount = 'acct_1RuZ3lEC1lIErRsy'; // Your real connected account ID
     setSelectedConnectedAccount(testAccount);
-    alert(`✅ Test connected account set: ${testAccount}\n\nNow you can test booking approvals!\n\nTo get your real account ID:\n1. Go to Stripe Dashboard > Connect > Accounts\n2. Copy the Account ID (starts with acct_)\n3. Replace the testAccount variable above`);
+    alert(`✅ Connected account set: ${testAccount}\n\nNow you can test booking approvals!\n\nThis is your real Stripe connected account, so payments will work properly!`);
   };
 
   const handleCalendarConnect = async () => {
