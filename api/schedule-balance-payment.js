@@ -37,10 +37,41 @@ export default async function handler(req, res) {
     // Calculate the balance amount in cents
     const balanceAmountInCents = Math.round(balanceAmount * 100);
 
+    // First, create or get the Stripe customer
+    let customer;
+    try {
+      // Try to find existing customer by email
+      const existingCustomers = await stripe.customers.list({
+        email: customerEmail,
+        limit: 1
+      });
+      
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+        console.log('✅ Found existing customer:', customer.id);
+      } else {
+        // Create new customer
+        customer = await stripe.customers.create({
+          email: customerEmail,
+          name: customerName,
+          metadata: {
+            bookingId,
+            boatId,
+            type: 'boat_rental_customer'
+          }
+        });
+        console.log('✅ Created new customer:', customer.id);
+      }
+    } catch (customerError) {
+      console.error('❌ Customer creation error:', customerError);
+      throw new Error('Failed to create customer account');
+    }
+
     // Create a PaymentIntent for the balance (scheduled for future)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: balanceAmountInCents,
       currency: 'usd',
+      customer: customer.id,  // Link to customer
       transfer_data: {
         destination: connectedAccountId,
       },
@@ -78,11 +109,12 @@ export default async function handler(req, res) {
         customerEmail,
         type: 'balance_payment'
       },
+      // Link to existing customer for notifications
+      customer: customer.id,
       // Enable Stripe's automatic email notifications
       active: true,
       allow_promotion_codes: false,
       billing_address_collection: 'auto',
-      customer_creation: 'always',
       // Stripe will automatically send emails for:
       // - Payment link creation
       // - Payment reminders
@@ -103,6 +135,13 @@ export default async function handler(req, res) {
     // 3. ✅ Due date notifications - Automatic timing
     // 4. ✅ Payment confirmations - Success/failure emails
     // 5. ✅ Professional templates - Stripe's branded emails
+    //
+    // 📧 EMAIL COLLECTION FLOW:
+    // 1. Customer books → You collect email in frontend
+    // 2. Owner approves → Your API creates Stripe customer
+    // 3. Balance scheduled → PaymentLink linked to customer
+    // 4. Stripe sends emails → Using stored customer email
+    // 5. Customer receives → Payment link + reminders automatically
     //
     // No additional code needed - Stripe does everything!
     // Configure reminder frequency in Stripe Dashboard > Payment Links
