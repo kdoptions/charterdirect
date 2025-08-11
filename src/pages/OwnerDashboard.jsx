@@ -569,7 +569,7 @@ export default function OwnerDashboard() {
           <Alert>
             <CreditCard className="h-4 w-4" />
             <AlertDescription className="flex justify-between items-center">
-              <span>🚨 FORCE UPDATE: Latest Code Test - {new Date().toLocaleTimeString()}</span>
+              <span>🎯 FINAL TEST: Latest Code - {new Date().toLocaleTimeString()}</span>
               <Button onClick={setTestConnectedAccount} size="sm">
                 Set Test Account
               </Button>
