@@ -207,3 +207,14 @@ SydneyCharter Team
 }
 
 export const notifications = new NotificationAPI();
+
+// Mock functions for Stripe Connect
+export const mockUploadFile = async (file) => {
+  console.log('Mock file upload:', file);
+  return { success: true, url: 'https://mock-upload-url.com/file.pdf' };
+};
+
+export const mockInvokeLLM = async (prompt) => {
+  console.log('Mock LLM invocation:', prompt);
+  return { success: true, response: 'This is a mock AI response for testing purposes.' };
+};

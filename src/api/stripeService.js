@@ -82,11 +82,12 @@ class StripeService {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create payment intent');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment intent');
       }
 
-      const { clientSecret } = await response.json();
-      return { id: `pi_${Date.now()}`, clientSecret };
+      const { clientSecret, paymentIntentId } = await response.json();
+      return { id: paymentIntentId, clientSecret };
       
     } catch (error) {
       console.error('❌ Error creating payment intent:', error);
