@@ -113,18 +113,28 @@ export default function OwnerDashboard() {
       const selectedBoat = boats[0];
       console.log('🔗 Using boat for Stripe connection:', selectedBoat.name);
       
-      const redirectUri = `${window.location.origin}/stripe-callback`;
-      const state = `owner_${selectedBoat.id}_${Date.now()}`;
+      // For test mode, we'll create a test connected account
+      // In production, this would use Stripe Connect OAuth
+      console.log('🧪 Test mode: Creating test connected account...');
       
-      const oauthUrl = stripeConnect.getConnectOAuthUrl(redirectUri, state);
-      console.log('🔗 OAuth URL generated:', oauthUrl);
+      // Create a test connected account ID
+      const testAccountId = `acct_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Store the state for verification when we return
-      localStorage.setItem('stripe_connect_state', state);
-      localStorage.setItem('stripe_connect_boat_id', selectedBoat.id);
+      // Store the test account
+      setSelectedConnectedAccount(testAccountId);
       
-      // Redirect to Stripe Connect OAuth
-      window.location.href = oauthUrl;
+      // Update the boat with the connected account
+      await Boat.update(selectedBoat.id, {
+        stripe_account_id: testAccountId
+      });
+      
+      // Update local state
+      setStripeConnected(true);
+      
+      alert(`✅ Test Stripe account connected successfully!\n\nAccount ID: ${testAccountId}\n\nThis is a test account for development. In production, you would complete Stripe Connect OAuth.`);
+      
+      console.log('✅ Test connected account created:', testAccountId);
+      
     } catch (error) {
       console.error('❌ Stripe Connect error:', error);
       alert('Failed to connect Stripe account. Please try again.');
@@ -133,10 +143,10 @@ export default function OwnerDashboard() {
 
   // Quick test function to set a connected account for development
   const setTestConnectedAccount = () => {
-    // Using your actual connected account ID from Stripe
-    const testAccount = 'acct_1RuZ3lEC1lIErRsy'; // Your real connected account ID
+    // Create a test connected account ID for development
+    const testAccount = `acct_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     setSelectedConnectedAccount(testAccount);
-    alert(`✅ Connected account set: ${testAccount}\n\nNow you can test booking approvals!\n\nThis is your real Stripe connected account, so payments will work properly!`);
+    alert(`✅ Test connected account set: ${testAccount}\n\nNow you can test booking approvals!\n\nThis is a test account for development - no real money will move!`);
   };
 
   const handleCalendarConnect = async () => {
