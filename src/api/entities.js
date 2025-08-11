@@ -27,7 +27,9 @@ export const Boat = {
         ],
         google_calendar_id: "primary",
         owner_id: "owner-1",
-        down_payment_percentage: 25
+        down_payment_percentage: 25,
+        balance_payment_days_before: 7,
+        payment_schedule_enabled: true
       },
       {
         id: "2",
@@ -50,7 +52,9 @@ export const Boat = {
         ],
         google_calendar_id: "boat-bookings@group.calendar.google.com",
         owner_id: "owner-2",
-        down_payment_percentage: 30
+        down_payment_percentage: 30,
+        balance_payment_days_before: 14,
+        payment_schedule_enabled: true
       },
       {
         id: "3",
@@ -75,7 +79,9 @@ export const Boat = {
         ],
         google_calendar_id: "primary",
         owner_id: "owner-3",
-        down_payment_percentage: 20
+        down_payment_percentage: 20,
+        balance_payment_days_before: 3,
+        payment_schedule_enabled: true
       },
       {
         id: "4",
@@ -100,7 +106,9 @@ export const Boat = {
         ],
         google_calendar_id: "test-owner@group.calendar.google.com",
         owner_id: "test-owner-1",
-        down_payment_percentage: 25
+        down_payment_percentage: 25,
+        balance_payment_days_before: 7,
+        payment_schedule_enabled: true
       }
     ];
     

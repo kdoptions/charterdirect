@@ -303,6 +303,42 @@ export default function OwnerDashboard() {
             confirmed_at: new Date().toISOString()
           });
 
+          // Schedule balance payment if enabled
+          if (boat.payment_schedule_enabled) {
+            try {
+              console.log('📅 Scheduling balance payment...');
+              
+              const balanceAmount = totalAmount - depositAmount;
+              const balancePaymentDate = new Date(booking.start_date);
+              balancePaymentDate.setDate(balancePaymentDate.getDate() - (boat.balance_payment_days_before || 7));
+              
+              // Schedule balance payment through your backend
+              const balanceResponse = await fetch('/api/schedule-balance-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  bookingId: booking.id,
+                  boatId: booking.boat_id,
+                  customerEmail: booking.customer_email,
+                  customerName: booking.customer_name,
+                  balanceAmount: balanceAmount,
+                  dueDate: balancePaymentDate.toISOString(),
+                  connectedAccountId: selectedConnectedAccount
+                }),
+              });
+
+              if (balanceResponse.ok) {
+                console.log('✅ Balance payment scheduled successfully');
+              } else {
+                console.warn('⚠️ Failed to schedule balance payment');
+              }
+            } catch (balanceError) {
+              console.warn('⚠️ Balance payment scheduling failed:', balanceError);
+            }
+          }
+
           // Create Google Calendar event
           try {
             await realGoogleCalendarService.createBookingEvent({
@@ -600,6 +636,64 @@ export default function OwnerDashboard() {
             <p className="text-sm text-gray-600">
               When customers book your boats, payments go directly to your connected account with our 10% platform fee automatically deducted.
             </p>
+          </div>
+        </div>
+
+        {/* Payment Schedule Settings */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            📅 Payment Schedule Settings
+          </h3>
+
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Balance Payment Due (Days Before Cruise)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="7"
+                  defaultValue="7"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  When the remaining balance payment is due
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Schedule Status
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="payment_schedule_enabled"
+                    defaultChecked={true}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor="payment_schedule_enabled" className="text-sm text-gray-700">
+                    Enable automatic balance payment requests
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Stripe will automatically send payment requests for remaining balances
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-md">
+              <h4 className="font-medium text-blue-900 mb-2">How It Works:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>Deposit:</strong> Charged immediately when you approve booking</li>
+                <li>• <strong>Platform Fee:</strong> 10% collected from deposit payment</li>
+                <li>• <strong>Balance Payment:</strong> Automatically requested X days before cruise</li>
+                <li>• <strong>Customer Experience:</strong> Receives email with payment link</li>
+              </ul>
+            </div>
           </div>
         </div>
 
