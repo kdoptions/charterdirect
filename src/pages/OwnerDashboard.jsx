@@ -113,32 +113,54 @@ export default function OwnerDashboard() {
       const selectedBoat = boats[0];
       console.log('🔗 Using boat for Stripe connection:', selectedBoat.name);
       
-      // For test mode, we'll create a test connected account
-      // In production, this would create a real connected account via your backend
-      console.log('🧪 Test mode: Creating test connected account...');
+      // Create a real Stripe connected account through your backend
+      console.log('🔗 Creating real Stripe connected account...');
       
       try {
-        // Create a test connected account ID
-        const testAccountId = `acct_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Call your backend API to create a real connected account
+        const response = await fetch('/api/create-connect-account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            boatId: selectedBoat.id,
+            boatName: selectedBoat.name,
+            ownerEmail: user?.email || 'test@example.com',
+            ownerName: user?.name || 'Test Owner'
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create connected account');
+        }
+
+        const { connectedAccountId, accountLink } = await response.json();
         
-        // Store the test account
-        setSelectedConnectedAccount(testAccountId);
+        // Store the real connected account
+        setSelectedConnectedAccount(connectedAccountId);
         
         // Update the boat with the connected account
         await Boat.update(selectedBoat.id, {
-          stripe_account_id: testAccountId
+          stripe_account_id: connectedAccountId
         });
         
         // Update local state
         setStripeConnected(true);
         
-        alert(`✅ Test Stripe account connected successfully!\n\nAccount ID: ${testAccountId}\n\nThis is a test account for development. In production, you would create a real connected account via your backend.`);
+        // Redirect to Stripe to complete account setup
+        if (accountLink) {
+          alert(`✅ Stripe account created! Redirecting to complete setup...`);
+          window.open(accountLink, '_blank');
+        } else {
+          alert(`✅ Stripe account connected successfully!\n\nAccount ID: ${connectedAccountId}\n\nYou can now receive payments through this account.`);
+        }
         
-        console.log('✅ Test connected account created:', testAccountId);
+        console.log('✅ Real connected account created:', connectedAccountId);
         
-      } catch (updateError) {
-        console.error('❌ Error updating boat:', updateError);
-        alert('Failed to update boat with Stripe account. Please try again.');
+      } catch (apiError) {
+        console.error('❌ API Error:', apiError);
+        alert('Failed to create Stripe account. Please try again.');
       }
       
     } catch (error) {
