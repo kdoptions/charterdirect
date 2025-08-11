@@ -132,6 +132,22 @@ export const Boat = {
   getOwnerBoats: async (ownerId) => {
     const boats = await Boat.filter();
     return boats.filter(boat => boat.owner_id === ownerId);
+  },
+  
+  // Update a boat
+  update: async (boatId, updateData) => {
+    console.log("Updating boat:", boatId, "with data:", updateData);
+    
+    // For now, just log the update since we're using mock data
+    // In production, this would update the database
+    console.log("✅ Boat update requested:", { boatId, updateData });
+    
+    // Return the updated boat data
+    return {
+      id: boatId,
+      ...updateData,
+      updated_at: new Date().toISOString()
+    };
   }
 };
 

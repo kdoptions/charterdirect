@@ -114,26 +114,32 @@ export default function OwnerDashboard() {
       console.log('🔗 Using boat for Stripe connection:', selectedBoat.name);
       
       // For test mode, we'll create a test connected account
-      // In production, this would use Stripe Connect OAuth
+      // In production, this would create a real connected account via your backend
       console.log('🧪 Test mode: Creating test connected account...');
       
-      // Create a test connected account ID
-      const testAccountId = `acct_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Store the test account
-      setSelectedConnectedAccount(testAccountId);
-      
-      // Update the boat with the connected account
-      await Boat.update(selectedBoat.id, {
-        stripe_account_id: testAccountId
-      });
-      
-      // Update local state
-      setStripeConnected(true);
-      
-      alert(`✅ Test Stripe account connected successfully!\n\nAccount ID: ${testAccountId}\n\nThis is a test account for development. In production, you would complete Stripe Connect OAuth.`);
-      
-      console.log('✅ Test connected account created:', testAccountId);
+      try {
+        // Create a test connected account ID
+        const testAccountId = `acct_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store the test account
+        setSelectedConnectedAccount(testAccountId);
+        
+        // Update the boat with the connected account
+        await Boat.update(selectedBoat.id, {
+          stripe_account_id: testAccountId
+        });
+        
+        // Update local state
+        setStripeConnected(true);
+        
+        alert(`✅ Test Stripe account connected successfully!\n\nAccount ID: ${testAccountId}\n\nThis is a test account for development. In production, you would create a real connected account via your backend.`);
+        
+        console.log('✅ Test connected account created:', testAccountId);
+        
+      } catch (updateError) {
+        console.error('❌ Error updating boat:', updateError);
+        alert('Failed to update boat with Stripe account. Please try again.');
+      }
       
     } catch (error) {
       console.error('❌ Stripe Connect error:', error);
