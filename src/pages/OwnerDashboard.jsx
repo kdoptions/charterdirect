@@ -202,7 +202,8 @@ export default function OwnerDashboard() {
           }
           
           alert('✅ Booking confirmed successfully! Deposit was already paid.');
-          window.location.reload();
+          // Refresh the data instead of reloading the page
+          await loadOwnerData();
           return;
         }
         
@@ -282,7 +283,8 @@ export default function OwnerDashboard() {
           }
 
           alert('✅ Booking confirmed and payment processed successfully!');
-          window.location.reload();
+          // Refresh the data instead of reloading the page
+          await loadOwnerData();
 
         } catch (paymentError) {
           console.error('❌ Payment processing failed:', paymentError);
