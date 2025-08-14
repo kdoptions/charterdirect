@@ -17,7 +17,7 @@ import {
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User as UserEntity } from "@/api/entities";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,28 +28,19 @@ import {
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
-  const [user, setUser] = React.useState(null);
+  const { currentUser, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await UserEntity.me();
-        setUser(userData);
-      } catch (error) {
-        setUser(null);
-      }
-    };
-    loadUser();
-  }, []);
-
-  const handleLogout = async () => {
-    await UserEntity.logout();
-    setUser(null);
-  };
 
   const isAdminPage = currentPageName === "Admin";
   const isPublicPage = ["Home", "Search", "BoatDetails", "Booking"].includes(currentPageName);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -118,55 +109,56 @@ export default function Layout({ children, currentPageName }) {
                 </>
               )}
               
-              {user ? (
+              {currentUser ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm font-semibold">
-                          {user.full_name?.[0] || user.email[0].toUpperCase()}
+                          {currentUser.displayName?.[0] || currentUser.email[0].toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-slate-700">{user.full_name || user.email}</span>
+                      <span className="text-slate-700">{currentUser.displayName || currentUser.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl("Dashboard")} className="flex items-center space-x-2">
-                        <LayoutDashboard className="w-4 h-4" />
+                        <LayoutDashboard className="w-4 w-4" />
                         <span>Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl("MyBookings")} className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-4 w-4" />
                         <span>My Bookings</span>
                       </Link>
                     </DropdownMenuItem>
                     {/* New Owner Dashboard link */}
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl("OwnerDashboard")} className="flex items-center space-x-2">
-                        <Ship className="w-4 h-4" />
+                        <Ship className="w-4 w-4" />
                         <span>Owner Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl("MyBoats")} className="flex items-center space-x-2">
-                        <Ship className="w-4 h-4" />
+                        <Ship className="w-4 w-4" />
                         <span>My Boats</span>
                       </Link>
                     </DropdownMenuItem>
-                    {user.role === 'admin' && (
+                    {/* TODO: Add admin role check when we implement user roles */}
+                    {/* {currentUser.role === 'admin' && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link to={createPageUrl("Admin")} className="flex items-center space-x-2">
-                            <Settings className="w-4 h-4" />
+                            <Settings className="w-4 w-4" />
                             <span>Admin Panel</span>
                           </Link>
                         </DropdownMenuItem>
                       </>
-                    )}
+                    )} */}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <span>Sign Out</span>
@@ -175,10 +167,10 @@ export default function Layout({ children, currentPageName }) {
                 </DropdownMenu>
               ) : (
                 <Button 
-                  onClick={() => UserEntity.login()}
+                  asChild
                   className="luxury-gradient text-white hover:opacity-90 transition-opacity duration-200"
                 >
-                  Sign In
+                  <Link to="/auth">Sign In</Link>
                 </Button>
               )}
             </div>
@@ -218,7 +210,7 @@ export default function Layout({ children, currentPageName }) {
                 </>
               )}
               
-              {user ? (
+              {currentUser ? (
                 <div className="space-y-3 pt-4 border-t border-white/20">
                   <Link 
                     to={createPageUrl("Dashboard")} 
@@ -249,7 +241,8 @@ export default function Layout({ children, currentPageName }) {
                   >
                     My Boats
                   </Link>
-                  {user.role === 'admin' && (
+                  {/* TODO: Add admin role check when we implement user roles */}
+                  {/* {currentUser.role === 'admin' && (
                     <Link 
                       to={createPageUrl("Admin")} 
                       className="block text-slate-700 hover:text-blue-600 font-medium"
@@ -257,7 +250,7 @@ export default function Layout({ children, currentPageName }) {
                     >
                       Admin Panel
                     </Link>
-                  )}
+                  )} */}
                   <button 
                     onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                     className="block w-full text-left text-slate-700 hover:text-blue-600 font-medium"
@@ -267,10 +260,11 @@ export default function Layout({ children, currentPageName }) {
                 </div>
               ) : (
                 <Button 
-                  onClick={() => { UserEntity.login(); setMobileMenuOpen(false); }}
+                  asChild
                   className="w-full luxury-gradient text-white"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign In
+                  <Link to="/auth">Sign In</Link>
                 </Button>
               )}
             </div>

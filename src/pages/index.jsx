@@ -28,6 +28,8 @@ import StripeCallback from "./StripeCallback";
 
 import CalendarCallback from "./CalendarCallback";
 
+import AuthPage from "../components/auth/AuthPage";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -95,6 +97,12 @@ function PagesContent() {
                 
                 <Route path="/BoatDetails" element={<BoatDetails />} />
                 
+                {/* Auth Routes */}
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/signup" element={<AuthPage />} />
+                
+                {/* Protected Routes - Add these later */}
                 <Route path="/MyBoats" element={<MyBoats />} />
                 
                 <Route path="/Admin" element={<Admin />} />
