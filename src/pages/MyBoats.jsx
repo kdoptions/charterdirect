@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Boat, User } from "@/api/entities";
+import { Boat } from "@/api/entities";
+import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -23,25 +24,67 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function MyBoats() {
+  const { currentUser } = useAuth();
   const [boats, setBoats] = useState([]);
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMyBoats();
-  }, []);
+    if (currentUser) {
+      loadMyBoats();
+    }
+  }, [currentUser]);
 
   const loadMyBoats = async () => {
     try {
-      const userData = await User.me();
-      setUser(userData);
-      
-      const myBoats = await Boat.filter({ owner_id: userData.id }, "-created_date");
+      // Use Firebase user ID (uid) instead of old User.me()
+      const myBoats = await Boat.filter({ owner_id: currentUser.uid }, "-created_date");
       setBoats(myBoats);
     } catch (error) {
       console.error("Error loading boats:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createTestBoat = async () => {
+    try {
+      const testBoatData = {
+        name: `Test Boat ${Date.now()}`,
+        description: "This is a test boat for testing the admin approval system. It will have pending status until approved by an admin.",
+        price_per_hour: Math.floor(Math.random() * 200) + 100,
+        weekend_price: Math.floor(Math.random() * 250) + 150,
+        max_guests: Math.floor(Math.random() * 10) + 5,
+        location: "Sydney Harbour",
+        boat_type: "yacht",
+        with_captain: true,
+        images: [
+          "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop"
+        ],
+        amenities: ["Test Amenity 1", "Test Amenity 2"],
+        availability_blocks: [
+          { name: "Morning", start_time: "09:00", end_time: "13:00", duration_hours: 4 }
+        ],
+        special_pricing: [],
+        down_payment_percentage: 25,
+        balance_payment_days_before: 7,
+        payment_schedule_enabled: true,
+        terms_and_conditions: "Test terms and conditions",
+        cancellation_policy: "Test cancellation policy",
+        owner_id: currentUser.uid,
+        owner_email: currentUser.email,
+        owner_name: currentUser.displayName || currentUser.email,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+
+      await Boat.create(testBoatData);
+      
+      // Reload boats to show the new test boat
+      await loadMyBoats();
+      
+      console.log("✅ Test boat created successfully:", testBoatData);
+    } catch (error) {
+      console.error("❌ Error creating test boat:", error);
     }
   };
 
@@ -78,16 +121,18 @@ export default function MyBoats() {
     );
   }
 
-  if (!user) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <AlertCircle className="w-16 h-16 text-slate-400 mx-auto" />
           <h2 className="text-2xl font-bold text-slate-900">Please sign in</h2>
           <p className="text-slate-600">You need to be signed in to view your boats.</p>
-          <Button onClick={() => User.login()} className="luxury-gradient text-white">
-            Sign In
-          </Button>
+          <Link to="/auth">
+            <Button className="luxury-gradient text-white">
+              Sign In
+            </Button>
+          </Link>
         </div>
       </div>
     );
@@ -102,12 +147,23 @@ export default function MyBoats() {
             <h1 className="text-3xl font-bold text-slate-900">My Boats</h1>
             <p className="text-slate-600 mt-2">Manage your boat listings and bookings</p>
           </div>
-          <Link to={createPageUrl("ListBoat")}>
-            <Button className="luxury-gradient text-white">
-              <Plus className="w-5 h-5 mr-2" />
-              Add New Boat
+          <div className="flex gap-3">
+            {/* Test Boat Button - Remove in production */}
+            <Button 
+              variant="outline" 
+              onClick={createTestBoat}
+              className="border-orange-200 text-orange-700 hover:bg-orange-50"
+            >
+              🧪 Create Test Boat
             </Button>
-          </Link>
+            
+            <Link to={createPageUrl("ListBoat")}>
+              <Button className="luxury-gradient text-white">
+                <Plus className="w-5 h-5 mr-2" />
+                Add New Boat
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Overview */}

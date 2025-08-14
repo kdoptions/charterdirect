@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
-import { Boat, User } from "@/api/entities";
+import { Boat } from "@/api/entities";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ const TOTAL_STEPS = 6; // Updated total steps
 
 export default function ListBoat() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1
@@ -52,7 +54,7 @@ export default function ListBoat() {
     additional_services: [],
 
     // Step 5
-    stripe_account_id: "",
+    stripe_account_id: "", // Optional for now
 
     // Step 6 - Legal (New fields)
     terms_and_conditions: "",
@@ -61,6 +63,12 @@ export default function ListBoat() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+
+  // Redirect if not logged in
+  if (!currentUser) {
+    navigate('/auth');
+    return null;
+  }
 
   const updateFormData = (newData) => {
     setFormData(prev => ({ ...prev, ...newData }));
@@ -90,10 +98,12 @@ export default function ListBoat() {
     }
     
     try {
-      const user = await User.me();
+      // Use Firebase user ID (uid) instead of old User.me()
       const finalData = {
         ...formData,
-        owner_id: user.id,
+        owner_id: currentUser.uid,
+        owner_email: currentUser.email,
+        owner_name: currentUser.displayName || currentUser.email,
         status: 'pending' // Default status
       };
       await Boat.create(finalData);
