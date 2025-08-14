@@ -21,6 +21,7 @@ import {
   Loader2
 } from "lucide-react";
 import { format, isPast, isFuture } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
@@ -28,22 +29,33 @@ export default function MyBookings() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    loadUserBookings();
+    loadMyBookings();
   }, []);
 
-  const loadUserBookings = async () => {
+  const loadMyBookings = async () => {
     try {
-      const userData = await User.me();
+      // Use Firebase currentUser instead of User.me()
+      if (!currentUser) {
+        console.error("No current user found");
+        return;
+      }
+
+      const userData = {
+        id: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName
+      };
       setUser(userData);
 
-      // Load user's bookings
-      const userBookings = await Booking.filter({ customer_id: userData.id }, "-created_date");
-      setBookings(userBookings);
+      // Load bookings I made as a customer
+      const customerBookings = await Booking.filter({ customer_id: currentUser.uid }, "-created_date");
+      setBookings(customerBookings);
 
       // Load boat details for each booking
-      const boatIds = [...new Set(userBookings.map(b => b.boat_id))];
+      const boatIds = [...new Set(customerBookings.map(b => b.boat_id))];
       if (boatIds.length > 0) {
         const boatData = await Promise.all(
           boatIds.map(id => Boat.filter({ id }))
@@ -131,7 +143,7 @@ export default function MyBookings() {
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto" />
           <h2 className="text-2xl font-bold text-slate-900">Error Loading Bookings</h2>
           <p className="text-slate-600">{error}</p>
-          <Button onClick={loadUserBookings}>Try Again</Button>
+          <Button onClick={loadMyBookings}>Try Again</Button>
         </div>
       </div>
     );

@@ -21,8 +21,10 @@ import {
   Activity
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Dashboard() {
+  const { currentUser } = useAuth();
   const [user, setUser] = useState(null);
   const [myBoats, setMyBoats] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
@@ -43,15 +45,25 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const userData = await User.me();
+      // Use Firebase currentUser instead of User.me()
+      if (!currentUser) {
+        console.error("No current user found");
+        return;
+      }
+
+      const userData = {
+        id: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName
+      };
       setUser(userData);
 
       // Load boats I own
-      const boatsOwned = await Boat.filter({ owner_id: userData.id }, "-created_date");
+      const boatsOwned = await Boat.filter({ owner_id: currentUser.uid }, "-created_date");
       setMyBoats(boatsOwned);
 
       // Load bookings I made as a customer
-      const customerBookings = await Booking.filter({ customer_id: userData.id }, "-created_date");
+      const customerBookings = await Booking.filter({ customer_id: currentUser.uid }, "-created_date");
       setMyBookings(customerBookings);
 
       // Load bookings for boats I own
@@ -143,7 +155,7 @@ export default function Dashboard() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">
-            Welcome back, {user.full_name || user.email}!
+            Welcome back, {user.displayName || user.email}!
           </h1>
           <p className="text-slate-600 mt-2">
             Here's an overview of your bookings and boat listings

@@ -138,12 +138,7 @@ CREATE POLICY "Owners can view their own boats" ON public.boats
     FOR SELECT USING (owner_id = auth.uid());
 
 CREATE POLICY "Admins can view all boats" ON public.boats
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.admin_roles 
-            WHERE user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (is_admin(auth.uid()));
 
 CREATE POLICY "Owners can insert their own boats" ON public.boats
     FOR INSERT WITH CHECK (owner_id = auth.uid());
@@ -152,12 +147,7 @@ CREATE POLICY "Owners can update their own boats" ON public.boats
     FOR UPDATE USING (owner_id = auth.uid());
 
 CREATE POLICY "Admins can update any boat" ON public.boats
-    FOR UPDATE USING (
-        EXISTS (
-            SELECT 1 FROM public.admin_roles 
-            WHERE user_id = auth.uid()
-        )
-    );
+    FOR UPDATE USING (is_admin(auth.uid()));
 
 -- RLS Policies for bookings
 CREATE POLICY "Customers can view their own bookings" ON public.bookings
@@ -172,12 +162,7 @@ CREATE POLICY "Boat owners can view bookings for their boats" ON public.bookings
     );
 
 CREATE POLICY "Admins can view all bookings" ON public.bookings
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.admin_roles 
-            WHERE user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (is_admin(auth.uid()));
 
 CREATE POLICY "Users can insert their own bookings" ON public.bookings
     FOR INSERT WITH CHECK (customer_id = auth.uid());
@@ -193,22 +178,23 @@ CREATE POLICY "Boat owners can update bookings for their boats" ON public.bookin
         )
     );
 
+-- Function to check if user is admin (avoids recursion)
+CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admin_roles 
+    WHERE admin_roles.user_id = user_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- RLS Policies for admin_roles
 CREATE POLICY "Only admins can view admin roles" ON public.admin_roles
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.admin_roles 
-            WHERE user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (is_admin(auth.uid()));
 
 CREATE POLICY "Only admins can manage admin roles" ON public.admin_roles
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM public.admin_roles 
-            WHERE user_id = auth.uid()
-        )
-    );
+    FOR ALL USING (is_admin(auth.uid()));
 
 -- Functions for automatic timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
