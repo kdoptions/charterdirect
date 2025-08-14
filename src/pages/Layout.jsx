@@ -3,6 +3,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { hasPermission } from "@/utils/adminRoles";
 import { 
   Anchor, 
   Search, 
@@ -150,25 +151,18 @@ export default function Layout({ children, currentPageName }) {
                     </DropdownMenuItem>
                     
                     {/* Admin Panel Link */}
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl("Admin")} className="flex items-center space-x-2">
-                        <AlertTriangle className="w-4 w-4" />
-                        <span>Admin Panel</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    {/* TODO: Add admin role check when we implement user roles */}
-                    {/* {currentUser.role === 'admin' && (
+                    {hasPermission(currentUser, 'access_admin_panel') && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link to={createPageUrl("Admin")} className="flex items-center space-x-2">
-                            <Settings className="w-4 w-4" />
+                            <AlertTriangle className="w-4 w-4" />
                             <span>Admin Panel</span>
                           </Link>
                         </DropdownMenuItem>
                       </>
-                    )} */}
+                    )}
+                    
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <span>Sign Out</span>

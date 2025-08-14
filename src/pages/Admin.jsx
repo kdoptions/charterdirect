@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { isAdmin, hasPermission } from '@/utils/adminRoles';
 import { 
   CheckCircle, 
   XCircle, 
@@ -18,7 +19,9 @@ import {
   Ship,
   User,
   Mail,
-  Phone
+  Phone,
+  Shield,
+  AlertCircle
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -103,6 +106,33 @@ export default function Admin() {
     return null;
   }
 
+  // Check admin permissions
+  if (!hasPermission(currentUser, 'access_admin_panel')) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-6">
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+              <Shield className="w-12 h-12 text-red-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">Access Denied</h1>
+            <p className="text-slate-600 max-w-md mx-auto">
+              You don't have permission to access the admin panel. Only authorized administrators can view this page.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Button onClick={() => navigate('/')} variant="outline">
+                Go Home
+              </Button>
+              <Button onClick={() => navigate('/my-boats')}>
+                My Boats
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -121,8 +151,21 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Panel</h1>
-          <p className="text-slate-600">Review and approve pending boat listings</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Panel</h1>
+              <p className="text-slate-600">Review and approve pending boat listings</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                <Shield className="w-3 h-3 mr-1" />
+                Admin Access
+              </Badge>
+              <div className="text-sm text-slate-500">
+                Logged in as: {currentUser.email}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats Overview */}
@@ -147,7 +190,7 @@ export default function Admin() {
                 <div>
                   <p className="text-sm text-slate-600">Total Boats</p>
                   <p className="text-2xl font-bold text-slate-900">
-                    {allBoats.length}
+                    {allBoats.filter(boat => boat.status === 'approved').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
