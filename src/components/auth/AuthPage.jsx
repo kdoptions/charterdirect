@@ -1,19 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Login from './Login';
 import Signup from './Signup';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // If user is already logged in, redirect to dashboard
   if (currentUser) {
     navigate('/dashboard');
     return null;
   }
+
+  // Handle redirects from protected features
+  useEffect(() => {
+    const redirectMessage = location.state?.redirectMessage;
+    if (redirectMessage) {
+      // Show a temporary alert for the redirect message
+      // This will be replaced by a proper UI component later
+      alert(redirectMessage);
+      // Optionally, you might want to clear the state after a short delay
+      // setTimeout(() => {
+      //   navigate('/dashboard', { replace: true });
+      // }, 3000); // Redirect after 3 seconds
+    }
+  }, [location.state]);
 
   const handleSwitchToSignup = () => {
     setIsLogin(false);
@@ -24,8 +42,15 @@ export default function AuthPage() {
   };
 
   const handleAuthSuccess = () => {
-    // Redirect to dashboard after successful auth
-    navigate('/dashboard');
+    // Check for redirect destination
+    const redirectTo = localStorage.getItem('redirectAfterLogin');
+    if (redirectTo) {
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(redirectTo);
+    } else {
+      // Default redirect to dashboard
+      navigate('/dashboard');
+    }
   };
 
   return (

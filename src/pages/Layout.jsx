@@ -3,7 +3,8 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { hasPermission } from "@/utils/adminRoles";
+import { isAdmin, hasPermission, getUserRole } from '@/utils/adminRoles';
+import SmartLink from "@/components/SmartLink";
 import { 
   Anchor, 
   Search, 
@@ -35,6 +36,49 @@ export default function Layout({ children, currentPageName }) {
 
   const isAdminPage = currentPageName === "Admin";
   const isPublicPage = ["Home", "Search", "BoatDetails", "Booking"].includes(currentPageName);
+
+  // Get user role for navigation
+  const userRole = getUserRole(currentUser);
+
+  // Generate navigation items based on user role
+  const getNavigationItems = () => {
+    if (!currentUser) {
+      // Guest users
+      return [
+        { label: "Explore Boats", href: createPageUrl("Search"), icon: Search },
+        { label: "List Your Boat", href: "/auth", icon: Plus, requiresAuth: true },
+        { label: "Sign In", href: "/auth", icon: User }
+      ];
+    }
+
+    // Logged in users
+    const items = [
+      { label: "Dashboard", href: createPageUrl("Dashboard"), icon: LayoutDashboard },
+      { label: "My Bookings", href: createPageUrl("MyBookings"), icon: Calendar }
+    ];
+
+    // Add owner-specific items (if they have boats)
+    if (userRole === 'admin' || currentUser.boats?.length > 0) {
+      items.push(
+        { label: "Owner Dashboard", href: createPageUrl("OwnerDashboard"), icon: Ship },
+        { label: "My Boats", href: createPageUrl("MyBoats"), icon: Ship }
+      );
+    }
+
+    // Add admin panel for admins
+    if (hasPermission(currentUser, 'access_admin_panel')) {
+      items.push(
+        { label: "Admin Panel", href: createPageUrl("Admin"), icon: AlertTriangle, isAdmin: true }
+      );
+    }
+
+    // Add List Your Boat for all logged in users
+    items.push({ label: "List Your Boat", href: createPageUrl("ListBoat"), icon: Plus });
+
+    return items;
+  };
+
+  const navigationItems = getNavigationItems();
 
   const handleLogout = async () => {
     try {
@@ -105,9 +149,12 @@ export default function Layout({ children, currentPageName }) {
                   <Link to={createPageUrl("Search")} className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200">
                     Explore Boats
                   </Link>
-                  <Link to={createPageUrl("ListBoat")} className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                  <SmartLink 
+                    to={createPageUrl("ListBoat")} 
+                    className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200"
+                  >
                     List Your Boat
-                  </Link>
+                  </SmartLink>
                 </>
               )}
               
@@ -124,44 +171,18 @@ export default function Layout({ children, currentPageName }) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl("Dashboard")} className="flex items-center space-x-2">
-                        <LayoutDashboard className="w-4 w-4" />
-                        <span>Dashboard</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl("MyBookings")} className="flex items-center space-x-2">
-                        <Calendar className="w-4 w-4" />
-                        <span>My Bookings</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    {/* New Owner Dashboard link */}
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl("OwnerDashboard")} className="flex items-center space-x-2">
-                        <Ship className="w-4 w-4" />
-                        <span>Owner Dashboard</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl("MyBoats")} className="flex items-center space-x-2">
-                        <Ship className="w-4 w-4" />
-                        <span>My Boats</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    {/* Admin Panel Link */}
-                    {hasPermission(currentUser, 'access_admin_panel') && (
-                      <>
-                        <DropdownMenuSeparator />
+                    {navigationItems.map((item, index) => (
+                      <React.Fragment key={item.label}>
+                        {item.isAdmin && <DropdownMenuSeparator />}
                         <DropdownMenuItem asChild>
-                          <Link to={createPageUrl("Admin")} className="flex items-center space-x-2">
-                            <AlertTriangle className="w-4 w-4" />
-                            <span>Admin Panel</span>
+                          <Link to={item.href} className="flex items-center space-x-2">
+                            <item.icon className="w-4 h-4" />
+                            <span>{item.label}</span>
                           </Link>
                         </DropdownMenuItem>
-                      </>
-                    )}
+                        {item.isAdmin && <DropdownMenuSeparator />}
+                      </React.Fragment>
+                    ))}
                     
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
@@ -204,57 +225,28 @@ export default function Layout({ children, currentPageName }) {
                   >
                     Explore Boats
                   </Link>
-                  <Link 
+                  <SmartLink 
                     to={createPageUrl("ListBoat")} 
                     className="block text-slate-700 hover:text-blue-600 font-medium"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     List Your Boat
-                  </Link>
+                  </SmartLink>
                 </>
               )}
               
               {currentUser ? (
                 <div className="space-y-3 pt-4 border-t border-white/20">
-                  <Link 
-                    to={createPageUrl("Dashboard")} 
-                    className="block text-slate-700 hover:text-blue-600 font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link 
-                    to={createPageUrl("MyBookings")} 
-                    className="block text-slate-700 hover:text-blue-600 font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Bookings
-                  </Link>
-                  {/* New Owner Dashboard link for mobile */}
-                  <Link 
-                    to={createPageUrl("OwnerDashboard")} 
-                    className="block text-slate-700 hover:text-blue-600 font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Owner Dashboard
-                  </Link>
-                  <Link 
-                    to={createPageUrl("MyBoats")} 
-                    className="block text-slate-700 hover:text-blue-600 font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Boats
-                  </Link>
-                  {/* TODO: Add admin role check when we implement user roles */}
-                  {/* {currentUser.role === 'admin' && (
+                  {navigationItems.map((item, index) => (
                     <Link 
-                      to={createPageUrl("Admin")} 
+                      key={item.label}
+                      to={item.href} 
                       className="block text-slate-700 hover:text-blue-600 font-medium"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Admin Panel
+                      {item.label}
                     </Link>
-                  )} */}
+                  ))}
                   <button 
                     onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                     className="block w-full text-left text-slate-700 hover:text-blue-600 font-medium"
