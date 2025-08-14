@@ -1,7 +1,7 @@
-// Mock entities for local development without Base44 dependencies
+import { supabase } from '@/lib/supabase';
 
-// Mock Boat entity with Google Calendar integration
-let mockBoats = [
+// Mock data for fallback (will be removed once Supabase is fully working)
+const mockBoats = [
   {
     id: "1",
     name: "Luxury Yacht Experience",
@@ -197,102 +197,206 @@ let mockBoats = [
 ];
 
 export const Boat = {
-  filter: async (params) => {
-    // Return mock boat data
-    let boats = [...mockBoats]; // Use the new mockBoats array
-    
-    // Filter by parameters if provided
-    if (params) {
-      if (params.id) {
-        boats = boats.filter(boat => boat.id === params.id);
-      }
-      if (params.owner_id) {
-        boats = boats.filter(boat => boat.owner_id === params.owner_id);
-      }
-      if (params.status) { // Add status filter
-        boats = boats.filter(boat => boat.status === params.status);
-      }
-    }
-    
-    return boats;
-  },
-  get: async (id) => {
-    const boats = await Boat.filter();
-    return boats.find(boat => boat.id === id);
-  },
-  create: async (boatData) => {
-    // Create the boat with a unique ID
-    const newBoat = {
-      id: "mock-boat-" + Date.now(),
-      ...boatData,
-      status: "pending"
-    };
-    
-    // Add the boat to our mock data array
-    mockBoats.push(newBoat);
-    
-    return newBoat;
-  },
-  // Get boats owned by a specific user
-  getOwnerBoats: async (ownerId) => {
-    const boats = await Boat.filter();
-    return boats.filter(boat => boat.owner_id === ownerId);
-  },
-  
   // Get all boats (for admin dashboard)
   getAllBoats: async () => {
-    return [...mockBoats];
+    try {
+      const { data, error } = await supabase
+        .from('boats')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching boats from Supabase:', error);
+      // Fallback to mock data for now
+      return mockBoats;
+    }
   },
 
   // Get pending boats (for admin review)
   getPendingBoats: async () => {
-    return mockBoats.filter(boat => boat.status === 'pending');
+    try {
+      const { data, error } = await supabase
+        .from('boats')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching pending boats from Supabase:', error);
+      // Fallback to mock data for now
+      return mockBoats.filter(boat => boat.status === 'pending');
+    }
+  },
+
+  // Get approved boats (live and bookable)
+  getApprovedBoats: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('boats')
+        .select('*')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching approved boats from Supabase:', error);
+      // Fallback to mock data for now
+      return mockBoats.filter(boat => boat.status === 'approved');
+    }
   },
 
   // Get today's approved boats
   getApprovedToday: async () => {
-    const today = new Date().toDateString();
-    return mockBoats.filter(boat => 
-      boat.status === 'approved' && 
-      boat.approved_at && 
-      new Date(boat.approved_at).toDateString() === today
-    );
+    try {
+      const today = new Date().toDateString();
+      const { data, error } = await supabase
+        .from('boats')
+        .select('*')
+        .eq('status', 'approved')
+        .gte('approved_at', new Date(today).toISOString())
+        .lte('approved_at', new Date(today + 'T23:59:59').toISOString());
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching today\'s approved boats from Supabase:', error);
+      return [];
+    }
   },
 
   // Get today's rejected boats
   getRejectedToday: async () => {
-    const today = new Date().toDateString();
-    return mockBoats.filter(boat => 
-      boat.status === 'rejected' && 
-      boat.rejected_at && 
-      new Date(boat.rejected_at).toDateString() === today
-    );
-  },
-  
-  // Update a boat
-  update: async (boatId, updateData) => {
-    console.log("Updating boat:", boatId, "with data:", updateData);
-    
-    // Find and update the boat in our mock data
-    const boatIndex = mockBoats.findIndex(boat => boat.id === boatId);
-    if (boatIndex !== -1) {
-      mockBoats[boatIndex] = {
-        ...mockBoats[boatIndex],
-        ...updateData,
-        updated_at: new Date().toISOString()
-      };
+    try {
+      const today = new Date().toDateString();
+      const { data, error } = await supabase
+        .from('boats')
+        .select('*')
+        .eq('status', 'rejected')
+        .gte('rejected_at', new Date(today).toISOString())
+        .lte('rejected_at', new Date(today + 'T23:59:59').toISOString());
       
-      // If approving, set approved_at timestamp
-      if (updateData.status === 'approved') {
-        mockBoats[boatIndex].approved_at = new Date().toISOString();
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching today\'s rejected boats from Supabase:', error);
+      return [];
+    }
+  },
+
+  // Filter boats with parameters
+  filter: async (params) => {
+    try {
+      let query = supabase
+        .from('boats')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      // Apply filters
+      if (params) {
+        if (params.id) {
+          query = query.eq('id', params.id);
+        }
+        if (params.owner_id) {
+          query = query.eq('owner_id', params.owner_id);
+        }
+        if (params.status) {
+          query = query.eq('status', params.status);
+        }
       }
       
-      console.log("✅ Boat updated successfully:", mockBoats[boatIndex]);
-      return mockBoats[boatIndex];
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error filtering boats from Supabase:', error);
+      // Fallback to mock data for now
+      let boats = [...mockBoats];
+      if (params) {
+        if (params.id) {
+          boats = boats.filter(boat => boat.id === params.id);
+        }
+        if (params.owner_id) {
+          boats = boats.filter(boat => boat.owner_id === params.owner_id);
+        }
+        if (params.status) {
+          boats = boats.filter(boat => boat.status === params.status);
+        }
+      }
+      return boats;
     }
-    
-    console.log("❌ Boat not found:", boatId);
-    return null;
+  },
+
+  // Create new boat
+  create: async (boatData) => {
+    try {
+      const { data, error } = await supabase
+        .from('boats')
+        .insert([boatData])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      console.log('✅ Boat created in Supabase:', data);
+      return data;
+    } catch (error) {
+      console.error('Error creating boat in Supabase:', error);
+      // Fallback to mock data for now
+      const newBoat = {
+        id: "mock-boat-" + Date.now(),
+        ...boatData,
+        status: "pending"
+      };
+      mockBoats.push(newBoat);
+      return newBoat;
+    }
+  },
+
+  // Update boat
+  update: async (boatId, updateData) => {
+    try {
+      const { data, error } = await supabase
+        .from('boats')
+        .update(updateData)
+        .eq('id', boatId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      console.log('✅ Boat updated in Supabase:', data);
+      return data;
+    } catch (error) {
+      console.error('Error updating boat in Supabase:', error);
+      // Fallback to mock data for now
+      const boatIndex = mockBoats.findIndex(b => b.id === boatId);
+      if (boatIndex !== -1) {
+        mockBoats[boatIndex] = { ...mockBoats[boatIndex], ...updateData };
+        return mockBoats[boatIndex];
+      }
+      throw error;
+    }
+  },
+
+  // Get boat by ID
+  getById: async (boatId) => {
+    try {
+      const { data, error } = await supabase
+        .from('boats')
+        .select('*')
+        .eq('id', boatId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching boat from Supabase:', error);
+      // Fallback to mock data for now
+      return mockBoats.find(boat => boat.id === boatId);
+    }
   }
 };
 

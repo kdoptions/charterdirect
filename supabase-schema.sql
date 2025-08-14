@@ -1,9 +1,6 @@
 -- Harbour Lux Database Schema
 -- Run this in your Supabase SQL Editor
 
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
-
 -- Create custom types
 CREATE TYPE boat_status AS ENUM ('pending', 'approved', 'rejected', 'suspended');
 CREATE TYPE booking_status AS ENUM ('pending_approval', 'confirmed', 'cancelled', 'completed');
