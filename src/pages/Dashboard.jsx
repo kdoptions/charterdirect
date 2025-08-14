@@ -21,7 +21,7 @@ import {
   Activity
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
   const { currentUser } = useAuth();

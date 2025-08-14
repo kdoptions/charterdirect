@@ -21,7 +21,7 @@ import {
   Loader2
 } from "lucide-react";
 import { format, isPast, isFuture } from "date-fns";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
