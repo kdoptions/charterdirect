@@ -14,7 +14,8 @@ import {
   Calendar,
   CreditCard,
   Menu,
-  X
+  X,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -147,6 +148,15 @@ export default function Layout({ children, currentPageName }) {
                         <span>My Boats</span>
                       </Link>
                     </DropdownMenuItem>
+                    
+                    {/* Admin Panel Link */}
+                    <DropdownMenuItem asChild>
+                      <Link to={createPageUrl("Admin")} className="flex items-center space-x-2">
+                        <AlertTriangle className="w-4 w-4" />
+                        <span>Admin Panel</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    
                     {/* TODO: Add admin role check when we implement user roles */}
                     {/* {currentUser.role === 'admin' && (
                       <>
