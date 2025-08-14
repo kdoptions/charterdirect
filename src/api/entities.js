@@ -239,16 +239,34 @@ export const Boat = {
     return boats.filter(boat => boat.owner_id === ownerId);
   },
   
-  // Get pending boats for admin review
-  getPendingBoats: async () => {
-    const boats = await Boat.filter();
-    return boats.filter(boat => boat.status === 'pending');
+  // Get all boats (for admin dashboard)
+  getAllBoats: async () => {
+    return [...mockBoats];
   },
-  
-  // Get approved boats (live and bookable)
-  getApprovedBoats: async () => {
-    const boats = await Boat.filter();
-    return boats.filter(boat => boat.status === 'approved');
+
+  // Get pending boats (for admin review)
+  getPendingBoats: async () => {
+    return mockBoats.filter(boat => boat.status === 'pending');
+  },
+
+  // Get today's approved boats
+  getApprovedToday: async () => {
+    const today = new Date().toDateString();
+    return mockBoats.filter(boat => 
+      boat.status === 'approved' && 
+      boat.approved_at && 
+      new Date(boat.approved_at).toDateString() === today
+    );
+  },
+
+  // Get today's rejected boats
+  getRejectedToday: async () => {
+    const today = new Date().toDateString();
+    return mockBoats.filter(boat => 
+      boat.status === 'rejected' && 
+      boat.rejected_at && 
+      new Date(boat.rejected_at).toDateString() === today
+    );
   },
   
   // Update a boat

@@ -26,21 +26,33 @@ export default function Admin() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [pendingBoats, setPendingBoats] = useState([]);
+  const [allBoats, setAllBoats] = useState([]);
+  const [approvedToday, setApprovedToday] = useState([]);
+  const [rejectedToday, setRejectedToday] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
-      loadPendingBoats();
+      loadAdminData();
     }
   }, [currentUser]);
 
-  const loadPendingBoats = async () => {
+  const loadAdminData = async () => {
     try {
-      const pending = await Boat.getPendingBoats();
+      const [pending, all, approved, rejected] = await Promise.all([
+        Boat.getPendingBoats(),
+        Boat.getAllBoats(),
+        Boat.getApprovedToday(),
+        Boat.getRejectedToday()
+      ]);
+      
       setPendingBoats(pending);
+      setAllBoats(all);
+      setApprovedToday(approved);
+      setRejectedToday(rejected);
     } catch (error) {
-      console.error('Error loading pending boats:', error);
+      console.error('Error loading admin data:', error);
     } finally {
       setLoading(false);
     }
@@ -54,8 +66,8 @@ export default function Admin() {
         approved_at: new Date().toISOString()
       });
       
-      // Reload pending boats
-      await loadPendingBoats();
+      // Reload all admin data
+      await loadAdminData();
       
       console.log('✅ Boat approved:', boatId);
     } catch (error) {
@@ -74,8 +86,8 @@ export default function Admin() {
         rejected_at: new Date().toISOString()
       });
       
-      // Reload pending boats
-      await loadPendingBoats();
+      // Reload all admin data
+      await loadAdminData();
       
       console.log('❌ Boat rejected:', boatId);
     } catch (error) {
@@ -135,7 +147,7 @@ export default function Admin() {
                 <div>
                   <p className="text-sm text-slate-600">Total Boats</p>
                   <p className="text-2xl font-bold text-slate-900">
-                    {pendingBoats.length + 4} {/* 4 existing approved boats */}
+                    {allBoats.length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -150,7 +162,9 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Approved Today</p>
-                  <p className="text-2xl font-bold text-green-600">0</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {approvedToday.length}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-600" />
@@ -164,7 +178,9 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Rejected Today</p>
-                  <p className="text-2xl font-bold text-red-600">0</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {rejectedToday.length}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <XCircle className="w-6 h-6 text-red-600" />
