@@ -198,22 +198,32 @@ let mockBoats = [
 
 export const Boat = {
   filter: async (params) => {
+    console.log("🔍 Boat.filter called with params:", params);
+    
     // Return mock boat data
     let boats = [...mockBoats]; // Use the new mockBoats array
+    
+    console.log("📋 Total boats in mock data:", boats.length);
     
     // Filter by parameters if provided
     if (params) {
       if (params.id) {
         boats = boats.filter(boat => boat.id === params.id);
+        console.log("🔍 Filtered by ID:", params.id, "Result:", boats.length);
       }
       if (params.owner_id) {
+        console.log("🔍 Filtering by owner_id:", params.owner_id);
+        console.log("📋 Available owner_ids:", boats.map(b => b.owner_id));
         boats = boats.filter(boat => boat.owner_id === params.owner_id);
+        console.log("🔍 Filtered by owner_id result:", boats.length);
       }
       if (params.status) { // Add status filter
         boats = boats.filter(boat => boat.status === params.status);
+        console.log("🔍 Filtered by status:", params.status, "Result:", boats.length);
       }
     }
     
+    console.log("📋 Final filtered boats:", boats);
     return boats;
   },
   get: async (id) => {
@@ -222,11 +232,21 @@ export const Boat = {
   },
   create: async (boatData) => {
     console.log("Mock boat created:", boatData);
-    return {
+    
+    // Create the boat with a unique ID
+    const newBoat = {
       id: "mock-boat-" + Date.now(),
       ...boatData,
       status: "pending"
     };
+    
+    // Add the boat to our mock data array
+    mockBoats.push(newBoat);
+    
+    console.log("✅ Boat added to mock data. Total boats:", mockBoats.length);
+    console.log("New boat:", newBoat);
+    
+    return newBoat;
   },
   // Get boats owned by a specific user
   getOwnerBoats: async (ownerId) => {

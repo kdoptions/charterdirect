@@ -36,8 +36,14 @@ export default function MyBoats() {
 
   const loadMyBoats = async () => {
     try {
+      console.log("🔍 Loading boats for user:", currentUser.uid);
+      
       // Use Firebase user ID (uid) instead of old User.me()
       const myBoats = await Boat.filter({ owner_id: currentUser.uid }, "-created_date");
+      
+      console.log("📋 Found boats:", myBoats);
+      console.log("📊 Boat count:", myBoats.length);
+      
       setBoats(myBoats);
     } catch (error) {
       console.error("Error loading boats:", error);
