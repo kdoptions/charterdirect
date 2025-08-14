@@ -6,6 +6,7 @@
 const ADMIN_EMAILS = [
   'admin@harbourlux.com',
   'kurtdon@gmail.com', // Add your email for testing
+  'kurtdon42@gmail.com', // Your actual email address
   // Add more admin emails as needed
 ];
 
