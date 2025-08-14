@@ -103,9 +103,15 @@ export default function Layout({ children, currentPageName }) {
                   <Link to={createPageUrl("Search")} className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200">
                     Explore Boats
                   </Link>
-                  <Link to={createPageUrl("ListBoat")} className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200">
-                    List Your Boat
-                  </Link>
+                  {currentUser ? (
+                    <Link to="/owner-application" className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                      List Your Boat
+                    </Link>
+                  ) : (
+                    <Link to={createPageUrl("ListBoat")} className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                      List Your Boat
+                    </Link>
+                  )}
                 </>
               )}
               
@@ -200,13 +206,23 @@ export default function Layout({ children, currentPageName }) {
                   >
                     Explore Boats
                   </Link>
-                  <Link 
-                    to={createPageUrl("ListBoat")} 
-                    className="block text-slate-700 hover:text-blue-600 font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    List Your Boat
-                  </Link>
+                  {currentUser ? (
+                    <Link 
+                      to="/owner-application" 
+                      className="block text-slate-700 hover:text-blue-600 font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      List Your Boat
+                    </Link>
+                  ) : (
+                    <Link 
+                      to={createPageUrl("ListBoat")} 
+                      className="block text-slate-700 hover:text-blue-600 font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      List Your Boat
+                    </Link>
+                  )}
                 </>
               )}
               

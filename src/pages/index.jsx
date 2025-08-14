@@ -30,6 +30,8 @@ import CalendarCallback from "./CalendarCallback";
 
 import AuthPage from "../components/auth/AuthPage";
 
+import OwnerApplication from "./OwnerApplication";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -101,6 +103,9 @@ function PagesContent() {
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/signup" element={<AuthPage />} />
+                
+                {/* Owner Application Route */}
+                <Route path="/owner-application" element={<OwnerApplication />} />
                 
                 {/* Protected Routes - Add these later */}
                 <Route path="/MyBoats" element={<MyBoats />} />
