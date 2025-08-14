@@ -102,7 +102,7 @@ export default function MyBoats() {
             <h1 className="text-3xl font-bold text-slate-900">My Boats</h1>
             <p className="text-slate-600 mt-2">Manage your boat listings and bookings</p>
           </div>
-          <Link to="/owner-application">
+          <Link to={createPageUrl("ListBoat")}>
             <Button className="luxury-gradient text-white">
               <Plus className="w-5 h-5 mr-2" />
               Add New Boat
@@ -184,7 +184,7 @@ export default function MyBoats() {
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">No boats listed yet</h3>
               <p className="text-slate-600 mb-6">Start earning by listing your first boat on our platform.</p>
-              <Link to="/owner-application">
+              <Link to={createPageUrl("ListBoat")}>
                 <Button className="luxury-gradient text-white">
                   <Plus className="w-5 h-5 mr-2" />
                   List Your First Boat
