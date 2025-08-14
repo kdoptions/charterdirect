@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { isAdmin, hasPermission } from '@/utils/adminRoles';
+import { isAdmin, hasPermission, getAdminList, addAdmin, removeAdmin } from '@/utils/adminRoles';
 import { 
   CheckCircle, 
   XCircle, 
@@ -34,6 +34,9 @@ export default function Admin() {
   const [rejectedToday, setRejectedToday] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [adminList, setAdminList] = useState([]);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [showAdminManagement, setShowAdminManagement] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -54,6 +57,9 @@ export default function Admin() {
       setAllBoats(all);
       setApprovedToday(approved);
       setRejectedToday(rejected);
+      
+      // Load admin list
+      setAdminList(getAdminList());
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
@@ -97,6 +103,39 @@ export default function Admin() {
       console.error('❌ Error rejecting boat:', error);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleAddAdmin = () => {
+    if (!newAdminEmail || !newAdminEmail.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+    
+    const success = addAdmin(newAdminEmail);
+    if (success) {
+      setAdminList(getAdminList());
+      setNewAdminEmail('');
+      alert('Admin added successfully!');
+    } else {
+      alert('This email is already an admin or invalid.');
+    }
+  };
+
+  const handleRemoveAdmin = (email) => {
+    if (email === currentUser.email) {
+      alert('You cannot remove yourself as an admin!');
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to remove ${email} as an admin?`)) {
+      const success = removeAdmin(email);
+      if (success) {
+        setAdminList(getAdminList());
+        alert('Admin removed successfully!');
+      } else {
+        alert('Failed to remove admin.');
+      }
     }
   };
 
@@ -157,6 +196,14 @@ export default function Admin() {
               <p className="text-slate-600">Review and approve pending boat listings</p>
             </div>
             <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowAdminManagement(!showAdminManagement)}
+                className="flex items-center space-x-2"
+              >
+                <Shield className="w-4 h-4" />
+                <span>{showAdminManagement ? 'Hide' : 'Show'} Admin Management</span>
+              </Button>
               <Badge className="bg-blue-100 text-blue-700 border-blue-200">
                 <Shield className="w-3 h-3 mr-1" />
                 Admin Access
@@ -232,6 +279,80 @@ export default function Admin() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Admin Management Section */}
+        {showAdminManagement && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="w-5 h-5" />
+                <span>Admin Management</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Add New Admin */}
+                <div className="flex items-end space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Add New Admin
+                    </label>
+                    <input
+                      type="email"
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                      placeholder="Enter email address"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <Button onClick={handleAddAdmin} className="bg-blue-600 hover:bg-blue-700">
+                    Add Admin
+                  </Button>
+                </div>
+
+                {/* Current Admins List */}
+                <div>
+                  <h4 className="font-medium text-slate-900 mb-3">Current Admins ({adminList.length})</h4>
+                  <div className="space-y-2">
+                    {adminList.map((email, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{email}</p>
+                            <p className="text-sm text-slate-500">
+                              {email === currentUser.email ? 'Current User' : 'Admin'}
+                            </p>
+                          </div>
+                        </div>
+                        {email !== currentUser.email && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveAdmin(email)}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info Alert */}
+                <Alert>
+                  <AlertCircle className="w-4 h-4" />
+                  <AlertDescription>
+                    <strong>Note:</strong> Admin changes are currently stored in memory. In production, these should be persisted to a database.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Pending Boats List */}
         {pendingBoats.length === 0 ? (
