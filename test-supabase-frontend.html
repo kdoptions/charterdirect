@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Backend Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Supabase Backend Test</h1>
+        
+        <div id="connection-status" class="status disconnected">
+            ❌ Not Connected
+        </div>
+        
+        <div class="test-section">
+            <h3>🔌 Connection Test</h3>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connection-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Database Tables</h3>
+            <button onclick="checkTables()">Check Tables</button>
+            <div id="tables-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>👥 User Operations</h3>
+            <button onclick="createTestUser()">Create Test User</button>
+            <button onclick="readUsers()">Read Users</button>
+            <button onclick="updateTestUser()">Update Test User</button>
+            <button onclick="deleteTestUser()">Delete Test User</button>
+            <div id="user-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚤 Boat Operations</h3>
+            <button onclick="createTestBoat()">Create Test Boat</button>
+            <button onclick="readBoats()">Read Boats</button>
+            <button onclick="updateTestBoat()">Update Test Boat</button>
+            <button onclick="deleteTestBoat()">Delete Test Boat</button>
+            <div id="boat-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📅 Booking Operations</h3>
+            <button onclick="createTestBooking()">Create Test Booking</button>
+            <button onclick="readBookings()">Read Bookings</button>
+            <button onclick="deleteTestBooking()">Delete Test Booking</button>
+            <div id="booking-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔔 Real-time Test</h3>
+            <button onclick="startRealtime()">Start Real-time</button>
+            <button onclick="stopRealtime()">Stop Real-time</button>
+            <div id="realtime-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'YOUR_SUPABASE_URL_HERE' // Replace with your URL
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE' // Replace with your key
+        
+        if (supabaseUrl === 'YOUR_SUPABASE_URL_HERE' || supabaseKey === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+            alert('Please update the Supabase URL and key in the script before testing!')
+        }
+        
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+        let realtimeSubscription = null
+        let testUserId = null
+        let testBoatId = null
+        let testBookingId = null
+        
+        // Test connection
+        async function testConnection() {
+            const resultDiv = document.getElementById('connection-result')
+            resultDiv.innerHTML = 'Testing...'
+            
+            try {
+                const { data, error } = await supabase.from('users').select('count').limit(1)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Connection failed: ${error.message}</div>`
+                    document.getElementById('connection-status').className = 'status disconnected'
+                    document.getElementById('connection-status').innerHTML = '❌ Not Connected'
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ Connection successful!</div>'
+                    document.getElementById('connection-status').className = 'status connected'
+                    document.getElementById('connection-status').innerHTML = '✅ Connected to Supabase'
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        // Check database tables
+        async function checkTables() {
+            const resultDiv = document.getElementById('tables-result')
+            resultDiv.innerHTML = 'Checking tables...'
+            
+            const tables = ['users', 'boats', 'bookings', 'admin_roles']
+            let results = []
+            
+            for (const table of tables) {
+                try {
+                    const { error } = await supabase.from(table).select('*').limit(1)
+                    if (error) {
+                        results.push(`❌ ${table}: ${error.message}`)
+                    } else {
+                        results.push(`✅ ${table}: exists`)
+                    }
+                } catch (err) {
+                    results.push(`❌ ${table}: ${err.message}`)
+                }
+            }
+            
+            resultDiv.innerHTML = `<div class="info">${results.join('\n')}</div>`
+        }
+        
+        // User operations
+        async function createTestUser() {
+            const resultDiv = document.getElementById('user-result')
+            resultDiv.innerHTML = 'Creating test user...'
+            
+            const testUser = {
+                email: 'test@example.com',
+                display_name: 'Test User',
+                phone: '+1234567890',
+                role: 'user'
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([testUser])
+                    .select()
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ User creation failed: ${error.message}</div>`
+                } else {
+                    testUserId = data[0].id
+                    resultDiv.innerHTML = `<div class="success">✅ User created: ${testUserId}</div>`
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function readUsers() {
+            const resultDiv = document.getElementById('user-result')
+            resultDiv.innerHTML = 'Reading users...'
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .limit(5)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Read failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = `<div class="success">✅ Found ${data.length} users:\n${JSON.stringify(data, null, 2)}</div>`
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function updateTestUser() {
+            if (!testUserId) {
+                document.getElementById('user-result').innerHTML = '<div class="error">❌ No test user to update. Create one first.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('user-result')
+            resultDiv.innerHTML = 'Updating test user...'
+            
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ display_name: 'Updated Test User' })
+                    .eq('id', testUserId)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Update failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ User updated successfully</div>'
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function deleteTestUser() {
+            if (!testUserId) {
+                document.getElementById('user-result').innerHTML = '<div class="error">❌ No test user to delete.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('user-result')
+            resultDiv.innerHTML = 'Deleting test user...'
+            
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .eq('id', testUserId)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Delete failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ User deleted successfully</div>'
+                    testUserId = null
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        // Boat operations
+        async function createTestBoat() {
+            if (!testUserId) {
+                document.getElementById('boat-result').innerHTML = '<div class="error">❌ No test user. Create one first.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('boat-result')
+            resultDiv.innerHTML = 'Creating test boat...'
+            
+            const testBoat = {
+                name: 'Test Boat',
+                description: 'A test boat for testing purposes',
+                boat_type: 'Yacht',
+                with_captain: true,
+                max_guests: 8,
+                location: 'Miami, FL',
+                price_per_hour: 150.00,
+                owner_id: testUserId,
+                owner_email: 'owner@example.com',
+                owner_name: 'Test Owner'
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('boats')
+                    .insert([testBoat])
+                    .select()
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Boat creation failed: ${error.message}</div>`
+                } else {
+                    testBoatId = data[0].id
+                    resultDiv.innerHTML = `<div class="success">✅ Boat created: ${testBoatId}</div>`
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function readBoats() {
+            const resultDiv = document.getElementById('boat-result')
+            resultDiv.innerHTML = 'Reading boats...'
+            
+            try {
+                const { data, error } = await supabase
+                    .from('boats')
+                    .select('*')
+                    .limit(5)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Read failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = `<div class="success">✅ Found ${data.length} boats:\n${JSON.stringify(data, null, 2)}</div>`
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function updateTestBoat() {
+            if (!testBoatId) {
+                document.getElementById('boat-result').innerHTML = '<div class="error">❌ No test boat to update. Create one first.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('boat-result')
+            resultDiv.innerHTML = 'Updating test boat...'
+            
+            try {
+                const { error } = await supabase
+                    .from('boats')
+                    .update({ price_per_hour: 175.00 })
+                    .eq('id', testBoatId)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Update failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ Boat updated successfully</div>'
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function deleteTestBoat() {
+            if (!testBoatId) {
+                document.getElementById('boat-result').innerHTML = '<div class="error">❌ No test boat to delete.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('boat-result')
+            resultDiv.innerHTML = 'Deleting test boat...'
+            
+            try {
+                const { error } = await supabase
+                    .from('boats')
+                    .delete()
+                    .eq('id', testBoatId)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Delete failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ Boat deleted successfully</div>'
+                    testBoatId = null
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        // Booking operations
+        async function createTestBooking() {
+            if (!testUserId || !testBoatId) {
+                document.getElementById('booking-result').innerHTML = '<div class="error">❌ Need both test user and boat. Create them first.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('booking-result')
+            resultDiv.innerHTML = 'Creating test booking...'
+            
+            const testBooking = {
+                boat_id: testBoatId,
+                customer_id: testUserId,
+                start_date: '2024-12-25',
+                end_date: '2024-12-26',
+                guests: 4,
+                total_hours: 8,
+                base_price: 1200.00,
+                total_amount: 1200.00,
+                commission_amount: 120.00,
+                down_payment: 360.00,
+                remaining_balance: 840.00,
+                customer_name: 'Test Customer',
+                customer_email: 'customer@example.com',
+                booking_reference: 'TEST-' + Date.now()
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('bookings')
+                    .insert([testBooking])
+                    .select()
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Booking creation failed: ${error.message}</div>`
+                } else {
+                    testBookingId = data[0].id
+                    resultDiv.innerHTML = `<div class="success">✅ Booking created: ${testBookingId}</div>`
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function readBookings() {
+            const resultDiv = document.getElementById('booking-result')
+            resultDiv.innerHTML = 'Reading bookings...'
+            
+            try {
+                const { data, error } = await supabase
+                    .from('bookings')
+                    .select('*')
+                    .limit(5)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Read failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = `<div class="success">✅ Found ${data.length} bookings:\n${JSON.stringify(data, null, 2)}</div>`
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        async function deleteTestBooking() {
+            if (!testBookingId) {
+                document.getElementById('booking-result').innerHTML = '<div class="error">❌ No test booking to delete.</div>'
+                return
+            }
+            
+            const resultDiv = document.getElementById('booking-result')
+            resultDiv.innerHTML = 'Deleting test booking...'
+            
+            try {
+                const { error } = await supabase
+                    .from('bookings')
+                    .delete()
+                    .eq('id', testBookingId)
+                
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Delete failed: ${error.message}</div>`
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ Booking deleted successfully</div>'
+                    testBookingId = null
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        // Real-time operations
+        function startRealtime() {
+            const resultDiv = document.getElementById('realtime-result')
+            resultDiv.innerHTML = 'Starting real-time subscription...'
+            
+            try {
+                realtimeSubscription = supabase
+                    .channel('test-channel')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'boats' },
+                        (payload) => {
+                            resultDiv.innerHTML = `<div class="info">🔔 Real-time event: ${payload.eventType} on boat ${payload.new?.id || payload.old?.id}</div>`
+                        }
+                    )
+                    .subscribe()
+                
+                resultDiv.innerHTML = '<div class="success">✅ Real-time subscription started. Try creating/updating/deleting a boat to see events.</div>'
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`
+            }
+        }
+        
+        function stopRealtime() {
+            if (realtimeSubscription) {
+                realtimeSubscription.unsubscribe()
+                realtimeSubscription = null
+                document.getElementById('realtime-result').innerHTML = '<div class="info">🛑 Real-time subscription stopped</div>'
+            }
+        }
+        
+        // Auto-test connection on page load
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 1000)
+        })
+    </script>
+</body>
+</html> 
