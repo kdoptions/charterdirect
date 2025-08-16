@@ -17,11 +17,11 @@ class RealGoogleCalendarService {
     // If we're on Vercel (production), use the Vercel URL
     if (window.location.hostname.includes('vercel.app')) {
       return import.meta.env.VITE_VERCEL_GOOGLE_REDIRECT_URI || 
-             `https://${window.location.hostname}/calendar-callback`;
+             `https://${window.location.hostname}/CalendarCallback`;
     }
     
     // Otherwise use local development URL
-    return import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5174/calendar-callback';
+    return import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5174/CalendarCallback';
   }
 
   // Initialize Google API
