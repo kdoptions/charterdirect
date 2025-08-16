@@ -186,7 +186,7 @@ const stripeInstance = await stripeService.getStripe();
         console.log('Selected calendar:', selectedCalendar);
         
         // Get confirmed bookings for this boat and date
-        const confirmedBookings = await Booking.filter({
+        const confirmedBookings = await BookingEntity.filter({
           boat_id: boat.id,
           start_date: dateString,
           status: 'confirmed'
@@ -377,14 +377,14 @@ const stripeInstance = await stripeService.getStripe();
         base_price: Number(pricePerHour),
         additional_services: [],
         total_amount: Number(totalAmount),
-        commission_amount: Number(totalAmount * 0.10), // Assuming 10% commission
+        commission_amount: Number(totalAmount * 0.10),
         down_payment: Number(totalAmount * (boat.down_payment_percentage / 100)),
         remaining_balance: Number(totalAmount - (totalAmount * (boat.down_payment_percentage / 100))),
-        status: 'pending_approval', // New status for owner approval
+        status: 'pending_approval',
         payment_status: 'pending',
-        payment_method: paymentMethod, // Store the Stripe payment method
+        payment_method: paymentMethod,
         payment_details: {
-          card_number: paymentMethod?.card?.last4 || '****', // Store only last 4 digits
+          card_number: paymentMethod?.card?.last4 || '****',
           card_brand: paymentMethod?.card?.brand || 'unknown',
           cardholder_name: paymentDetails.cardholderName
         },
@@ -392,8 +392,7 @@ const stripeInstance = await stripeService.getStripe();
         customer_name: customerDetails.name,
         customer_email: customerDetails.email,
         customer_phone: customerDetails.phone,
-        booking_reference: `BK${Date.now().toString().slice(-8).toUpperCase()}`,
-        created_at: new Date().toISOString(),
+        booking_reference: `BK${Date.now().toString().slice(-8).toUpperCase()}`
       };
 
       console.log("Creating booking with data:", bookingData);
