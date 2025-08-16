@@ -227,8 +227,7 @@ export default function OwnerDashboard() {
           
           // Update booking status to confirmed
           await Booking.update(bookingId, {
-            status: 'confirmed',
-            confirmed_at: new Date().toISOString()
+            status: 'confirmed'
           });
           
           // Create Google Calendar event
@@ -306,10 +305,7 @@ export default function OwnerDashboard() {
           await Booking.update(bookingId, {
             status: 'confirmed',
             payment_status: 'deposit_paid',
-            stripe_payment_intent_id: paymentIntent.id,
-            stripe_connected_account_id: selectedConnectedAccount,
-            platform_fee_collected: platformFee / 100,
-            confirmed_at: new Date().toISOString()
+            platform_fee_collected: platformFee / 100
           });
 
           // Schedule balance payment if enabled
