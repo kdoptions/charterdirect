@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Boat, Booking as BookingEntity, User } from "@/api/entities";
+import { Boat, Booking as BookingEntity } from "@/api/entities";
+import { useAuth } from "@/contexts/AuthContext";
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from "@/api/stripeService";
 import { createPageUrl } from "@/utils";
@@ -28,9 +29,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export default function BookingPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser } = useAuth();
   
   const [boat, setBoat] = useState(null);
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,24 +135,18 @@ const stripeInstance = await stripeService.getStripe();
         setBoat(boatData[0]);
 
         // Fetch user data
-        try {
-          const userData = await User.me();
-          console.log("User data:", userData);
-          setUser(userData);
+        if (currentUser) {
+          console.log("User data from auth context:", currentUser);
           setCustomerDetails(prev => ({
             ...prev,
-            name: userData?.full_name || "",
-            email: userData?.email || ""
+            name: currentUser.user_metadata?.display_name || currentUser.email || "",
+            email: currentUser.email || ""
           }));
-        } catch (userErr) {
-          console.log("User not logged in, setting up guest booking");
-          // For demo purposes, create a mock user
-          const mockUser = {
-            id: "guest-user",
-            full_name: "",
-            email: ""
-          };
-          setUser(mockUser);
+        } else {
+          console.log("No user logged in");
+          setError("You must be logged in to create a booking. Please sign in first.");
+          setLoading(false);
+          return;
         }
 
       } catch (err) {
@@ -371,7 +366,7 @@ const stripeInstance = await stripeService.getStripe();
 
       const bookingData = {
         boat_id: boat.id,
-        customer_id: user?.id, // Remove the fallback to "guest-user"
+        customer_id: currentUser?.id, // Use currentUser from auth context
         start_date: bookingDate,
         end_date: bookingDate,
         start_datetime: startDateTime,
@@ -403,7 +398,7 @@ const stripeInstance = await stripeService.getStripe();
       };
 
       // Check if user is logged in
-      if (!user?.id) {
+      if (!currentUser?.id) {
         setError("You must be logged in to create a booking. Please sign in first.");
         setIsSubmitting(false);
         return;
