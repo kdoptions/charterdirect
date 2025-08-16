@@ -412,44 +412,88 @@ let mockBookings = []; // Store created bookings
 
 export const Booking = {
   create: async (bookingData) => {
-    console.log("Mock booking created:", bookingData);
-    
-    // Simulate Google Calendar integration
-    const booking = {
-      id: "mock-booking-" + Date.now(),
-      ...bookingData,
-      status: "pending_approval", // Start with pending approval
-      calendar_event_id: null, // Will be created after approval
-      owner_notified: false
-    };
-    
-    // Store the booking for retrieval
-    mockBookings.push(booking);
-    console.log("Booking request created, awaiting owner approval:", booking.id);
-    console.log("Total bookings stored:", mockBookings.length);
-    
-    return booking;
+    try {
+      console.log("Creating real booking in Supabase:", bookingData);
+      
+      // Create the booking in Supabase
+      const { data: newBooking, error } = await supabase
+        .from('bookings')
+        .insert([bookingData])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Failed to create booking in Supabase:', error);
+        throw error;
+      }
+      
+      console.log("✅ Booking created successfully in Supabase:", newBooking);
+      
+      // Also store in mock array for backward compatibility
+      mockBookings.push(newBooking);
+      
+      return newBooking;
+    } catch (error) {
+      console.error('❌ Error creating booking:', error);
+      throw error;
+    }
   },
   
   // Get all bookings (for demo purposes)
   filter: async (params) => {
-    console.log("Filtering bookings with params:", params);
-    let filteredBookings = [...mockBookings];
-    
-    if (params) {
-      if (params.id) {
-        filteredBookings = filteredBookings.filter(booking => booking.id === params.id);
+    try {
+      console.log("Filtering bookings from Supabase with params:", params);
+      
+      let query = supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (params) {
+        if (params.id) {
+          query = query.eq('id', params.id);
+        }
+        if (params.boat_id) {
+          query = query.eq('boat_id', params.boat_id);
+        }
+        if (params.customer_id) {
+          query = query.eq('customer_id', params.customer_id);
+        }
+        if (params.status) {
+          query = query.eq('status', params.status);
+        }
       }
-      if (params.boat_id) {
-        filteredBookings = filteredBookings.filter(booking => booking.boat_id === params.boat_id);
+      
+      const { data: bookings, error } = await query;
+      
+      if (error) {
+        console.error('❌ Error fetching bookings from Supabase:', error);
+        throw error;
       }
-      if (params.customer_id) {
-        filteredBookings = filteredBookings.filter(booking => booking.customer_id === params.customer_id);
+      
+      console.log("✅ Bookings fetched from Supabase:", bookings);
+      return bookings || [];
+      
+    } catch (error) {
+      console.error('❌ Error in Booking.filter:', error);
+      // Fallback to mock data if Supabase fails
+      console.log("⚠️ Falling back to mock data");
+      let filteredBookings = [...mockBookings];
+      
+      if (params) {
+        if (params.id) {
+          filteredBookings = filteredBookings.filter(booking => booking.id === params.id);
+        }
+        if (params.boat_id) {
+          filteredBookings = filteredBookings.filter(booking => booking.boat_id === params.boat_id);
+        }
+        if (params.customer_id) {
+          filteredBookings = filteredBookings.filter(booking => booking.customer_id === params.customer_id);
+        }
       }
+      
+      return filteredBookings;
     }
-    
-    console.log("Filtered bookings:", filteredBookings);
-    return filteredBookings;
   },
   
   // Approve a booking (owner action)
@@ -500,22 +544,35 @@ export const Booking = {
   
   // Update a booking
   update: async (bookingId, updateData) => {
-    console.log("Updating booking:", bookingId, "with data:", updateData);
-    
-    // Find and update the booking
-    const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
-    if (bookingIndex !== -1) {
-      mockBookings[bookingIndex] = {
-        ...mockBookings[bookingIndex],
-        ...updateData,
-        updated_at: new Date().toISOString()
-      };
-      console.log("✅ Booking updated successfully:", mockBookings[bookingIndex]);
-      return mockBookings[bookingIndex];
+    try {
+      console.log("Updating booking in Supabase:", bookingId, "with data:", updateData);
+      
+      // Update the booking in Supabase
+      const { data: updatedBooking, error } = await supabase
+        .from('bookings')
+        .update(updateData)
+        .eq('id', bookingId)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Failed to update booking in Supabase:', error);
+        throw error;
+      }
+      
+      console.log("✅ Booking updated successfully in Supabase:", updatedBooking);
+      
+      // Also update in mock array for backward compatibility
+      const mockIndex = mockBookings.findIndex(b => b.id === bookingId);
+      if (mockIndex !== -1) {
+        mockBookings[mockIndex] = { ...mockBookings[mockIndex], ...updateData };
+      }
+      
+      return updatedBooking;
+    } catch (error) {
+      console.error('❌ Error updating booking:', error);
+      throw error;
     }
-    
-    console.warn("⚠️ Booking not found for update:", bookingId);
-    return null;
   },
 
   // Get bookings for a boat owner
