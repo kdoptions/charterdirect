@@ -167,101 +167,107 @@ const stripeInstance = await stripeService.getStripe();
     if (date && boat) {
       setCheckingAvailability(true);
       try {
-        // Check availability for the selected date
-        const dateString = format(date, 'yyyy-MM-dd');
-        
-        // Get the boat owner's calendar tokens
-        const boatOwnerId = boat.owner_id;
-        const tokens = localStorage.getItem(`google_tokens_${boatOwnerId}`);
-        const selectedCalendar = localStorage.getItem(`selected_calendar_${boatOwnerId}`);
-        
-        console.log('🔍 Availability Check Debug:');
-        console.log('Boat owner ID:', boatOwnerId);
-        console.log('Tokens found:', !!tokens);
-        console.log('Selected calendar:', selectedCalendar);
-        
-        // Get confirmed bookings for this boat and date
-        const confirmedBookings = await BookingEntity.filter({
-          boat_id: boat.id,
-          start_date: dateString,
-          status: 'confirmed'
-        });
-        
-        console.log('📋 Confirmed bookings for this date:', confirmedBookings);
-        
-        if (tokens && selectedCalendar) {
-          const tokenData = JSON.parse(tokens);
-          
-          // Check real Google Calendar availability
-          const availability = await realGoogleCalendarService.checkAvailability(
-            selectedCalendar,
-            `${dateString}T00:00:00Z`,
-            `${dateString}T23:59:59Z`,
-            tokenData.access_token
-          );
-          
-          if (availability.success) {
-            console.log('📅 Calendar availability check:', availability.busy);
-            
-            // Filter out busy times and show available slots
-            const availableBlocks = boat.availability_blocks?.filter(block => {
-              const blockStart = new Date(`${dateString}T${block.start_time}:00`);
-              const blockEnd = new Date(`${dateString}T${block.end_time}:00`);
-              
-              // Check if this time block conflicts with any existing Google Calendar events
-              const hasCalendarConflict = availability.busy.some(busyTime => {
-                const busyStart = new Date(busyTime.start);
-                const busyEnd = new Date(busyTime.end);
-                return (blockStart < busyEnd && blockEnd > busyStart);
-              });
-              
-              // Check if this time block conflicts with any confirmed bookings
-              const hasBookingConflict = confirmedBookings.some(booking => {
-                const bookingStart = new Date(booking.start_datetime);
-                const bookingEnd = new Date(booking.end_datetime);
-                return (blockStart < bookingEnd && blockEnd > bookingStart);
-              });
-              
-              const isAvailable = !hasCalendarConflict && !hasBookingConflict;
-              
-              console.log(`⏰ ${block.name} (${block.start_time}-${block.end_time}): ${isAvailable ? 'Available' : 'Booked'}`);
-              if (!isAvailable) {
-                if (hasCalendarConflict) console.log(`  └─ Conflicts with Google Calendar event`);
-                if (hasBookingConflict) console.log(`  └─ Conflicts with confirmed booking`);
-              }
-              return isAvailable;
-            }) || [];
-            
-            setAvailableSlots(availableBlocks);
-            console.log(`✅ Available slots for ${dateString}:`, availableBlocks.length);
+        const dateStr = date.toISOString().split('T')[0];
+        console.log("📅 Checking availability for date:", dateStr);
+
+        // Use enhanced availability checking that considers calendar conflicts
+        const availabilityResult = await BookingEntity.checkAvailabilityWithCalendar(
+          boat.id,
+          dateStr,
+          dateStr,
+          null, // startTime will be checked per slot
+          null,  // endTime will be checked per slot
+          null   // excludeBookingId (for editing existing bookings)
+        );
+
+        if (!availabilityResult.available) {
+          console.log("❌ Availability check failed:", availabilityResult.reason);
+          if (availabilityResult.conflicts.length > 0) {
+            console.log("📅 Calendar conflicts found:", availabilityResult.conflicts);
+            // Show conflicts to user
+            setError(`Calendar conflict detected: ${availabilityResult.reason}`);
+          } else {
+            setError(availabilityResult.reason);
           }
-        } else {
-          console.log('⚠️ No Google Calendar integration found for boat owner, checking local bookings only');
+          setCheckingAvailability(false);
+          return;
+        }
+
+        // If calendar integration is enabled and no conflicts, check individual time slots
+        if (boat.calendar_integration_enabled && boat.google_calendar_id) {
+          console.log("📅 Calendar integration enabled, checking individual time slots");
           
-          // Filter out confirmed bookings even without Google Calendar
-          const availableBlocks = boat.availability_blocks?.filter(block => {
-            const blockStart = new Date(`${dateString}T${block.start_time}:00`);
-            const blockEnd = new Date(`${dateString}T${block.end_time}:00`);
+                  // Check each time slot for conflicts
+        const slots = [];
+        for (const slot of timeSlots) {
+          const slotStartTime = slot.start;
+          const slotEndTime = slot.end;
             
-            // Check if this time block conflicts with any confirmed bookings
-            const hasBookingConflict = confirmedBookings.some(booking => {
-              const bookingStart = new Date(booking.start_datetime);
-              const bookingEnd = new Date(booking.end_datetime);
-              return (blockStart < bookingEnd && blockEnd > bookingStart);
+            const slotAvailability = await BookingEntity.checkAvailabilityWithCalendar(
+              boat.id,
+              dateStr,
+              dateStr,
+              slotStartTime,
+              slotEndTime
+            );
+            
+            if (slotAvailability.available) {
+              slots.push(slot);
+            } else {
+              console.log(`⏰ Slot ${slotStartTime}-${slotEndTime} unavailable:`, slotAvailability.reason);
+            }
+          }
+          
+          setAvailableSlots(slots);
+        } else {
+          // Fallback to original availability checking
+          console.log("⚠️ No Google Calendar integration found for boat owner, checking local bookings only");
+          
+          // Get confirmed bookings for this date
+          const confirmedBookings = await BookingEntity.filter({
+            boat_id: boat.id,
+            start_date: dateStr,
+            status: 'confirmed'
+          });
+          
+          console.log("📋 Confirmed bookings for this date:", confirmedBookings);
+          
+                  // Filter out unavailable time slots
+        const availableSlots = timeSlots.filter(slot => {
+          const slotStartTime = slot.start;
+          const slotEndTime = slot.end;
+            
+            // Check if any confirmed booking overlaps with this time slot
+            const hasConflict = confirmedBookings.some(booking => {
+              if (!booking.start_time || !booking.end_time) return false;
+              
+              const bookingStart = booking.start_time;
+              const bookingEnd = booking.end_time;
+              
+              // Check for time overlap
+              return (
+                (slotStartTime < bookingEnd && slotEndTime > bookingStart) ||
+                (slotStartTime === bookingStart && slotEndTime === bookingEnd)
+              );
             });
             
-            const isAvailable = !hasBookingConflict;
-            console.log(`⏰ ${block.name} (${block.start_time}-${block.end_time}): ${isAvailable ? 'Available' : 'Booked'}`);
-            return isAvailable;
+            if (hasConflict) {
+              console.log(`⏰ ${slotStartTime}-${slotEndTime}: Unavailable (conflict with existing booking)`);
+            } else {
+              console.log(`⏰ ${slotStartTime}-${slotEndTime}: Available`);
+            }
+            
+            return !hasConflict;
           }) || [];
           
-          setAvailableSlots(availableBlocks);
-          console.log(`✅ Available slots for ${dateString}:`, availableBlocks.length);
+          setAvailableSlots(availableSlots);
         }
+        
+        console.log(`✅ Available slots for ${dateStr}:`, availableSlots.length);
+        
       } catch (error) {
-        console.error('❌ Availability check error:', error);
-        // Fallback to showing all blocks if availability check fails
-        setAvailableSlots(boat.availability_blocks || []);
+        console.error("❌ Availability check error:", error);
+        setError("Failed to check availability. Please try again.");
       } finally {
         setCheckingAvailability(false);
       }

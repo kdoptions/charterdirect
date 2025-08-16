@@ -19,14 +19,20 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Pause
+  Pause,
+  Ship,
+  Trash2
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import CalendarSelector from '@/components/CalendarSelector';
 
 export default function MyBoats() {
   const { currentUser } = useAuth();
   const [boats, setBoats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedBoatForCalendar, setSelectedBoatForCalendar] = useState(null);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -322,12 +328,93 @@ export default function MyBoats() {
                       Edit
                     </Button>
                   </div>
+
+                  {/* Calendar Integration Section */}
+                  {boat.status === 'approved' && (
+                    <div className="border-t pt-4 mt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          Calendar Integration
+                        </h4>
+                        <Badge 
+                          variant={boat.calendar_integration_enabled ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {boat.calendar_integration_enabled ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      
+                      {boat.calendar_integration_enabled ? (
+                        <div className="text-xs text-slate-600 space-y-1">
+                          <p>Calendar: {boat.calendar_name || boat.google_calendar_id}</p>
+                          <p>Status: Connected</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">
+                          Connect to Google Calendar for automatic booking management
+                        </p>
+                      )}
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-2"
+                        onClick={() => setSelectedBoatForCalendar(boat)}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {boat.calendar_integration_enabled ? "Manage Calendar" : "Setup Calendar"}
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {/* Calendar Integration Modal */}
+      {showCalendarModal && selectedBoatForCalendar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  Calendar Integration - {selectedBoatForCalendar.name}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowCalendarModal(false);
+                    setSelectedBoatForCalendar(null);
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+              
+              <CalendarSelector
+                boat={selectedBoatForCalendar}
+                currentUser={currentUser}
+                onCalendarUpdate={(updateData) => {
+                  // Update the boat in the local state
+                  setBoats(prevBoats => 
+                    prevBoats.map(b => 
+                      b.id === selectedBoatForCalendar.id 
+                        ? { ...b, ...updateData }
+                        : b
+                    )
+                  );
+                  setShowCalendarModal(false);
+                  setSelectedBoatForCalendar(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

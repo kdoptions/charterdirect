@@ -449,56 +449,153 @@ export const Booking = {
   filter: async (params) => {
     try {
       console.log("Filtering bookings from Supabase with params:", params);
+      let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
       
-      let query = supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (params) {
-        if (params.id) {
-          query = query.eq('id', params.id);
-        }
-        if (params.boat_id) {
-          query = query.eq('boat_id', params.boat_id);
-        }
-        if (params.customer_id) {
-          query = query.eq('customer_id', params.customer_id);
-        }
-        if (params.status) {
-          query = query.eq('status', params.status);
-        }
+      // Apply filters
+      if (params.boat_id) {
+        query = query.eq('boat_id', params.boat_id);
+      }
+      if (params.customer_id) {
+        query = query.eq('customer_id', params.customer_id);
+      }
+      if (params.status) {
+        query = query.eq('status', params.status);
+      }
+      if (params.start_date) {
+        query = query.gte('start_date', params.start_date);
+      }
+      if (params.end_date) {
+        query = query.lte('end_date', params.end_date);
       }
       
       const { data: bookings, error } = await query;
       
       if (error) {
-        console.error('❌ Error fetching bookings from Supabase:', error);
-        throw error;
+        console.error("❌ Error fetching bookings from Supabase:", error);
+        // Fallback to mock data for now
+        console.log("🔄 Falling back to mock data...");
+        return mockBookings.filter(booking => {
+          if (params.boat_id && booking.boat_id !== params.boat_id) return false;
+          if (params.customer_id && booking.customer_id !== params.customer_id) return false;
+          if (params.status && booking.status !== params.status) return false;
+          return true;
+        });
       }
       
       console.log("✅ Bookings fetched from Supabase:", bookings);
       return bookings || [];
-      
     } catch (error) {
-      console.error('❌ Error in Booking.filter:', error);
-      // Fallback to mock data if Supabase fails
-      console.log("⚠️ Falling back to mock data");
-      let filteredBookings = [...mockBookings];
+      console.error("❌ Error in Booking.filter:", error);
+      // Fallback to mock data
+      return mockBookings.filter(booking => {
+        if (params.boat_id && booking.boat_id !== params.boat_id) return false;
+        if (params.customer_id && booking.customer_id !== params.customer_id) return false;
+        if (params.status && booking.status !== params.status) return false;
+        return true;
+      });
+    }
+  },
+
+  // New method: Check calendar conflicts across multiple boats
+  checkCalendarConflicts: async (calendarId, startDateTime, endDateTime, excludeBookingId = null) => {
+    try {
+      console.log("🔍 Checking calendar conflicts for calendar:", calendarId, "from", startDateTime, "to", endDateTime);
       
-      if (params) {
-        if (params.id) {
-          filteredBookings = filteredBookings.filter(booking => booking.id === params.id);
-        }
-        if (params.boat_id) {
-          filteredBookings = filteredBookings.filter(booking => booking.boat_id === params.boat_id);
-        }
-        if (params.customer_id) {
-          filteredBookings = filteredBookings.filter(booking => booking.customer_id === params.customer_id);
-        }
+      // Query for conflicts using the database function
+      const { data: conflicts, error } = await supabase
+        .rpc('check_calendar_conflicts', {
+          p_calendar_id: calendarId,
+          p_start_datetime: startDateTime,
+          p_end_datetime: endDateTime,
+          p_exclude_booking_id: excludeBookingId
+        });
+      
+      if (error) {
+        console.error("❌ Error checking calendar conflicts:", error);
+        return [];
       }
       
-      return filteredBookings;
+      console.log("✅ Calendar conflicts found:", conflicts);
+      return conflicts || [];
+    } catch (error) {
+      console.error("❌ Error in checkCalendarConflicts:", error);
+      return [];
+    }
+  },
+
+  // Enhanced availability check that considers multiple boats per calendar
+  checkAvailabilityWithCalendar: async (boatId, startDate, endDate, startTime, endTime, excludeBookingId = null) => {
+    try {
+      console.log("🔍 Enhanced availability check for boat:", boatId, "on", startDate, "from", startTime, "to", endTime);
+      
+      // First, get the boat details to check calendar integration
+      const { data: boat, error: boatError } = await supabase
+        .from('boats')
+        .select('google_calendar_id, calendar_integration_enabled')
+        .eq('id', boatId)
+        .single();
+      
+      if (boatError) {
+        console.error("❌ Error fetching boat details:", boatError);
+        return { available: false, conflicts: [], reason: "Could not fetch boat details" };
+      }
+      
+      // If calendar integration is enabled, check for conflicts across all boats using the same calendar
+      if (boat.calendar_integration_enabled && boat.google_calendar_id) {
+        console.log("📅 Calendar integration enabled, checking for conflicts across all boats on calendar:", boat.google_calendar_id);
+        
+        // Convert date and time to datetime for conflict checking
+        const startDateTime = new Date(`${startDate}T${startTime}`);
+        const endDateTime = new Date(`${startDate}T${endTime}`);
+        
+        // Check for conflicts across all boats using this calendar
+        const conflicts = await Booking.checkCalendarConflicts(
+          boat.google_calendar_id,
+          startDateTime.toISOString(),
+          endDateTime.toISOString(),
+          excludeBookingId
+        );
+        
+        if (conflicts.length > 0) {
+          console.log("❌ Calendar conflicts found:", conflicts);
+          return {
+            available: false,
+            conflicts: conflicts,
+            reason: `Calendar conflict detected. ${conflicts.length} other boat(s) have bookings during this time.`
+          };
+        }
+        
+        console.log("✅ No calendar conflicts found");
+      }
+      
+      // Also check local boat availability as before
+      const { data: existingBookings, error: bookingError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('boat_id', boatId)
+        .eq('status', 'confirmed')
+        .overlaps('start_date', startDate, 'end_date', endDate);
+      
+      if (bookingError) {
+        console.error("❌ Error checking local availability:", bookingError);
+        return { available: false, conflicts: [], reason: "Could not check local availability" };
+      }
+      
+      if (existingBookings && existingBookings.length > 0) {
+        console.log("❌ Local conflicts found:", existingBookings);
+        return {
+          available: false,
+          conflicts: existingBookings,
+          reason: "Boat is already booked during this time period."
+        };
+      }
+      
+      console.log("✅ Availability check passed - no conflicts found");
+      return { available: true, conflicts: [], reason: "Time slot is available" };
+      
+    } catch (error) {
+      console.error("❌ Error in checkAvailabilityWithCalendar:", error);
+      return { available: false, conflicts: [], reason: "Error checking availability" };
     }
   },
   
