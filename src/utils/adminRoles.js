@@ -1,6 +1,6 @@
 // Admin role management system
 // For now, we'll use a simple hardcoded list of admin emails
-// Later this can be moved to Firebase/Supabase for dynamic management
+// Later this can be moved to Supabase for dynamic management
 
 // List of admin user emails
 const ADMIN_EMAILS = [
