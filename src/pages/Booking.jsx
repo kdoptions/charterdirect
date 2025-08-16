@@ -325,6 +325,13 @@ const stripeInstance = await stripeService.getStripe();
       const startDateTime = `${bookingDate}T${startTime}:00`;
       const endDateTime = `${bookingDate}T${endTime}:00`;
       
+      // Ensure we have valid time values
+      if (!startTime || !endTime) {
+        setError("Please select a valid time slot for your booking.");
+        setIsSubmitting(false);
+        return;
+      }
+
       // Create payment method from Stripe card element or fallback
       let paymentMethod = null;
       if (stripe && cardElement) {
@@ -364,7 +371,7 @@ const stripeInstance = await stripeService.getStripe();
 
       const bookingData = {
         boat_id: boat.id,
-        customer_id: user?.id || "guest-user",
+        customer_id: user?.id, // Remove the fallback to "guest-user"
         start_date: bookingDate,
         end_date: bookingDate,
         start_datetime: startDateTime,
@@ -394,6 +401,25 @@ const stripeInstance = await stripeService.getStripe();
         customer_phone: customerDetails.phone,
         booking_reference: `BK${Date.now().toString().slice(-8).toUpperCase()}`
       };
+
+      // Check if user is logged in
+      if (!user?.id) {
+        setError("You must be logged in to create a booking. Please sign in first.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate data types before sending
+      console.log("🔍 Booking data validation:");
+      console.log("boat_id:", typeof bookingData.boat_id, bookingData.boat_id);
+      console.log("customer_id:", typeof bookingData.customer_id, bookingData.customer_id);
+      console.log("start_date:", typeof bookingData.start_date, bookingData.start_date);
+      console.log("guests:", typeof bookingData.guests, bookingData.guests);
+      console.log("total_hours:", typeof bookingData.total_hours, bookingData.total_hours);
+      console.log("base_price:", typeof bookingData.base_price, bookingData.base_price);
+      console.log("total_amount:", typeof bookingData.total_amount, bookingData.total_amount);
+      console.log("status:", typeof bookingData.status, bookingData.status);
+      console.log("payment_status:", typeof bookingData.payment_status, bookingData.payment_status);
 
       console.log("Creating booking with data:", bookingData);
       const newBooking = await BookingEntity.create(bookingData);

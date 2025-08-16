@@ -424,6 +424,12 @@ export const Booking = {
       
       if (error) {
         console.error('❌ Failed to create booking in Supabase:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
       
