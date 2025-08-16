@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { Boat, Booking, User } from "@/api/entities";
+import { Boat, Booking } from "@/api/entities";
+import { useAuth } from "@/contexts/AuthContext";
 import stripeConnect from '../components/api/stripeConnect';
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from '../api/stripeService';
@@ -29,7 +30,7 @@ import { format } from "date-fns";
 
 
 export default function OwnerDashboard() {
-  const [user, setUser] = useState(null);
+  const { currentUser } = useAuth();
   const [boats, setBoats] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +42,13 @@ export default function OwnerDashboard() {
   const [selectedConnectedAccount, setSelectedConnectedAccount] = useState(null);
 
   useEffect(() => {
-    loadOwnerData().catch(err => {
-      console.error("❌ Error in loadOwnerData:", err);
-      setError(err.message);
-    });
-  }, []);
+    if (currentUser) {
+      loadOwnerData().catch(err => {
+        console.error("❌ Error in loadOwnerData:", err);
+        setError(err.message);
+      });
+    }
+  }, [currentUser]);
 
   // Debug: Log whenever bookings state changes
   useEffect(() => {
@@ -54,18 +57,18 @@ export default function OwnerDashboard() {
 
   const loadOwnerData = async () => {
     try {
-      let userData;
-      
-      // For demo purposes, always auto-login as test owner
-      console.log("Auto-logging in as test owner for demo");
-      userData = await User.loginAsOwner();
-      console.log("Test owner loaded:", userData);
-      
-      setUser(userData);
+      if (!currentUser) {
+        console.log("No user logged in");
+        setError("You must be logged in to access the owner dashboard");
+        setLoading(false);
+        return;
+      }
 
-      // Load boats owned by user
-      console.log("Loading boats for owner ID:", userData.id);
-      const userBoats = await Boat.filter({ owner_id: userData.id }, "-created_date");
+      console.log("Loading owner data for user:", currentUser);
+      
+      // Load boats owned by current user
+      console.log("Loading boats for owner ID:", currentUser.id);
+      const userBoats = await Boat.filter({ owner_id: currentUser.id }, "-created_date");
       console.log("User boats found:", userBoats);
       setBoats(userBoats);
 
@@ -86,7 +89,7 @@ export default function OwnerDashboard() {
 
       // Check integration status from user data instead of separate entity
       const hasStripe = userBoats.some(boat => boat.stripe_account_id);
-      const hasCalendar = userData.google_calendar_integration || userData.calendar_integration_data;
+      const hasCalendar = currentUser.user_metadata?.google_calendar_integration || currentUser.user_metadata?.calendar_integration_data;
       setStripeConnected(hasStripe);
       setCalendarConnected(!!hasCalendar);
 
@@ -126,8 +129,8 @@ export default function OwnerDashboard() {
           body: JSON.stringify({
             boatId: selectedBoat.id,
             boatName: selectedBoat.name,
-            ownerEmail: user?.email || 'test@example.com',
-            ownerName: user?.name || 'Test Owner'
+            ownerEmail: currentUser?.email || 'test@example.com', // Use currentUser from AuthContext
+            ownerName: currentUser?.name || 'Test Owner' // Use currentUser from AuthContext
           }),
         });
 
@@ -393,7 +396,7 @@ export default function OwnerDashboard() {
         console.log("Checking for calendar integration...");
         
         // Check localStorage for tokens
-        const userId = user?.id || 'test-owner-1';
+        const userId = currentUser?.id || 'test-owner-1'; // Use currentUser from AuthContext
         const tokens = localStorage.getItem(`google_tokens_${userId}`);
         
         if (tokens) {
@@ -526,9 +529,9 @@ export default function OwnerDashboard() {
               onClick={async () => {
                 const { Booking, Boat } = await import('@/api/entities');
                 const allBookings = await Booking.filter();
-                const userBoats = await Boat.filter({ owner_id: user?.id });
+                const userBoats = await Boat.filter({ owner_id: currentUser?.id }); // Use currentUser from AuthContext
                 console.log('🔍 Owner Dashboard Debug:');
-                console.log('User ID:', user?.id);
+                console.log('User ID:', currentUser?.id);
                 console.log('User boats:', userBoats);
                 console.log('All bookings:', allBookings);
                 alert(`Debug info logged. User has ${userBoats.length} boats and ${allBookings.length} total bookings.`);
@@ -541,7 +544,7 @@ export default function OwnerDashboard() {
               variant="outline" 
               onClick={async () => {
                 console.log('🧪 Testing Calendar Integration...');
-                const userId = user?.id || 'test-owner-1';
+                const userId = currentUser?.id || 'test-owner-1'; // Use currentUser from AuthContext
                 const tokens = localStorage.getItem(`google_tokens_${userId}`);
                 const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
                 
@@ -743,7 +746,7 @@ export default function OwnerDashboard() {
           <CardContent>
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <div>
-                <strong>User ID:</strong> {user?.id || 'Not loaded'}
+                <strong>User ID:</strong> {currentUser?.id || 'Not loaded'}
               </div>
               <div>
                 <strong>Boats:</strong> {boats.length} found
