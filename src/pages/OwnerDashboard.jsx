@@ -192,10 +192,16 @@ export default function OwnerDashboard() {
   const handleBookingAction = async (bookingId, action) => {
     try {
       console.log(`🔄 Processing booking ${action}:`, bookingId);
+      console.log('🔍 Function parameters:', { bookingId, action });
+      console.log('🔍 Available bookings:', bookings);
+      console.log('🔍 Available boats:', boats);
       
       // Get booking and boat data early so it's available throughout the function
       const booking = getBookingById(bookingId);
       const boat = getBoatById(booking.boat_id);
+      
+      console.log('🔍 Found booking:', booking);
+      console.log('🔍 Found boat:', boat);
       
       if (!booking || !boat) {
         alert('Booking or boat not found.');
@@ -1139,6 +1145,11 @@ export default function OwnerDashboard() {
               <Button
                 onClick={() => {
                   const action = actionDialog.type === 'reject' ? 'rejected' : 'confirmed';
+                  console.log('🔍 Action button clicked:', {
+                    action,
+                    bookingId: actionDialog.booking.id,
+                    actionDialog: actionDialog
+                  });
                   handleBookingAction(actionDialog.booking.id, action);
                 }}
                 className={actionDialog.type === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
