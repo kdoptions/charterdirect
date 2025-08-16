@@ -1,0 +1,22 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/CalendarCallback",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/stripe-callback",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/calendar-callback",
+      "dest": "/index.html"
+    }
+  ]
+}
