@@ -41,6 +41,11 @@ class RealGoogleCalendarService {
 
   // Get OAuth URL for calendar connection
   getAuthUrl() {
+    console.log('🔍 Debug: getAuthUrl called');
+    console.log('🔍 Debug: this.redirectUri =', this.redirectUri);
+    console.log('🔍 Debug: this.clientId =', this.clientId);
+    console.log('🔍 Debug: window.location.hostname =', window.location.hostname);
+    
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -50,7 +55,10 @@ class RealGoogleCalendarService {
       prompt: 'consent'
     });
     
-    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    console.log('🔍 Debug: Generated auth URL =', authUrl);
+    
+    return authUrl;
   }
 
   // Exchange authorization code for tokens
