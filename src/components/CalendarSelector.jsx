@@ -214,14 +214,15 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
 
             {/* Multiple Boats Warning */}
             {boat?.owner_id && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div className="text-sm text-yellow-800">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="text-sm text-blue-800">
                     <p className="font-medium">Multiple Boats on Same Calendar</p>
                     <p>
-                      If you have multiple boats using the same calendar, the system will 
-                      automatically check for conflicts across all boats to prevent double-booking.
+                      Multiple boats can use the same calendar simultaneously. Each boat maintains 
+                      its own availability - booking one boat won't block other boats from being 
+                      booked at the same time. This helps you organize all your boat schedules in one place.
                     </p>
                   </div>
                 </div>

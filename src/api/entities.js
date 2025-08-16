@@ -496,34 +496,7 @@ export const Booking = {
     }
   },
 
-  // New method: Check calendar conflicts across multiple boats
-  checkCalendarConflicts: async (calendarId, startDateTime, endDateTime, excludeBookingId = null) => {
-    try {
-      console.log("🔍 Checking calendar conflicts for calendar:", calendarId, "from", startDateTime, "to", endDateTime);
-      
-      // Query for conflicts using the database function
-      const { data: conflicts, error } = await supabase
-        .rpc('check_calendar_conflicts', {
-          p_calendar_id: calendarId,
-          p_start_datetime: startDateTime,
-          p_end_datetime: endDateTime,
-          p_exclude_booking_id: excludeBookingId
-        });
-      
-      if (error) {
-        console.error("❌ Error checking calendar conflicts:", error);
-        return [];
-      }
-      
-      console.log("✅ Calendar conflicts found:", conflicts);
-      return conflicts || [];
-    } catch (error) {
-      console.error("❌ Error in checkCalendarConflicts:", error);
-      return [];
-    }
-  },
-
-  // Enhanced availability check that considers multiple boats per calendar
+  // Enhanced availability check that considers calendar conflicts
   checkAvailabilityWithCalendar: async (boatId, startDate, endDate, startTime, endTime, excludeBookingId = null) => {
     try {
       console.log("🔍 Enhanced availability check for boat:", boatId, "on", startDate, "from", startTime, "to", endTime);
@@ -540,35 +513,15 @@ export const Booking = {
         return { available: false, conflicts: [], reason: "Could not fetch boat details" };
       }
       
-      // If calendar integration is enabled, check for conflicts across all boats using the same calendar
-      if (boat.calendar_integration_enabled && boat.google_calendar_id) {
-        console.log("📅 Calendar integration enabled, checking for conflicts across all boats on calendar:", boat.google_calendar_id);
-        
-        // Convert date and time to datetime for conflict checking
-        const startDateTime = new Date(`${startDate}T${startTime}`);
-        const endDateTime = new Date(`${startDate}T${endTime}`);
-        
-        // Check for conflicts across all boats using this calendar
-        const conflicts = await Booking.checkCalendarConflicts(
-          boat.google_calendar_id,
-          startDateTime.toISOString(),
-          endDateTime.toISOString(),
-          excludeBookingId
-        );
-        
-        if (conflicts.length > 0) {
-          console.log("❌ Calendar conflicts found:", conflicts);
-          return {
-            available: false,
-            conflicts: conflicts,
-            reason: `Calendar conflict detected. ${conflicts.length} other boat(s) have bookings during this time.`
-          };
-        }
-        
-        console.log("✅ No calendar conflicts found");
-      }
+      // Check availability for THIS SPECIFIC BOAT only
+      // Don't check conflicts across other boats using the same calendar
+      console.log("📅 Checking availability for specific boat:", boatId);
       
-      // Also check local boat availability as before
+      // Convert date and time to datetime for conflict checking
+      const startDateTime = new Date(`${startDate}T${startTime}`);
+      const endDateTime = new Date(`${startDate}T${endTime}`);
+      
+      // Check for conflicts on THIS boat only
       const { data: existingBookings, error: bookingError } = await supabase
         .from('bookings')
         .select('*')
@@ -582,16 +535,27 @@ export const Booking = {
       }
       
       if (existingBookings && existingBookings.length > 0) {
-        console.log("❌ Local conflicts found:", existingBookings);
+        console.log("❌ Local conflicts found for this boat:", existingBookings);
         return {
           available: false,
           conflicts: existingBookings,
-          reason: "Boat is already booked during this time period."
+          reason: "This boat is already booked during this time period."
         };
       }
       
-      console.log("✅ Availability check passed - no conflicts found");
-      return { available: true, conflicts: [], reason: "Time slot is available" };
+      // If calendar integration is enabled, also check Google Calendar for THIS boat
+      if (boat.calendar_integration_enabled && boat.google_calendar_id) {
+        console.log("📅 Calendar integration enabled, checking Google Calendar for this boat");
+        
+        // Note: In a real implementation, this would check Google Calendar API
+        // for conflicts on this specific boat's calendar events
+        // For now, we'll just log that we would check it
+        
+        console.log("✅ Would check Google Calendar for boat-specific conflicts");
+      }
+      
+      console.log("✅ Availability check passed - no conflicts found for this boat");
+      return { available: true, conflicts: [], reason: "Time slot is available for this boat" };
       
     } catch (error) {
       console.error("❌ Error in checkAvailabilityWithCalendar:", error);

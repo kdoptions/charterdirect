@@ -195,13 +195,13 @@ const stripeInstance = await stripeService.getStripe();
 
         // If calendar integration is enabled and no conflicts, check individual time slots
         if (boat.calendar_integration_enabled && boat.google_calendar_id) {
-          console.log("📅 Calendar integration enabled, checking individual time slots");
+          console.log("📅 Calendar integration enabled, checking individual time slots for this boat");
           
-                  // Check each time slot for conflicts
-        const slots = [];
-        for (const slot of timeSlots) {
-          const slotStartTime = slot.start;
-          const slotEndTime = slot.end;
+          // Check each time slot for conflicts on THIS boat only
+          const slots = [];
+          for (const slot of timeSlots) {
+            const slotStartTime = slot.start;
+            const slotEndTime = slot.end;
             
             const slotAvailability = await BookingEntity.checkAvailabilityWithCalendar(
               boat.id,
@@ -220,24 +220,24 @@ const stripeInstance = await stripeService.getStripe();
           
           setAvailableSlots(slots);
         } else {
-          // Fallback to original availability checking
-          console.log("⚠️ No Google Calendar integration found for boat owner, checking local bookings only");
+          // Fallback to original availability checking for this boat only
+          console.log("⚠️ No Google Calendar integration found for boat owner, checking local bookings for this boat only");
           
-          // Get confirmed bookings for this date
+          // Get confirmed bookings for THIS boat and date
           const confirmedBookings = await BookingEntity.filter({
             boat_id: boat.id,
             start_date: dateStr,
             status: 'confirmed'
           });
           
-          console.log("📋 Confirmed bookings for this date:", confirmedBookings);
+          console.log("📋 Confirmed bookings for this boat on this date:", confirmedBookings);
           
-                  // Filter out unavailable time slots
-        const availableSlots = timeSlots.filter(slot => {
-          const slotStartTime = slot.start;
-          const slotEndTime = slot.end;
+          // Filter out unavailable time slots for THIS boat only
+          const availableSlots = timeSlots.filter(slot => {
+            const slotStartTime = slot.start;
+            const slotEndTime = slot.end;
             
-            // Check if any confirmed booking overlaps with this time slot
+            // Check if any confirmed booking overlaps with this time slot for THIS boat
             const hasConflict = confirmedBookings.some(booking => {
               if (!booking.start_time || !booking.end_time) return false;
               
@@ -252,13 +252,13 @@ const stripeInstance = await stripeService.getStripe();
             });
             
             if (hasConflict) {
-              console.log(`⏰ ${slotStartTime}-${slotEndTime}: Unavailable (conflict with existing booking)`);
+              console.log(`⏰ Slot ${slotStartTime}-${slotEndTime}: Unavailable (conflict with existing booking on this boat)`);
             } else {
-              console.log(`⏰ ${slotStartTime}-${slotEndTime}: Available`);
+              console.log(`⏰ Slot ${slotStartTime}-${slotEndTime}: Available for this boat`);
             }
             
             return !hasConflict;
-          }) || [];
+          });
           
           setAvailableSlots(availableSlots);
         }
