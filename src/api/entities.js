@@ -334,25 +334,32 @@ export const Boat = {
   // Create new boat
   create: async (boatData) => {
     try {
+      console.log('🚤 Attempting to create boat in Supabase:', boatData);
+      
       const { data, error } = await supabase
         .from('boats')
         .insert([boatData])
         .select()
         .single();
       
-      if (error) throw error;
-      console.log('✅ Boat created in Supabase:', data);
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Boat created successfully in Supabase:', data);
       return data;
     } catch (error) {
-      console.error('Error creating boat in Supabase:', error);
-      // Fallback to mock data for now
-      const newBoat = {
-        id: "mock-boat-" + Date.now(),
-        ...boatData,
-        status: "pending"
-      };
-      mockBoats.push(newBoat);
-      return newBoat;
+      console.error('❌ Boat creation failed:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      // Don't fall back to mock data - let the error bubble up
+      throw new Error(`Failed to create boat: ${error.message}`);
     }
   },
 
@@ -622,5 +629,50 @@ export const User = {
       email: "customer@example.com",
       full_name: "Test Customer"
     };
+  },
+  
+  // Create or get user in Supabase
+  createOrGetUser: async (supabaseUser) => {
+    try {
+      console.log('👤 Creating/getting user in Supabase:', supabaseUser.id);
+      
+      // First, try to get existing user
+      const { data: existingUser, error: getError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+      
+      if (existingUser && !getError) {
+        console.log('✅ User already exists in Supabase:', existingUser.id);
+        return existingUser;
+      }
+      
+      // User doesn't exist, create them
+      const newUser = {
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        display_name: supabaseUser.user_metadata?.display_name || supabaseUser.email,
+        role: 'user'
+      };
+      
+      const { data: createdUser, error: createError } = await supabase
+        .from('users')
+        .insert([newUser])
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('❌ Failed to create user in Supabase:', createError);
+        throw createError;
+      }
+      
+      console.log('✅ User created in Supabase:', createdUser.id);
+      return createdUser;
+      
+    } catch (error) {
+      console.error('❌ Error in createOrGetUser:', error);
+      throw error;
+    }
   }
 };

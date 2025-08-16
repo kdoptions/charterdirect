@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Boat } from "@/api/entities";
+import { Boat, User } from "@/api/entities";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -98,14 +98,20 @@ export default function ListBoat() {
     }
     
     try {
-      // Use Firebase user ID (uid) instead of old User.me()
+      // First, ensure user exists in Supabase
+      console.log('👤 Ensuring user exists in Supabase...');
+      await User.createOrGetUser(currentUser);
+      
+      // Use Supabase user ID
       const finalData = {
         ...formData,
-        owner_id: currentUser.uid,
+        owner_id: currentUser.id,
         owner_email: currentUser.email,
-        owner_name: currentUser.displayName || currentUser.email,
+        owner_name: currentUser.user_metadata?.display_name || currentUser.email,
         status: 'pending' // Default status
       };
+      
+      console.log('🚤 Creating boat with data:', finalData);
       await Boat.create(finalData);
       setSubmitted(true);
     } catch (err) {

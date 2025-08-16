@@ -34,22 +34,19 @@ export default function Login({ onSwitchToSignup, onLoginSuccess }) {
     } catch (error) {
       console.error('Login error:', error);
       
-      // Handle specific Firebase auth errors
-      switch (error.code) {
-        case 'auth/user-not-found':
-          setError('No account found with this email address');
-          break;
-        case 'auth/wrong-password':
-          setError('Incorrect password');
-          break;
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/too-many-requests':
+      // Handle Supabase auth errors
+      if (error.message) {
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password');
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Please check your email and confirm your account');
+        } else if (error.message.includes('Too many requests')) {
           setError('Too many failed attempts. Please try again later');
-          break;
-        default:
-          setError('Failed to log in. Please check your credentials');
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError('Failed to log in. Please check your credentials');
       }
     } finally {
       setLoading(false);

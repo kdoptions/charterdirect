@@ -87,19 +87,19 @@ export default function Signup({ onSwitchToLogin, onSignupSuccess }) {
     } catch (error) {
       console.error('Signup error:', error);
       
-      // Handle specific Firebase auth errors
-      switch (error.code) {
-        case 'auth/email-already-in-use':
+      // Handle Supabase auth errors
+      if (error.message) {
+        if (error.message.includes('User already registered')) {
           setError('An account with this email already exists');
-          break;
-        case 'auth/invalid-email':
+        } else if (error.message.includes('Invalid email')) {
           setError('Invalid email address');
-          break;
-        case 'auth/weak-password':
+        } else if (error.message.includes('Password should be at least')) {
           setError('Password is too weak. Please choose a stronger password');
-          break;
-        default:
-          setError('Failed to create account. Please try again');
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError('Failed to create account. Please try again');
       }
     } finally {
       setLoading(false);

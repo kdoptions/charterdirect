@@ -48,14 +48,14 @@ export default function UserProfile() {
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src={currentUser.photoURL} alt={currentUser.displayName} />
+            <AvatarImage src={currentUser.user_metadata?.avatar_url} alt={currentUser.user_metadata?.display_name} />
             <AvatarFallback className="text-2xl bg-blue-100 text-blue-600">
-              {getInitials(currentUser.displayName)}
+              {getInitials(currentUser.user_metadata?.display_name)}
             </AvatarFallback>
           </Avatar>
         </div>
         <CardTitle className="text-xl">
-          {currentUser.displayName || 'User'}
+          {currentUser.user_metadata?.display_name || 'User'}
         </CardTitle>
         <CardDescription>
           Account Information
@@ -76,7 +76,7 @@ export default function UserProfile() {
           <div>
             <p className="text-sm font-medium text-gray-900">Display Name</p>
             <p className="text-sm text-gray-600">
-              {currentUser.displayName || 'Not set'}
+              {currentUser.user_metadata?.display_name || 'Not set'}
             </p>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function UserProfile() {
           <div>
             <p className="text-sm font-medium text-gray-900">Member Since</p>
             <p className="text-sm text-gray-600">
-              {formatDate(currentUser.metadata?.creationTime)}
+              {formatDate(currentUser.created_at)}
             </p>
           </div>
         </div>

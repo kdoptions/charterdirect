@@ -1,13 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged,
-  updateProfile,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
 
@@ -22,49 +14,90 @@ export function AuthProvider({ children }) {
   // Sign up function
   async function signup(email, password, displayName) {
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName
+          }
+        }
+      });
       
-      // Update profile with display name
-      if (displayName) {
-        await updateProfile(result.user, { displayName });
-      }
-      
-      return result;
+      if (error) throw error;
+      return data;
     } catch (error) {
       throw error;
     }
   }
 
   // Login function
-  function login(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+  async function login(email, password) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   // Logout function
-  function logout() {
-    return signOut(auth);
+  async function logout() {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
   }
 
   // Reset password function
-  function resetPassword(email) {
-    return sendPasswordResetEmail(auth, email);
+  async function resetPassword(email) {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
   }
 
   // Update profile function
   async function updateUserProfile(updates) {
     if (currentUser) {
-      return updateProfile(currentUser, updates);
+      try {
+        const { data, error } = await supabase.auth.updateUser({
+          data: updates
+        });
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        throw error;
+      }
     }
     throw new Error('No user logged in');
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return unsubscribe;
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const value = {

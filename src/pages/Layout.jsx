@@ -164,10 +164,10 @@ export default function Layout({ children, currentPageName }) {
                     <Button variant="ghost" className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm font-semibold">
-                          {currentUser.displayName?.[0] || currentUser.email[0].toUpperCase()}
+                          {currentUser.user_metadata?.display_name?.[0] || currentUser.email[0].toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-slate-700">{currentUser.displayName || currentUser.email}</span>
+                      <span className="text-slate-700">{currentUser.user_metadata?.display_name || currentUser.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">

@@ -36,8 +36,8 @@ export default function MyBoats() {
 
   const loadMyBoats = async () => {
     try {
-      // Use Firebase user ID (uid) instead of old User.me()
-      const myBoats = await Boat.filter({ owner_id: currentUser.uid }, "-created_date");
+      // Use Supabase user ID instead of old User.me()
+      const myBoats = await Boat.filter({ owner_id: currentUser.id }, "-created_date");
       setBoats(myBoats);
     } catch (error) {
       console.error("Error loading boats:", error);
@@ -70,9 +70,9 @@ export default function MyBoats() {
         payment_schedule_enabled: true,
         terms_and_conditions: "Test terms and conditions",
         cancellation_policy: "Test cancellation policy",
-        owner_id: currentUser.uid,
+        owner_id: currentUser.id,
         owner_email: currentUser.email,
-        owner_name: currentUser.displayName || currentUser.email,
+        owner_name: currentUser.user_metadata?.display_name || currentUser.email,
         status: 'pending',
         created_at: new Date().toISOString()
       };

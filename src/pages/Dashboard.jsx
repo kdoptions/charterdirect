@@ -45,25 +45,25 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      // Use Firebase currentUser instead of User.me()
+      // Use Supabase currentUser instead of User.me()
       if (!currentUser) {
         console.error("No current user found");
         return;
       }
 
       const userData = {
-        id: currentUser.uid,
+        id: currentUser.id,
         email: currentUser.email,
-        displayName: currentUser.displayName
+        displayName: currentUser.user_metadata?.display_name || currentUser.email
       };
       setUser(userData);
 
       // Load boats I own
-      const boatsOwned = await Boat.filter({ owner_id: currentUser.uid }, "-created_date");
+      const boatsOwned = await Boat.filter({ owner_id: currentUser.id }, "-created_date");
       setMyBoats(boatsOwned);
 
       // Load bookings I made as a customer
-      const customerBookings = await Booking.filter({ customer_id: currentUser.uid }, "-created_date");
+      const customerBookings = await Booking.filter({ customer_id: currentUser.id }, "-created_date");
       setMyBookings(customerBookings);
 
       // Load bookings for boats I own
