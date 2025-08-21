@@ -116,19 +116,52 @@ export default function OwnerDashboard() {
       const selectedBoat = boats[0];
       console.log('🔗 Using boat for Stripe connection:', selectedBoat.name);
       
-      // Use Stripe's standard Connect flow instead of custom API
-      console.log('🔗 Redirecting to Stripe Connect...');
+      // Initialize Stripe service
+      const stripeService = new StripeService();
       
-      // For now, show a message about the standard Stripe Connect process
-      alert('Stripe Connect integration coming soon! This will redirect you to Stripe to create your connected account.');
+      // Step 1: Create Stripe Connect account
+      console.log('🔗 Step 1: Creating Stripe Connect account...');
+      const accountResult = await stripeService.createConnectAccount(selectedBoat, currentUser);
       
-      // TODO: Implement proper Stripe Connect flow
-      // 1. Create connected account via Stripe API
-      // 2. Generate account link for onboarding
-      // 3. Redirect user to Stripe
-      // 4. Handle webhook for account updates
+      if (!accountResult.success) {
+        throw new Error(accountResult.error || 'Failed to create Stripe Connect account');
+      }
       
-      console.log('🔗 Stripe Connect flow not yet implemented');
+      const account = accountResult.account;
+      console.log('✅ Stripe Connect account created:', account.id);
+      
+      // Step 2: Create account link for onboarding
+      console.log('🔗 Step 2: Creating account link for onboarding...');
+      const refreshUrl = `${window.location.origin}/owner-dashboard`;
+      const returnUrl = `${window.location.origin}/owner-dashboard?stripe_connected=true`;
+      
+      const linkResult = await stripeService.createAccountLink(account.id, refreshUrl, returnUrl);
+      
+      if (!linkResult.success) {
+        throw new Error(linkResult.error || 'Failed to create account link');
+      }
+      
+      const accountLink = linkResult.url;
+      console.log('✅ Account link created:', accountLink);
+      
+      // Step 3: Update boat with connected account ID
+      console.log('🔗 Step 3: Updating boat with connected account...');
+      await Boat.update(selectedBoat.id, {
+        stripe_account_id: account.id
+      });
+      
+      // Step 4: Update local state
+      setSelectedConnectedAccount(account.id);
+      setStripeConnected(true);
+      
+      // Step 5: Redirect user to Stripe onboarding
+      console.log('🔗 Step 5: Redirecting to Stripe onboarding...');
+      alert(`✅ Stripe Connect account created successfully!\n\nRedirecting you to Stripe to complete your account setup...`);
+      
+      // Open Stripe onboarding in new tab
+      window.open(accountLink, '_blank');
+      
+      console.log('✅ Stripe Connect flow completed successfully');
       
     } catch (error) {
       console.error('❌ Stripe Connect error:', error);

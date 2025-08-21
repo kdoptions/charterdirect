@@ -220,6 +220,183 @@ class StripeService {
       return { success: false, error: error.message };
     }
   }
+
+  // Stripe Connect methods for boat owners
+  async createConnectAccount(boatData, ownerData) {
+    try {
+      console.log('🔗 Creating Stripe Connect account for boat:', boatData.name);
+      
+      // For development, create a mock connected account
+      if (import.meta.env.DEV) {
+        console.log('🔄 Development mode - creating mock connected account');
+        
+        const mockAccountId = `acct_connect_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Simulate Stripe API response
+        const mockAccount = {
+          id: mockAccountId,
+          object: 'account',
+          business_type: 'individual',
+          capabilities: {
+            card_payments: { requested: true, status: 'active' },
+            transfers: { requested: true, status: 'active' }
+          },
+          charges_enabled: true,
+          country: 'US',
+          default_currency: 'usd',
+          details_submitted: false,
+          email: ownerData.email,
+          payouts_enabled: false,
+          requirements: {
+            currently_due: ['individual.verification.document'],
+            eventually_due: ['individual.verification.document'],
+            past_due: []
+          },
+          settings: {
+            payouts: {
+              schedule: {
+                delay_days: 7,
+                interval: 'daily'
+              }
+            }
+          },
+          type: 'express'
+        };
+        
+        console.log('✅ Mock connected account created:', mockAccount);
+        return { success: true, account: mockAccount };
+      }
+
+      // Production API call to your backend
+      const response = await fetch('/api/create-connect-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          boatId: boatData.id,
+          boatName: boatData.name,
+          ownerEmail: ownerData.email,
+          ownerName: ownerData.display_name || ownerData.email,
+          businessType: 'individual',
+          country: 'US'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create connected account');
+      }
+
+      const accountData = await response.json();
+      return { success: true, account: accountData.account };
+      
+    } catch (error) {
+      console.error('❌ Error creating Connect account:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async createAccountLink(accountId, refreshUrl, returnUrl) {
+    try {
+      console.log('🔗 Creating account link for account:', accountId);
+      
+      // For development, create a mock account link
+      if (import.meta.env.DEV) {
+        console.log('🔄 Development mode - creating mock account link');
+        
+        const mockLink = `https://dashboard.stripe.com/express/onboarding/${accountId}?mock=true`;
+        
+        console.log('✅ Mock account link created:', mockLink);
+        return { success: true, url: mockLink };
+      }
+
+      // Production API call to your backend
+      const response = await fetch('/api/create-account-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountId,
+          refreshUrl,
+          returnUrl,
+          type: 'account_onboarding'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create account link');
+      }
+
+      const linkData = await response.json();
+      return { success: true, url: linkData.url };
+      
+    } catch (error) {
+      console.error('❌ Error creating account link:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getConnectAccount(accountId) {
+    try {
+      console.log('🔗 Retrieving Connect account:', accountId);
+      
+      // For development, return mock account data
+      if (import.meta.env.DEV) {
+        console.log('🔄 Development mode - returning mock account data');
+        
+        const mockAccount = {
+          id: accountId,
+        object: 'account',
+          business_type: 'individual',
+          capabilities: {
+            card_payments: { requested: true, status: 'active' },
+            transfers: { requested: true, status: 'active' }
+          },
+          charges_enabled: true,
+          country: 'US',
+          default_currency: 'usd',
+          details_submitted: true,
+          email: 'owner@example.com',
+          payouts_enabled: true,
+          requirements: {
+            currently_due: [],
+            eventually_due: [],
+            past_due: []
+          },
+          settings: {
+            payouts: {
+              schedule: {
+                delay_days: 7,
+                interval: 'daily'
+              }
+            }
+          },
+          type: 'express'
+        };
+        
+        console.log('✅ Mock account data retrieved:', mockAccount);
+        return { success: true, account: mockAccount };
+      }
+
+      // Production API call to your backend
+      const response = await fetch(`/api/get-connect-account?accountId=${accountId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to retrieve connected account');
+      }
+
+      const accountData = await response.json();
+      return { success: true, account: accountData.account };
+      
+    } catch (error) {
+      console.error('❌ Error retrieving Connect account:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 export default StripeService; 
