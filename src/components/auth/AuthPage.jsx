@@ -13,9 +13,9 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If user is already logged in, redirect to dashboard
+  // If user is already logged in, redirect to home page
   if (currentUser) {
-    navigate('/dashboard');
+    navigate('/');
     return null;
   }
 
@@ -48,8 +48,8 @@ export default function AuthPage() {
       localStorage.removeItem('redirectAfterLogin');
       navigate(redirectTo);
     } else {
-      // Default redirect to dashboard
-      navigate('/dashboard');
+      // Default redirect to home page
+      navigate('/');
     }
   };
 

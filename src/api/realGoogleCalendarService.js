@@ -14,14 +14,17 @@ class RealGoogleCalendarService {
 
   // Automatically detect the right redirect URI
   getRedirectUri() {
-    // If we're on Vercel (production), use the Vercel URL
+    // Primary redirect URI is Vercel production
+    const primaryRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+    
+    // If we're on Vercel (production), use the primary redirect URI or construct from hostname
     if (window.location.hostname.includes('vercel.app')) {
-      return import.meta.env.VITE_VERCEL_GOOGLE_REDIRECT_URI || 
-             `https://${window.location.hostname}/CalendarCallback`;
+      return primaryRedirectUri || `https://${window.location.hostname}/CalendarCallback`;
     }
     
-    // Otherwise use local development URL
-    return import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:5174/CalendarCallback';
+    // For local development, use local redirect URI if available, otherwise fall back to primary
+    const localRedirectUri = import.meta.env.VITE_LOCAL_GOOGLE_REDIRECT_URI;
+    return localRedirectUri || primaryRedirectUri || 'http://localhost:5174/CalendarCallback';
   }
 
   // Initialize Google API
@@ -44,7 +47,12 @@ class RealGoogleCalendarService {
     console.log('🔍 Debug: getAuthUrl called');
     console.log('🔍 Debug: this.redirectUri =', this.redirectUri);
     console.log('🔍 Debug: this.clientId =', this.clientId);
+    console.log('🔍 Debug: this.clientSecret =', this.clientSecret ? 'present' : 'missing');
     console.log('🔍 Debug: window.location.hostname =', window.location.hostname);
+    
+    if (!this.clientId) {
+      throw new Error('Missing Google Client ID. Please check your VITE_GOOGLE_CLIENT_ID environment variable.');
+    }
     
     const params = new URLSearchParams({
       client_id: this.clientId,
@@ -63,6 +71,16 @@ class RealGoogleCalendarService {
 
   // Exchange authorization code for tokens
   async exchangeCodeForTokens(code) {
+    // Debug logging
+    console.log('🔍 Debug: exchangeCodeForTokens called with code:', code ? 'present' : 'missing');
+    console.log('🔍 Debug: clientId:', this.clientId ? 'present' : 'missing');
+    console.log('🔍 Debug: clientSecret:', this.clientSecret ? 'present' : 'missing');
+    console.log('🔍 Debug: redirectUri:', this.redirectUri);
+    
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('Missing Google OAuth credentials. Please check your environment variables.');
+    }
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -78,10 +96,15 @@ class RealGoogleCalendarService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to exchange code for tokens');
+      const errorText = await response.text();
+      console.error('🔍 Debug: Token exchange failed with status:', response.status);
+      console.error('🔍 Debug: Error response:', errorText);
+      throw new Error(`Failed to exchange code for tokens: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    const tokenData = await response.json();
+    console.log('🔍 Debug: Token exchange successful, received:', Object.keys(tokenData));
+    return tokenData;
   }
 
   // Refresh access token

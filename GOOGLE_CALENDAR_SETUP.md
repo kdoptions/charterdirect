@@ -15,8 +15,8 @@
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Choose "Web application"
 4. Add authorized redirect URIs:
-   - `http://localhost:5173/calendar-callback` (for development)
-   - `https://yourdomain.com/calendar-callback` (for production)
+   - `https://yourdomain.com/CalendarCallback` (for production - primary)
+   - `http://localhost:5174/CalendarCallback` (for development - optional)
 5. Download the client configuration JSON file
 
 ### Step 3: Configure OAuth Consent Screen
@@ -37,12 +37,12 @@ Create a `.env` file in your project root:
 
 ```env
 # Google OAuth
-GOOGLE_CLIENT_ID=your_client_id_here
-GOOGLE_CLIENT_SECRET=your_client_secret_here
-GOOGLE_REDIRECT_URI=http://localhost:5173/calendar-callback
+VITE_GOOGLE_CLIENT_ID=your_client_id_here
+VITE_GOOGLE_CLIENT_SECRET=your_client_secret_here
+VITE_GOOGLE_REDIRECT_URI=https://yourdomain.com/CalendarCallback
 
 # Calendar IDs (will be set per user)
-DEFAULT_CALENDAR_ID=primary
+VITE_DEFAULT_CALENDAR_ID=primary
 ```
 
 ## 3. Testing with Dummy Accounts
