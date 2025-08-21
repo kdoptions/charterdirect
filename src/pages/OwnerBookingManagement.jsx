@@ -54,7 +54,7 @@ export default function OwnerBookingManagement() {
       let allBookings = [];
       
       if (boatIds.length > 0) {
-        const bookingData = await Booking.list("-created_date", 100);
+        const bookingData = await Booking.filter(); // Get all bookings
         allBookings = bookingData.filter(booking => boatIds.includes(booking.boat_id));
       }
       

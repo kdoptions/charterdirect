@@ -71,8 +71,8 @@ export default function Dashboard() {
       let ownerBookingData = [];
       
       if (boatIds.length > 0) {
-        // Get all bookings for my boats
-        const allBookings = await Booking.list("-created_date", 100);
+        // Get all bookings for my boats using the correct filter method
+        const allBookings = await Booking.filter(); // Get all bookings
         ownerBookingData = allBookings.filter(booking => boatIds.includes(booking.boat_id));
       }
       setOwnerBookings(ownerBookingData);
@@ -82,9 +82,19 @@ export default function Dashboard() {
       const monthStart = startOfMonth(currentMonth);
       const monthEnd = endOfMonth(currentMonth);
 
-      const thisMonthOwnerBookings = ownerBookingData.filter(booking => 
-        isWithinInterval(new Date(booking.created_date), { start: monthStart, end: monthEnd })
-      );
+      const thisMonthOwnerBookings = ownerBookingData.filter(booking => {
+        try {
+          const createdDate = new Date(booking.created_date);
+          if (isNaN(createdDate.getTime())) {
+            console.warn('⚠️ Invalid created_date for booking:', booking.id, booking.created_date);
+            return false;
+          }
+          return isWithinInterval(createdDate, { start: monthStart, end: monthEnd });
+        } catch (error) {
+          console.warn('⚠️ Error parsing created_date for booking:', booking.id, error);
+          return false;
+        }
+      });
 
       const pendingOwnerBookings = ownerBookingData.filter(b => b.status === 'pending');
       const totalOwnerEarnings = ownerBookingData
@@ -115,7 +125,19 @@ export default function Dashboard() {
     const allActivity = [
       ...myBookings.map(b => ({ ...b, type: 'customer_booking' })),
       ...ownerBookings.map(b => ({ ...b, type: 'owner_booking' }))
-    ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+            ].sort((a, b) => {
+          try {
+            const dateA = new Date(a.created_date);
+            const dateB = new Date(b.created_date);
+            if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+              return 0; // Keep original order if dates are invalid
+            }
+            return dateB - dateA;
+          } catch (error) {
+            console.warn('⚠️ Error sorting by created_date:', error);
+            return 0;
+          }
+        });
     
     return allActivity.slice(0, 5);
   };
