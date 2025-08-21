@@ -195,6 +195,21 @@ const stripeInstance = await stripeService.getStripe();
         const dateStr = date.toISOString().split('T')[0];
         console.log("📅 Checking availability for date:", dateStr);
 
+        // Define time slots from boat availability blocks
+        const timeSlots = boat.availability_blocks?.map(block => ({
+          name: block.name,
+          start: block.start_time,
+          end: block.end_time,
+          duration: block.duration_hours
+        })) || [
+          // Default time slots if boat doesn't have availability blocks
+          { name: "Morning", start: "09:00", end: "13:00", duration: 4 },
+          { name: "Afternoon", start: "14:00", end: "18:00", duration: 4 },
+          { name: "Evening", start: "19:00", end: "23:00", duration: 4 }
+        ];
+
+        console.log("⏰ Available time slots for this boat:", timeSlots);
+
         // Use enhanced availability checking that considers calendar conflicts
         const availabilityResult = await BookingEntity.checkAvailabilityWithCalendar(
           boat.id,
