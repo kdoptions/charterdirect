@@ -1,8 +1,10 @@
 import Stripe from 'stripe';
 
+// Initialize Stripe with secret key from environment variables
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
+  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -25,7 +27,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Calculate amounts in cents
     const amountInCents = Math.round(amount * 100);
     const applicationFeeInCents = Math.round(applicationFeeAmount * 100);
 
@@ -36,7 +37,6 @@ export default async function handler(req, res) {
       metadata
     });
 
-    // Create PaymentIntent with application fee
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'usd',
@@ -51,13 +51,9 @@ export default async function handler(req, res) {
         customerEmail,
         type: 'deposit_payment'
       },
-      // Optional: Add customer if you have one
-      ...(customerEmail && { receipt_email: customerEmail }),
-      // Optional: Add description
+      receipt_email: customerEmail,
       description: `Deposit payment for boat booking`,
-      // Optional: Add statement descriptor
       statement_descriptor: 'HARBOUR LUX',
-      // Optional: Add statement descriptor suffix
       statement_descriptor_suffix: 'DEPOSIT'
     });
 
@@ -72,7 +68,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Error creating PaymentIntent:', error);
-    
     return res.status(500).json({ 
       error: 'Failed to create payment intent',
       details: error.message 

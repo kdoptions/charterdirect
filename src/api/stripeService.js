@@ -295,43 +295,29 @@ class StripeService {
             // For test/production, use real Stripe APIs
       console.log(`🔗 ${environment === 'test' ? 'Test' : 'Production'} mode - creating real Stripe account`);
       
-      // For now, fall back to mock data to avoid API errors
-      console.log('🔄 Falling back to mock data for now');
-      
-      const mockAccountId = `acct_connect_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const mockAccount = {
-        id: mockAccountId,
-        object: 'account',
-        business_type: 'individual',
-        capabilities: {
-          card_payments: { requested: true, status: 'active' },
-          transfers: { requested: true, status: 'active' }
+      // Use Vercel APIs (same domain as frontend)
+      const response = await fetch('/api/create-connect-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        charges_enabled: true,
-        country: 'US',
-        default_currency: 'usd',
-        details_submitted: false,
-        email: ownerData.email,
-        payouts_enabled: false,
-        requirements: {
-          currently_due: ['individual.verification.document'],
-          eventually_due: ['individual.verification.document'],
-          past_due: []
-        },
-        settings: {
-          payouts: {
-            schedule: {
-              delay_days: 7,
-              interval: 'daily'
-            }
-          }
-        },
-        type: 'express'
-      };
-      
-      console.log('✅ Mock connected account created (fallback):', mockAccount);
-      return { success: true, account: mockAccount };
+        body: JSON.stringify({
+          boatId: boatData.id,
+          boatName: boatData.name,
+          ownerEmail: ownerData.email,
+          ownerName: ownerData.display_name || ownerData.email,
+          businessType: 'individual',
+          country: 'US'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create connected account');
+      }
+
+      const accountData = await response.json();
+      return { success: true, account: accountData.account };
       
     } catch (error) {
       console.error('❌ Error creating Connect account:', error);
@@ -353,9 +339,8 @@ class StripeService {
         return { success: true, url: mockLink };
       }
 
-      // Production API call to your backend
-      const apiUrl = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
-      const response = await fetch(`${apiUrl}/create-account-link`, {
+      // Use Vercel APIs (same domain as frontend)
+      const response = await fetch('/api/create-account-link', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -424,9 +409,8 @@ class StripeService {
         return { success: true, account: mockAccount };
       }
 
-      // Production API call to your backend
-      const apiUrl = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
-      const response = await fetch(`${apiUrl}/get-connect-account?accountId=${accountId}`);
+      // Use Vercel APIs (same domain as frontend)
+      const response = await fetch(`/api/get-connect-account?accountId=${accountId}`);
       
       if (!response.ok) {
         const errorData = await response.json();

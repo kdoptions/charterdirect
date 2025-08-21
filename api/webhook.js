@@ -1,14 +1,17 @@
 import Stripe from 'stripe';
 
+// Initialize Stripe with secret key from environment variables
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export default async function handler(req, res) {
+  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   let event;
 
   try {
@@ -35,10 +38,6 @@ export default async function handler(req, res) {
         await handleAccountUpdated(event.data.object);
         break;
       
-      case 'transfer.created':
-        await handleTransferCreated(event.data.object);
-        break;
-      
       default:
         console.log(`⚠️ Unhandled event type: ${event.type}`);
     }
@@ -57,12 +56,6 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
   
   const { boatId, bookingId, customerEmail, type } = paymentIntent.metadata;
   
-  // Here you would:
-  // 1. Update booking status in your database
-  // 2. Send confirmation emails
-  // 3. Create calendar events
-  // 4. Update payment records
-  
   console.log('📋 Processing successful payment for:', {
     bookingId,
     boatId,
@@ -70,6 +63,10 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
     type,
     amount: paymentIntent.amount / 100
   });
+
+  // TODO: Update booking status in your database
+  // TODO: Send confirmation emails
+  // TODO: Schedule balance payment
 }
 
 // Handle failed payment
@@ -78,49 +75,21 @@ async function handlePaymentIntentFailed(paymentIntent) {
   
   const { boatId, bookingId, customerEmail } = paymentIntent.metadata;
   
-  // Here you would:
-  // 1. Update booking status to payment_failed
-  // 2. Send failure notification emails
-  // 3. Log the failure for admin review
-  
   console.log('📋 Processing failed payment for:', {
     bookingId,
     boatId,
     customerEmail,
     lastPaymentError: paymentIntent.last_payment_error?.message
   });
+
+  // TODO: Update booking status in your database
+  // TODO: Send failure notification emails
 }
 
 // Handle Connect account updates
 async function handleAccountUpdated(account) {
   console.log('🏢 Account updated:', account.id);
   
-  // Here you would:
-  // 1. Update account status in your database
-  // 2. Notify boat owner of account status changes
-  // 3. Update boat listing status if needed
-  
-  console.log('📋 Account status:', {
-    accountId: account.id,
-    chargesEnabled: account.charges_enabled,
-    payoutsEnabled: account.payouts_enabled,
-    requirements: account.requirements
-  });
-}
-
-// Handle transfers (payouts to boat owners)
-async function handleTransferCreated(transfer) {
-  console.log('💸 Transfer created:', transfer.id);
-  
-  // Here you would:
-  // 1. Log the transfer in your database
-  // 2. Update payment records
-  // 3. Send confirmation to boat owner
-  
-  console.log('📋 Transfer details:', {
-    transferId: transfer.id,
-    amount: transfer.amount / 100,
-    destination: transfer.destination,
-    status: transfer.status
-  });
+  // TODO: Update boat owner's Stripe account status in your database
+  // TODO: Send notification when account is fully verified
 } 
