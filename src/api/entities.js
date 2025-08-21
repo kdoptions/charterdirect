@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 // Mock data for fallback (will be removed once Supabase is fully working)
-const mockBoats = [
+export const mockBoats = [
   {
     id: "1",
     name: "Luxury Yacht Experience",

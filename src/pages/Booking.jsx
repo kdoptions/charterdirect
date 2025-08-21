@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Boat, Booking as BookingEntity } from "@/api/entities";
+import { Boat, Booking as BookingEntity, mockBoats } from "@/api/entities";
 import { useAuth } from "@/contexts/AuthContext";
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from "@/api/stripeService";
@@ -108,7 +108,20 @@ const stripeInstance = await stripeService.getStripe();
   // Mount Stripe card element
   useEffect(() => {
     if (cardElement) {
-      cardElement.mount('#card-element');
+      // Wait for the DOM to be ready and check if element exists
+      const cardElementDiv = document.getElementById('card-element');
+      if (cardElementDiv) {
+        cardElement.mount('#card-element');
+      } else {
+        console.log('⚠️ Card element div not found yet, will retry');
+        // Retry after a short delay
+        setTimeout(() => {
+          const retryElement = document.getElementById('card-element');
+          if (retryElement && cardElement) {
+            cardElement.mount('#card-element');
+          }
+        }, 100);
+      }
     }
   }, [cardElement]);
 
@@ -124,7 +137,19 @@ const stripeInstance = await stripeService.getStripe();
         }
 
         // Fetch boat details
-        const boatData = await Boat.filter({ id: boatId });
+        console.log("🔍 Boat object:", Boat);
+        console.log("🔍 Boat.filter method:", Boat.filter);
+        console.log("🔍 Calling Boat.filter with:", { id: boatId });
+        
+        let boatData;
+        try {
+          boatData = await Boat.filter({ id: boatId });
+        } catch (error) {
+          console.error("❌ Boat.filter failed, trying fallback:", error);
+          // Fallback: try to get boat directly from mock data
+          boatData = mockBoats.filter(boat => boat.id === boatId);
+        }
+        
         console.log("Boat data found:", boatData);
         
         if (boatData.length === 0) {
