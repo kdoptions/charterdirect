@@ -116,55 +116,19 @@ export default function OwnerDashboard() {
       const selectedBoat = boats[0];
       console.log('🔗 Using boat for Stripe connection:', selectedBoat.name);
       
-      // Create a real Stripe connected account through your backend
-      console.log('🔗 Creating real Stripe connected account...');
+      // Use Stripe's standard Connect flow instead of custom API
+      console.log('🔗 Redirecting to Stripe Connect...');
       
-      try {
-        // Call your backend API to create a real connected account
-        const response = await fetch('/api/create-connect-account', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            boatId: selectedBoat.id,
-            boatName: selectedBoat.name,
-            ownerEmail: currentUser?.email || 'test@example.com', // Use currentUser from AuthContext
-            ownerName: currentUser?.name || 'Test Owner' // Use currentUser from AuthContext
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to create connected account');
-        }
-
-        const { connectedAccountId, accountLink } = await response.json();
-        
-        // Store the real connected account
-        setSelectedConnectedAccount(connectedAccountId);
-        
-        // Update the boat with the connected account
-        await Boat.update(selectedBoat.id, {
-          stripe_account_id: connectedAccountId
-        });
-        
-        // Update local state
-        setStripeConnected(true);
-        
-        // Redirect to Stripe to complete account setup
-        if (accountLink) {
-          alert(`✅ Stripe account created! Redirecting to complete setup...`);
-          window.open(accountLink, '_blank');
-        } else {
-          alert(`✅ Stripe account connected successfully!\n\nAccount ID: ${connectedAccountId}\n\nYou can now receive payments through this account.`);
-        }
-        
-        console.log('✅ Real connected account created:', connectedAccountId);
-        
-      } catch (apiError) {
-        console.error('❌ API Error:', apiError);
-        alert('Failed to create Stripe account. Please try again.');
-      }
+      // For now, show a message about the standard Stripe Connect process
+      alert('Stripe Connect integration coming soon! This will redirect you to Stripe to create your connected account.');
+      
+      // TODO: Implement proper Stripe Connect flow
+      // 1. Create connected account via Stripe API
+      // 2. Generate account link for onboarding
+      // 3. Redirect user to Stripe
+      // 4. Handle webhook for account updates
+      
+      console.log('🔗 Stripe Connect flow not yet implemented');
       
     } catch (error) {
       console.error('❌ Stripe Connect error:', error);

@@ -253,13 +253,16 @@ export const Boat = {
   // Get today's approved boats
   getApprovedToday: async () => {
     try {
-      const today = new Date().toDateString();
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      
       const { data, error } = await supabase
         .from('boats')
         .select('*')
         .eq('status', 'approved')
-        .gte('approved_at', new Date(today).toISOString())
-        .lte('approved_at', new Date(today + 'T23:59:59').toISOString());
+        .gte('approved_at', startOfDay.toISOString())
+        .lte('approved_at', endOfDay.toISOString());
       
       if (error) throw error;
       return data || [];
@@ -272,13 +275,16 @@ export const Boat = {
   // Get today's rejected boats
   getRejectedToday: async () => {
     try {
-      const today = new Date().toDateString();
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      
       const { data, error } = await supabase
         .from('boats')
         .select('*')
         .eq('status', 'rejected')
-        .gte('rejected_at', new Date(today).toISOString())
-        .lte('rejected_at', new Date(today + 'T23:59:59').toISOString());
+        .gte('rejected_at', startOfDay.toISOString())
+        .lte('rejected_at', endOfDay.toISOString());
       
       if (error) throw error;
       return data || [];
