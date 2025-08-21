@@ -10,6 +10,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Debug: Log environment variables (without exposing secrets)
+    console.log('🔍 Environment check:', {
+      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+      stripeKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7),
+      businessUrl: process.env.BUSINESS_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     const { 
       boatId, 
       boatName, 
@@ -80,9 +88,13 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Error creating Connect account:', error);
+    
+    // Return detailed error for debugging
     return res.status(500).json({ 
       error: 'Failed to create connected account',
-      details: error.message 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      type: error.constructor.name
     });
   }
 } 
