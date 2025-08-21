@@ -227,7 +227,7 @@ class StripeService {
       console.log('🔗 Creating Stripe Connect account for boat:', boatData.name);
       
       // For development, create a mock connected account
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || !import.meta.env.VITE_STRIPE_SECRET_KEY) {
         console.log('🔄 Development mode - creating mock connected account');
         
         const mockAccountId = `acct_connect_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -268,7 +268,8 @@ class StripeService {
       }
 
       // Production API call to your backend
-      const response = await fetch('/api/create-connect-account', {
+      const apiUrl = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
+      const response = await fetch(`${apiUrl}/create-connect-account`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -302,7 +303,7 @@ class StripeService {
       console.log('🔗 Creating account link for account:', accountId);
       
       // For development, create a mock account link
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || !import.meta.env.VITE_STRIPE_SECRET_KEY) {
         console.log('🔄 Development mode - creating mock account link');
         
         const mockLink = `https://dashboard.stripe.com/express/onboarding/${accountId}?mock=true`;
@@ -312,7 +313,8 @@ class StripeService {
       }
 
       // Production API call to your backend
-      const response = await fetch('/api/create-account-link', {
+      const apiUrl = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
+      const response = await fetch(`${apiUrl}/create-account-link`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -344,7 +346,7 @@ class StripeService {
       console.log('🔗 Retrieving Connect account:', accountId);
       
       // For development, return mock account data
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || !import.meta.env.VITE_STRIPE_SECRET_KEY) {
         console.log('🔄 Development mode - returning mock account data');
         
         const mockAccount = {
@@ -382,7 +384,8 @@ class StripeService {
       }
 
       // Production API call to your backend
-      const response = await fetch(`/api/get-connect-account?accountId=${accountId}`);
+      const apiUrl = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
+      const response = await fetch(`${apiUrl}/get-connect-account?accountId=${accountId}`);
       
       if (!response.ok) {
         const errorData = await response.json();
