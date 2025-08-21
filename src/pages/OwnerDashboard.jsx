@@ -73,7 +73,7 @@ export default function OwnerDashboard() {
       setBoats(userBoats);
 
       // Load bookings for user's boats
-      const allBookings = await Booking.filter();
+      const allBookings = await Booking.filter(); // Get all bookings
       console.log("All bookings loaded:", allBookings);
       const boatIds = userBoats.map(boat => boat.id);
       console.log("Owner boat IDs:", boatIds);

@@ -477,6 +477,13 @@ export const Booking = {
   filter: async (params) => {
     try {
       console.log("Filtering bookings from Supabase with params:", params);
+      
+      // Handle case where params is undefined or null
+      if (!params) {
+        console.log("⚠️ No params provided, returning all mock bookings");
+        return mockBookings;
+      }
+      
       let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
       
       // Apply filters
