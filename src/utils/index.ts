@@ -2,5 +2,7 @@
 
 
 export function createPageUrl(pageName: string) {
-    return '/' + pageName.toLowerCase().replace(/ /g, '-');
+    // Convert camelCase/PascalCase to kebab-case
+    // e.g., "BoatDetails" -> "boat-details", "MyBoats" -> "my-boats"
+    return '/' + pageName.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
 }

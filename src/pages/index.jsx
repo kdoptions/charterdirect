@@ -73,7 +73,10 @@ function _getCurrentPage(url) {
         urlLastPart = urlLastPart.split('?')[0];
     }
 
-    const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
+    // Handle kebab-case URLs (e.g., "boat-details" -> "BoatDetails")
+    const normalizedUrl = urlLastPart.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/\s/g, '');
+    
+    const pageName = Object.keys(PAGES).find(page => page === normalizedUrl);
     return pageName || Object.keys(PAGES)[0];
 }
 
@@ -89,13 +92,13 @@ function PagesContent() {
                     <Route path="/" element={<Home />} />
                 
                 
-                <Route path="/Home" element={<Home />} />
+                <Route path="/home" element={<Home />} />
                 
-                <Route path="/Search" element={<Search />} />
+                <Route path="/search" element={<Search />} />
                 
-                <Route path="/ListBoat" element={<ListBoat />} />
+                <Route path="/list-boat" element={<ListBoat />} />
                 
-                <Route path="/BoatDetails" element={<BoatDetails />} />
+                <Route path="/boat-details" element={<BoatDetails />} />
                 
                 {/* Auth Routes */}
                 <Route path="/auth" element={<AuthPage />} />
@@ -103,25 +106,25 @@ function PagesContent() {
                 <Route path="/signup" element={<AuthPage />} />
                 
                 {/* Protected Routes - Add these later */}
-                <Route path="/MyBoats" element={<MyBoats />} />
+                <Route path="/my-boats" element={<MyBoats />} />
                 
-                <Route path="/Admin" element={<Admin />} />
+                <Route path="/admin" element={<Admin />} />
                 
-                <Route path="/Booking" element={<BookingPage />} />
+                <Route path="/booking" element={<BookingPage />} />
                 
-                <Route path="/BookingConfirmation" element={<BookingConfirmation />} />
+                <Route path="/booking-confirmation" element={<BookingConfirmation />} />
                 
-                <Route path="/MyBookings" element={<MyBookings />} />
+                <Route path="/my-bookings" element={<MyBookings />} />
                 
-                <Route path="/Dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 
-                <Route path="/OwnerBookingManagement" element={<OwnerBookingManagement />} />
+                <Route path="/owner-booking-management" element={<OwnerBookingManagement />} />
                 
-                <Route path="/OwnerDashboard" element={<OwnerDashboard />} />
+                <Route path="/owner-dashboard" element={<OwnerDashboard />} />
                 
-                <Route path="/StripeCallback" element={<StripeCallback />} />
+                <Route path="/stripe-callback" element={<StripeCallback />} />
                 
-                <Route path="/CalendarCallback" element={<CalendarCallback />} />
+                <Route path="/calendar-callback" element={<CalendarCallback />} />
                 
             </Routes>
         </Layout>
