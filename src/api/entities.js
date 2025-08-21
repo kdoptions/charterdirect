@@ -408,7 +408,35 @@ export const Boat = {
 };
 
 // Mock Booking entity with Google Calendar integration
-let mockBookings = []; // Store created bookings
+let mockBookings = [
+  // Add some sample bookings for testing
+  {
+    id: "mock-booking-1",
+    boat_id: "1",
+    customer_id: "customer-1",
+    start_date: "2025-08-25",
+    end_date: "2025-08-25",
+    start_time: "09:00",
+    end_time: "13:00",
+    status: "confirmed",
+    guests: 4,
+    total_amount: 1800,
+    created_at: "2025-08-20T10:00:00Z"
+  },
+  {
+    id: "mock-booking-2", 
+    boat_id: "2",
+    customer_id: "customer-2",
+    start_date: "2025-08-26",
+    end_date: "2025-08-26",
+    start_time: "14:00",
+    end_time: "18:00",
+    status: "confirmed",
+    guests: 6,
+    total_amount: 1080,
+    created_at: "2025-08-21T11:00:00Z"
+  }
+]; // Store created bookings
 
 export const Booking = {
   create: async (bookingData) => {
@@ -522,16 +550,38 @@ export const Booking = {
       const endDateTime = new Date(`${startDate}T${endTime}`);
       
       // Check for conflicts on THIS boat only
-      const { data: existingBookings, error: bookingError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('boat_id', boatId)
-        .eq('status', 'confirmed')
-        .overlaps('start_date', startDate, 'end_date', endDate);
-      
-      if (bookingError) {
-        console.error("❌ Error checking local availability:", bookingError);
-        return { available: false, conflicts: [], reason: "Could not check local availability" };
+      let existingBookings = [];
+      try {
+        const { data, error: bookingError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('boat_id', boatId)
+          .eq('status', 'confirmed')
+          .gte('start_date', startDate)
+          .lte('end_date', endDate);
+        
+        if (bookingError) {
+          console.error("❌ Error checking local availability:", bookingError);
+          console.log("⚠️ Falling back to mock data for availability check");
+          // Fallback to mock data
+          existingBookings = mockBookings.filter(booking => 
+            booking.boat_id === boatId && 
+            booking.status === 'confirmed' &&
+            new Date(booking.start_date) <= new Date(endDate) &&
+            new Date(booking.end_date) >= new Date(startDate)
+          );
+        } else {
+          existingBookings = data || [];
+        }
+      } catch (error) {
+        console.error("❌ Supabase query failed, using mock data:", error);
+        // Fallback to mock data
+        existingBookings = mockBookings.filter(booking => 
+          booking.boat_id === boatId && 
+          booking.status === 'confirmed' &&
+          new Date(booking.start_date) <= new Date(endDate) &&
+          new Date(booking.end_date) >= new Date(startDate)
+        );
       }
       
       if (existingBookings && existingBookings.length > 0) {
