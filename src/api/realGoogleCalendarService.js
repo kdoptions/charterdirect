@@ -12,19 +12,16 @@ class RealGoogleCalendarService {
     this.scope = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
   }
 
-  // Automatically detect the right redirect URI
+  // Get redirect URI (Vercel production only)
   getRedirectUri() {
-    // Primary redirect URI is Vercel production
-    const primaryRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+    // Use the configured Vercel redirect URI
+    const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
     
-    // If we're on Vercel (production), use the primary redirect URI or construct from hostname
-    if (window.location.hostname.includes('vercel.app')) {
-      return primaryRedirectUri || `https://${window.location.hostname}/calendar-callback`;
+    if (!redirectUri) {
+      throw new Error('VITE_GOOGLE_REDIRECT_URI environment variable is required');
     }
     
-    // For local development, use local redirect URI if available, otherwise fall back to primary
-    const localRedirectUri = import.meta.env.VITE_LOCAL_GOOGLE_REDIRECT_URI;
-    return localRedirectUri || primaryRedirectUri || 'http://localhost:5174/calendar-callback';
+    return redirectUri;
   }
 
   // Initialize Google API
