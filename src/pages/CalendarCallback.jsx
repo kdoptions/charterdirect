@@ -116,11 +116,11 @@ export default function CalendarCallback() {
   };
 
   const goToDashboard = () => {
-    navigate(createPageUrl("OwnerDashboard"));
+    navigate("/owner-dashboard");
   };
 
   const goHome = () => {
-    navigate(createPageUrl("Home"));
+    navigate("/");
   };
 
   return (

@@ -265,12 +265,20 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">New Bookings</span>
                     <span className="text-xl font-semibold">
-                      {ownerBookings.filter(b => 
-                        isWithinInterval(new Date(b.created_date), { 
-                          start: startOfMonth(new Date()), 
-                          end: endOfMonth(new Date()) 
-                        })
-                      ).length}
+                      {ownerBookings.filter(b => {
+                        try {
+                          const createdDate = new Date(b.created_date);
+                          if (isNaN(createdDate.getTime())) {
+                            return false;
+                          }
+                          return isWithinInterval(createdDate, { 
+                            start: startOfMonth(new Date()), 
+                            end: endOfMonth(new Date()) 
+                          });
+                        } catch (error) {
+                          return false;
+                        }
+                      }).length}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -309,7 +317,15 @@ export default function Dashboard() {
                                   }
                                 </p>
                                 <p className="text-sm text-slate-500">
-                                  {boat?.name || 'Unknown Boat'} • {format(new Date(activity.created_date), 'MMM d')}
+                                  {boat?.name || 'Unknown Boat'} • {(() => {
+                                    try {
+                                      const date = new Date(activity.created_date);
+                                      if (isNaN(date.getTime())) return 'Invalid date';
+                                      return format(date, 'MMM d');
+                                    } catch (error) {
+                                      return 'Invalid date';
+                                    }
+                                  })()}
                                 </p>
                               </div>
                             </div>
@@ -379,7 +395,15 @@ export default function Dashboard() {
                           <div>
                             <h4 className="font-semibold">{boat?.name || 'Unknown Boat'}</h4>
                             <p className="text-sm text-slate-600">
-                              {format(new Date(booking.start_date), 'MMM d, yyyy')} • 
+                              {(() => {
+                                try {
+                                  const date = new Date(booking.start_date);
+                                  if (isNaN(date.getTime())) return 'Invalid date';
+                                  return format(date, 'MMM d, yyyy');
+                                } catch (error) {
+                                  return 'Invalid date';
+                                }
+                              })()} • 
                               {booking.start_time} - {booking.end_time}
                             </p>
                           </div>
@@ -467,7 +491,15 @@ export default function Dashboard() {
                               {booking.customer_name} • {booking.guests} guests
                             </p>
                             <p className="text-sm text-slate-600">
-                              {format(new Date(booking.start_date), 'MMM d, yyyy')}
+                              {(() => {
+                                try {
+                                  const date = new Date(booking.start_date);
+                                  if (isNaN(date.getTime())) return 'Invalid date';
+                                  return format(date, 'MMM d, yyyy');
+                                } catch (error) {
+                                  return 'Invalid date';
+                                }
+                              })()}
                             </p>
                           </div>
                           <div className="text-right">
