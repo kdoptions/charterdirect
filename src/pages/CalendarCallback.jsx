@@ -98,11 +98,25 @@ export default function CalendarCallback() {
         token_type: tokens.token_type
       };
       
+      // Debug: Log what we're storing and where
+      addDebugLog(`User object: ${JSON.stringify(user)}`);
+      addDebugLog(`User ID: ${user?.id}`);
+      addDebugLog(`Fallback ID: test-owner-1`);
+      addDebugLog(`Final userId used: ${userId}`);
+      addDebugLog(`Storing tokens with key: google_tokens_${userId}`);
+      addDebugLog(`Storing calendar with key: selected_calendar_${userId}`);
+      
       localStorage.setItem(`google_tokens_${userId}`, JSON.stringify(tokenData));
       localStorage.setItem(`selected_calendar_${userId}`, primaryCalendar.id);
       
       addDebugLog(`Stored tokens in localStorage for user: ${userId}`);
       addDebugLog(`Selected calendar: ${primaryCalendar.id}`);
+      
+      // Debug: Verify what was actually stored
+      const storedTokens = localStorage.getItem(`google_tokens_${userId}`);
+      const storedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
+      addDebugLog(`Verification - stored tokens: ${!!storedTokens}`);
+      addDebugLog(`Verification - stored calendar: ${!!storedCalendar}`);
       
       setStatus("success");
 

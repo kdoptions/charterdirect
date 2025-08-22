@@ -120,6 +120,26 @@ export default function OwnerDashboard() {
       const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
       const hasCalendar = !!(calendarTokens && selectedCalendar);
       
+      // Debug: Log all localStorage keys and values for calendar
+      console.log('🔍 Calendar Integration Debug:', {
+        currentUserId: currentUser?.id,
+        fallbackUserId: 'test-owner-1',
+        usedUserId: userId,
+        calendarTokensKey: `google_tokens_${userId}`,
+        selectedCalendarKey: `selected_calendar_${userId}`,
+        hasTokens: !!calendarTokens,
+        hasSelectedCalendar: !!selectedCalendar,
+        hasCalendar: hasCalendar,
+        allLocalStorageKeys: Object.keys(localStorage).filter(key => key.includes('google') || key.includes('calendar'))
+      });
+      
+      // Also check if there are any other calendar-related keys
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('google') || key.includes('calendar')) {
+          console.log(`🔍 Found localStorage key: ${key} =`, localStorage.getItem(key));
+        }
+      });
+      
       setStripeConnected(hasStripe);
       setCalendarConnected(hasCalendar);
 
