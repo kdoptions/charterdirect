@@ -449,7 +449,12 @@ export default function OwnerDashboard() {
         console.log("Checking for calendar integration...");
         
         if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
-          console.log("Calendar integration found, attempting to create event...");
+          console.log("✅ Calendar integration found, attempting to create event...");
+          console.log("🔍 Calendar integration details:", {
+            isActive: currentUser.google_integration_active,
+            calendarId: currentUser.google_calendar_id,
+            hasRefreshToken: !!currentUser.google_refresh_token
+          });
           try {
             // Get fresh access token using refresh token from database
             const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
@@ -462,18 +467,31 @@ export default function OwnerDashboard() {
             const startTimeISO = `${startDateString}T${booking.start_time}:00`;
             const endTimeISO = `${startDateString}T${booking.end_time}:00`;
             
-            // Create event data with correct field names
+            // Create event data with correct field names and null checks
             const eventData = {
-              customer_name: booking.customer_name,
-              guests: booking.guests,
-              customer_email: booking.customer_email,
-              customer_phone: booking.customer_phone,
+              customer_name: booking.customer_name || 'Unknown Customer',
+              guests: booking.guests || 1,
+              customer_email: booking.customer_email || 'no-email@example.com',
+              customer_phone: booking.customer_phone || 'No phone provided',
               start_datetime: startTimeISO,
               end_datetime: endTimeISO,
               special_requests: booking.special_requests || 'None'
             };
             
+            // Validate required fields before proceeding
+            if (!startTimeISO || !endTimeISO) {
+              console.error("❌ Invalid date/time data:", { startTimeISO, endTimeISO });
+              throw new Error("Invalid booking date/time data");
+            }
+            
             console.log("Creating event with data:", eventData);
+            console.log("Event data validation:", {
+              hasCustomerName: !!eventData.customer_name,
+              hasGuests: !!eventData.guests,
+              hasEmail: !!eventData.customer_email,
+              hasStartTime: !!eventData.start_datetime,
+              hasEndTime: !!eventData.end_datetime
+            });
 
             const result = await realGoogleCalendarService.createBookingEvent(
               currentUser.google_calendar_id, 
@@ -496,7 +514,18 @@ export default function OwnerDashboard() {
             }
             
           } catch (calendarError) {
-            console.error("Failed to create Google Calendar event:", calendarError);
+            console.error("❌ Failed to create Google Calendar event:", calendarError);
+            console.error("❌ Calendar error details:", {
+              error: calendarError.message,
+              stack: calendarError.stack,
+              bookingData: {
+                id: booking.id,
+                customer_name: booking.customer_name,
+                start_date: booking.start_date,
+                start_time: booking.start_time,
+                end_time: booking.end_time
+              }
+            });
           }
         } else {
           console.log("No calendar integration found");
