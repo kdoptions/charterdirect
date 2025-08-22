@@ -20,7 +20,7 @@ export class GoogleCalendarAPI {
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       
       authUrl.searchParams.set('client_id', this.clientId);
-      authUrl.searchParams.set('redirect_uri', `${window.location.origin}/CalendarCallback`);
+      authUrl.searchParams.set('redirect_uri', `${window.location.origin}/calendar-callback`);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('scope', this.scopes);
       authUrl.searchParams.set('access_type', 'offline'); // Request a refresh token
