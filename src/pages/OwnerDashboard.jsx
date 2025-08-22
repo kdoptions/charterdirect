@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Boat, Booking } from "@/api/entities";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import stripeConnect from '../components/api/stripeConnect';
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from '../api/stripeService';
@@ -110,17 +111,38 @@ export default function OwnerDashboard() {
       // Check integration status from user data instead of separate entity
       const hasStripe = userBoats.some(boat => boat.stripe_account_id);
       
-      // Check calendar integration from database
-      const hasCalendar = currentUser?.google_integration_active || false;
+        // Check calendar integration from database
+  let hasCalendar = false;
+  
+  // If we have a currentUser with Google Calendar data, use it
+  if (currentUser?.google_integration_active !== undefined) {
+    hasCalendar = currentUser.google_integration_active;
+  } else {
+    // Fallback: directly fetch user data from database
+    try {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('google_integration_active, google_calendar_id')
+        .eq('id', currentUser?.id)
+        .single();
       
-      console.log('🔍 Calendar Integration Debug:', {
-        currentUserId: currentUser?.id,
-        googleIntegrationActive: currentUser?.google_integration_active,
-        hasCalendar: hasCalendar
-      });
-      
-      setStripeConnected(hasStripe);
-      setCalendarConnected(hasCalendar);
+      if (!error && userData) {
+        hasCalendar = userData.google_integration_active || false;
+        console.log('🔍 Fetched Google Calendar status from database:', userData);
+      }
+    } catch (dbError) {
+      console.error('Error fetching Google Calendar status:', dbError);
+    }
+  }
+  
+  console.log('🔍 Calendar Integration Debug:', {
+    currentUserId: currentUser?.id,
+    googleIntegrationActive: currentUser?.google_integration_active,
+    hasCalendar: hasCalendar
+  });
+  
+  setStripeConnected(hasStripe);
+  setCalendarConnected(hasCalendar);
 
     } catch (error) {
       console.error("❌ Error loading owner data:", error);
