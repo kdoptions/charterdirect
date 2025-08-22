@@ -771,8 +771,45 @@ export const Payment = {
 // Mock User entity for authentication
 export const User = {
   me: async () => {
-    // Return null to simulate not logged in
-    return null;
+    try {
+      // Get current Supabase session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Error getting session:', error);
+        return null;
+      }
+      
+      if (!session) {
+        console.log('🔍 No active session found');
+        return null;
+      }
+      
+      console.log('✅ Active session found for user:', session.user.id);
+      
+      // Get user data from Supabase users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (userError) {
+        console.error('❌ Error getting user data:', userError);
+        // Return basic session user if we can't get full user data
+        return {
+          id: session.user.id,
+          email: session.user.email,
+          display_name: session.user.user_metadata?.display_name || session.user.email
+        };
+      }
+      
+      return userData;
+      
+    } catch (error) {
+      console.error('❌ Error in User.me():', error);
+      return null;
+    }
   },
   login: async (credentials) => {
     console.log("Mock login attempt:", credentials);
