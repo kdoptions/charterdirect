@@ -108,20 +108,25 @@ const stripeInstance = await stripeService.getStripe();
   // Mount Stripe card element
   useEffect(() => {
     if (cardElement) {
-      // Wait for the DOM to be ready and check if element exists
-      const cardElementDiv = document.getElementById('card-element');
-      if (cardElementDiv) {
-        cardElement.mount('#card-element');
-      } else {
-        console.log('⚠️ Card element div not found yet, will retry');
-        // Retry after a short delay
-        setTimeout(() => {
-          const retryElement = document.getElementById('card-element');
-          if (retryElement && cardElement) {
+      const mountCardElement = () => {
+        const cardElementDiv = document.getElementById('card-element');
+        if (cardElementDiv) {
+          try {
             cardElement.mount('#card-element');
+            console.log('✅ Stripe card element mounted successfully');
+          } catch (error) {
+            console.error('❌ Failed to mount Stripe card element:', error);
           }
-        }, 100);
-      }
+        } else {
+          console.log('⚠️ Card element div not found yet, will retry');
+          // Retry with increasing delays
+          setTimeout(mountCardElement, 100);
+          setTimeout(mountCardElement, 500);
+          setTimeout(mountCardElement, 1000);
+        }
+      };
+      
+      mountCardElement();
     }
   }, [cardElement]);
 
@@ -200,13 +205,15 @@ const stripeInstance = await stripeService.getStripe();
           name: block.name,
           start: block.start_time,
           end: block.end_time,
-          duration: block.duration_hours
+          duration: block.duration_hours || 4
         })) || [
           // Default time slots if boat doesn't have availability blocks
           { name: "Morning", start: "09:00", end: "13:00", duration: 4 },
           { name: "Afternoon", start: "14:00", end: "18:00", duration: 4 },
           { name: "Evening", start: "19:00", end: "23:00", duration: 4 }
         ];
+        
+        console.log("⏰ Time slots with duration:", timeSlots.map(slot => `${slot.name}: ${slot.start}-${slot.end} (${slot.duration}h)`));
 
         console.log("⏰ Available time slots for this boat:", timeSlots);
 
@@ -337,13 +344,35 @@ const stripeInstance = await stripeService.getStripe();
     if (showCustomTime) {
       const start = new Date(`2000-01-01T${customStartTime}:00`);
       const end = new Date(`2000-01-01T${customEndTime}:00`);
-      return Math.max(0, (end - start) / (1000 * 60 * 60));
+      const hours = Math.max(0, (end - start) / (1000 * 60 * 60));
+      console.log("⏰ Custom time hours calculation:", { customStartTime, customEndTime, hours });
+      return hours;
     }
-    return selectedBlock ? selectedBlock.duration_hours : 0;
+    
+    if (selectedBlock) {
+      console.log("⏰ Selected block hours:", { 
+        blockName: selectedBlock.name, 
+        duration: selectedBlock.duration_hours,
+        start: selectedBlock.start,
+        end: selectedBlock.end
+      });
+      return selectedBlock.duration_hours || 0;
+    }
+    
+    console.log("⏰ No time block selected, hours: 0");
+    return 0;
   };
   
   const totalHours = getTotalHours();
   const totalAmount = pricePerHour * totalHours;
+  
+  console.log("💰 Price calculation:", { 
+    pricePerHour, 
+    totalHours, 
+    totalAmount,
+    selectedBlock: selectedBlock?.name,
+    showCustomTime 
+  });
 
   const isFormValid = boat && selectedDate && 
     ((selectedBlock && !showCustomTime) || (showCustomTime && customStartTime && customEndTime)) && 
@@ -807,6 +836,28 @@ const stripeInstance = await stripeService.getStripe();
                       value={paymentDetails.cardholderName} 
                       onChange={e => setPaymentDetails({...paymentDetails, cardholderName: e.target.value})}
                     />
+                  </div>
+                  
+                  {/* Test Card Button */}
+                  <div className="mt-3">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => {
+                        setPaymentDetails({
+                          ...paymentDetails,
+                          cardNumber: '4242 4242 4242 4242',
+                          expiryDate: '12/25',
+                          cvv: '123',
+                          cardholderName: 'John Doe',
+                          zipCode: '90210'
+                        });
+                      }}
+                    >
+                      💳 Fill Test Card Details
+                    </Button>
                   </div>
                   
                   {/* Test Card Info */}
