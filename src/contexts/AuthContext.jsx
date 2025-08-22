@@ -85,50 +85,15 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    // Get initial session and user data
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Fetch full user data from public.users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching user data:', error);
-          setCurrentUser(session.user);
-        } else {
-          setCurrentUser(userData);
-        }
-      } else {
-        setCurrentUser(null);
-      }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
       setLoading(false);
-    };
-
-    getInitialSession();
+    });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        // Fetch full user data from public.users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching user data:', error);
-          setCurrentUser(session.user);
-        } else {
-          setCurrentUser(userData);
-        }
-      } else {
-        setCurrentUser(null);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
       setLoading(false);
     });
 
