@@ -104,6 +104,39 @@ class RealGoogleCalendarService {
     return tokenData;
   }
 
+  // Get a fresh access token using refresh token
+  async getFreshAccessToken(refreshToken) {
+    console.log('🔍 Debug: Getting fresh access token using refresh token');
+    
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('Missing Google OAuth credentials. Please check your environment variables.');
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('🔍 Debug: Token refresh failed with status:', response.status);
+      console.error('🔍 Debug: Error response:', errorText);
+      throw new Error(`Failed to refresh access token: ${response.status} - ${errorText}`);
+    }
+
+    const tokenData = await response.json();
+    console.log('🔍 Debug: Token refresh successful, received:', Object.keys(tokenData));
+    return tokenData;
+  }
+
   // Refresh access token
   async refreshToken(refreshToken) {
     const response = await fetch('https://oauth2.googleapis.com/token', {

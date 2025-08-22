@@ -59,15 +59,11 @@ export default function OwnerDashboard() {
 
   // Function to check calendar connection status
   const checkCalendarConnectionStatus = () => {
-    const userId = currentUser?.id || 'test-owner-1';
-    const calendarTokens = localStorage.getItem(`google_tokens_${userId}`);
-    const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
-    const hasCalendar = !!(calendarTokens && selectedCalendar);
+    const hasCalendar = currentUser?.google_integration_active || false;
     
     console.log('🔍 Checking calendar connection status:', {
-      userId,
-      hasTokens: !!calendarTokens,
-      hasCalendar: !!selectedCalendar,
+      currentUserId: currentUser?.id,
+      googleIntegrationActive: currentUser?.google_integration_active,
       isConnected: hasCalendar
     });
     
@@ -114,30 +110,13 @@ export default function OwnerDashboard() {
       // Check integration status from user data instead of separate entity
       const hasStripe = userBoats.some(boat => boat.stripe_account_id);
       
-      // Check calendar integration from localStorage (where CalendarCallback stores it)
-      const userId = currentUser?.id || 'test-owner-1';
-      const calendarTokens = localStorage.getItem(`google_tokens_${userId}`);
-      const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
-      const hasCalendar = !!(calendarTokens && selectedCalendar);
+      // Check calendar integration from database
+      const hasCalendar = currentUser?.google_integration_active || false;
       
-      // Debug: Log all localStorage keys and values for calendar
       console.log('🔍 Calendar Integration Debug:', {
         currentUserId: currentUser?.id,
-        fallbackUserId: 'test-owner-1',
-        usedUserId: userId,
-        calendarTokensKey: `google_tokens_${userId}`,
-        selectedCalendarKey: `selected_calendar_${userId}`,
-        hasTokens: !!calendarTokens,
-        hasSelectedCalendar: !!selectedCalendar,
-        hasCalendar: hasCalendar,
-        allLocalStorageKeys: Object.keys(localStorage).filter(key => key.includes('google') || key.includes('calendar'))
-      });
-      
-      // Also check if there are any other calendar-related keys
-      Object.keys(localStorage).forEach(key => {
-        if (key.includes('google') || key.includes('calendar')) {
-          console.log(`🔍 Found localStorage key: ${key} =`, localStorage.getItem(key));
-        }
+        googleIntegrationActive: currentUser?.google_integration_active,
+        hasCalendar: hasCalendar
       });
       
       setStripeConnected(hasStripe);
@@ -447,53 +426,55 @@ export default function OwnerDashboard() {
         // Create Google Calendar event if integration exists
         console.log("Checking for calendar integration...");
         
-        // Check localStorage for tokens
-        const userId = currentUser?.id || 'test-owner-1'; // Use currentUser from AuthContext
-        const tokens = localStorage.getItem(`google_tokens_${userId}`);
-        
-        if (tokens) {
-          const tokenData = JSON.parse(tokens);
-          const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
-          
-          if (tokenData.access_token && selectedCalendar) {
-            console.log("Calendar integration found, attempting to create event...");
-            try {
-              // Construct ISO-compatible date strings
-              const bookingDate = new Date(booking.start_date);
-              const startDateString = bookingDate.toISOString().split('T')[0];
-              
-              // Convert time strings to full ISO format
-              const startTimeISO = `${startDateString}T${booking.start_time}:00`;
-              const endTimeISO = `${startDateString}T${booking.end_time}:00`;
-              
-              // Create event data with correct field names
-              const eventData = {
-                customer_name: booking.customer_name,
-                guests: booking.guests,
-                customer_email: booking.customer_email,
-                customer_phone: booking.customer_phone,
-                start_datetime: startTimeISO,
-                end_datetime: endTimeISO,
-                special_requests: booking.special_requests || 'None'
-              };
-              
-              console.log("Creating event with data:", eventData);
+        if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
+          console.log("Calendar integration found, attempting to create event...");
+          try {
+            // Get fresh access token using refresh token from database
+            const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
+            
+            // Construct ISO-compatible date strings
+            const bookingDate = new Date(booking.start_date);
+            const startDateString = bookingDate.toISOString().split('T')[0];
+            
+            // Convert time strings to full ISO format
+            const startTimeISO = `${startDateString}T${booking.start_time}:00`;
+            const endTimeISO = `${startDateString}T${booking.end_time}:00`;
+            
+            // Create event data with correct field names
+            const eventData = {
+              customer_name: booking.customer_name,
+              guests: booking.guests,
+              customer_email: booking.customer_email,
+              customer_phone: booking.customer_phone,
+              start_datetime: startTimeISO,
+              end_datetime: endTimeISO,
+              special_requests: booking.special_requests || 'None'
+            };
+            
+            console.log("Creating event with data:", eventData);
 
-              const result = await realGoogleCalendarService.createBookingEvent(selectedCalendar, eventData, tokenData.access_token);
+            const result = await realGoogleCalendarService.createBookingEvent(
+              currentUser.google_calendar_id, 
+              eventData, 
+              freshTokenData.access_token
+            );
+            
+            if (result.success) {
+              console.log("✅ Successfully created Google Calendar event:", result.eventId);
+              console.log("📅 Event link:", result.eventLink);
               
-              if (result.success) {
-                console.log("✅ Successfully created Google Calendar event:", result.eventId);
-                console.log("📅 Event link:", result.eventLink);
-                console.log("🔒 Time slot is now marked as unavailable");
-              } else {
-                console.error("Failed to create calendar event:", result.error);
-              }
+              // Store Google Calendar event ID in booking record
+              await Booking.update(booking.id, {
+                google_calendar_event_id: result.eventId
+              });
               
-            } catch (calendarError) {
-              console.error("Failed to create Google Calendar event:", calendarError);
+              console.log("🔒 Time slot is now marked as unavailable");
+            } else {
+              console.error("Failed to create calendar event:", result.error);
             }
-          } else {
-            console.log("Missing tokens or calendar selection");
+            
+          } catch (calendarError) {
+            console.error("Failed to create Google Calendar event:", calendarError);
           }
         } else {
           console.log("No calendar integration found");

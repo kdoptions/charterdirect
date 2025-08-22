@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import { User } from "@/api/entities";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader2, Calendar } from "lucide-react";
@@ -89,34 +90,35 @@ export default function CalendarCallback() {
         return;
       }
 
-      // Store tokens in localStorage like CalendarConnection component expects
-      const userId = user?.id || 'test-owner-1';
-      const tokenData = {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_in: tokens.expires_in,
-        token_type: tokens.token_type
-      };
-      
-      // Debug: Log what we're storing and where
-      addDebugLog(`User object: ${JSON.stringify(user)}`);
-      addDebugLog(`User ID: ${user?.id}`);
-      addDebugLog(`Fallback ID: test-owner-1`);
-      addDebugLog(`Final userId used: ${userId}`);
-      addDebugLog(`Storing tokens with key: google_tokens_${userId}`);
-      addDebugLog(`Storing calendar with key: selected_calendar_${userId}`);
-      
-      localStorage.setItem(`google_tokens_${userId}`, JSON.stringify(tokenData));
-      localStorage.setItem(`selected_calendar_${userId}`, primaryCalendar.id);
-      
-      addDebugLog(`Stored tokens in localStorage for user: ${userId}`);
+      // Store refresh token and calendar ID in Supabase database
+      const userId = user?.id;
+      if (!userId) {
+        throw new Error('User ID not found. Please log in again.');
+      }
+
+      addDebugLog(`User ID: ${userId}`);
       addDebugLog(`Selected calendar: ${primaryCalendar.id}`);
-      
-      // Debug: Verify what was actually stored
-      const storedTokens = localStorage.getItem(`google_tokens_${userId}`);
-      const storedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
-      addDebugLog(`Verification - stored tokens: ${!!storedTokens}`);
-      addDebugLog(`Verification - stored calendar: ${!!storedCalendar}`);
+      addDebugLog(`Storing refresh token in database for user: ${userId}`);
+
+      // Update user record in Supabase with Google Calendar integration
+      const { data: updateData, error: updateError } = await supabase
+        .from('users')
+        .update({
+          google_refresh_token: tokens.refresh_token,
+          google_calendar_id: primaryCalendar.id,
+          google_integration_active: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select();
+
+      if (updateError) {
+        console.error('Failed to update user with Google Calendar integration:', updateError);
+        throw new Error(`Failed to save calendar integration: ${updateError.message}`);
+      }
+
+      addDebugLog(`✅ Successfully stored Google Calendar integration in database`);
+      addDebugLog(`Updated user record:`, updateData);
       
       setStatus("success");
 
