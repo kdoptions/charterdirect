@@ -56,25 +56,37 @@ export default function CalendarCallback() {
       addDebugLog(`Refresh token: ${tokens.refresh_token ? 'present' : 'missing'}`);
 
       addDebugLog("Getting current user");
-      // Get current user - use demo owner for testing
+      // Get current user - must be a real authenticated user
       let user;
       try {
         user = await User.me();
         if (!user) {
-          addDebugLog("No user session, using demo owner");
-          user = await User.loginAsOwner();
+          addDebugLog("No user session found");
+          setStatus("error");
+          setError("You must be logged in to connect your Google Calendar. Please log in and try again.");
+          return;
         }
         addDebugLog(`User retrieved: ${user ? user.id : 'null'}`);
       } catch (err) {
         addDebugLog(`User.me() failed: ${err.message}`);
-        addDebugLog("Falling back to demo owner");
-        user = await User.loginAsOwner();
+        setStatus("error");
+        setError("Failed to get user session. Please log in and try again.");
+        return;
       }
 
       if (!user || !user.id) {
         addDebugLog("User or user.id is missing");
         setStatus("error");
         setError("User session not found. Please log in again to connect your calendar.");
+        return;
+      }
+
+      // Verify user ID is a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user.id)) {
+        addDebugLog(`Invalid user ID format: ${user.id}`);
+        setStatus("error");
+        setError("Invalid user session. Please log in again.");
         return;
       }
 
@@ -94,6 +106,11 @@ export default function CalendarCallback() {
       const userId = user?.id;
       if (!userId) {
         throw new Error('User ID not found. Please log in again.');
+      }
+
+      // Double-check that we have a valid UUID
+      if (!uuidRegex.test(userId)) {
+        throw new Error('Invalid user ID format. Please log in again.');
       }
 
       addDebugLog(`User ID: ${userId}`);
