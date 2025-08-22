@@ -50,6 +50,30 @@ export default function OwnerDashboard() {
     }
   }, [currentUser]);
 
+  // Check calendar connection status on mount and when returning from calendar callback
+  useEffect(() => {
+    if (currentUser) {
+      checkCalendarConnectionStatus();
+    }
+  }, [currentUser]);
+
+  // Function to check calendar connection status
+  const checkCalendarConnectionStatus = () => {
+    const userId = currentUser?.id || 'test-owner-1';
+    const calendarTokens = localStorage.getItem(`google_tokens_${userId}`);
+    const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
+    const hasCalendar = !!(calendarTokens && selectedCalendar);
+    
+    console.log('🔍 Checking calendar connection status:', {
+      userId,
+      hasTokens: !!calendarTokens,
+      hasCalendar: !!selectedCalendar,
+      isConnected: hasCalendar
+    });
+    
+    setCalendarConnected(hasCalendar);
+  };
+
   // Debug: Log whenever bookings state changes
   useEffect(() => {
     console.log("🔍 OwnerDashboard bookings state changed:", bookings);
@@ -89,9 +113,15 @@ export default function OwnerDashboard() {
 
       // Check integration status from user data instead of separate entity
       const hasStripe = userBoats.some(boat => boat.stripe_account_id);
-      const hasCalendar = currentUser.user_metadata?.google_calendar_integration || currentUser.user_metadata?.calendar_integration_data;
+      
+      // Check calendar integration from localStorage (where CalendarCallback stores it)
+      const userId = currentUser?.id || 'test-owner-1';
+      const calendarTokens = localStorage.getItem(`google_tokens_${userId}`);
+      const selectedCalendar = localStorage.getItem(`selected_calendar_${userId}`);
+      const hasCalendar = !!(calendarTokens && selectedCalendar);
+      
       setStripeConnected(hasStripe);
-      setCalendarConnected(!!hasCalendar);
+      setCalendarConnected(hasCalendar);
 
     } catch (error) {
       console.error("❌ Error loading owner data:", error);
@@ -774,10 +804,21 @@ export default function OwnerDashboard() {
         {calendarConnected && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-green-600" />
-                Google Calendar Integration
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-green-600" />
+                  Google Calendar Integration
+                </CardTitle>
+                <Button 
+                  onClick={checkCalendarConnectionStatus} 
+                  size="sm" 
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh Status
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
