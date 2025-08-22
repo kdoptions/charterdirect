@@ -278,21 +278,48 @@ export default function OwnerDashboard() {
             status: 'confirmed'
           });
           
-          // Create Google Calendar event
-          try {
-            await realGoogleCalendarService.createBookingEvent({
-              title: `Boat Booking: ${boat.name}`,
-              start: booking.start_date,
-              end: booking.end_date,
-              description: `Booking confirmed for ${booking.customer_name}. Deposit paid: $${booking.down_payment}. Total: $${booking.total_amount}`,
-              location: boat.location || 'Boat location',
-              customerEmail: booking.customer_email,
-              boatName: boat.name,
-              bookingId: booking.id
-            });
-            console.log('✅ Calendar event created');
-          } catch (calendarError) {
-            console.warn('⚠️ Calendar event creation failed:', calendarError);
+          // Create Google Calendar event if integration exists
+          if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
+            try {
+              // Get fresh access token using refresh token from database
+              const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
+              
+              // Construct ISO-compatible date strings
+              const bookingDate = new Date(booking.start_date);
+              const startDateString = bookingDate.toISOString().split('T')[0];
+              
+              // Convert time strings to full ISO format
+              const startTimeISO = `${startDateString}T${booking.start_time}:00`;
+              const endTimeISO = `${startDateString}T${booking.end_time}:00`;
+              
+              // Create event data with correct field names and null checks
+              const eventData = {
+                customer_name: booking.customer_name || 'Unknown Customer',
+                guests: booking.guests || 1,
+                customer_email: booking.customer_email || 'no-email@example.com',
+                customer_phone: booking.customer_phone || 'No phone provided',
+                start_datetime: startTimeISO,
+                end_datetime: endTimeISO,
+                special_requests: booking.special_requests || 'None'
+              };
+              
+              const result = await realGoogleCalendarService.createBookingEvent(
+                currentUser.google_calendar_id, 
+                eventData, 
+                freshTokenData.access_token
+              );
+              
+              if (result.success) {
+                console.log("✅ Successfully created Google Calendar event:", result.eventId);
+                
+                // Store Google Calendar event ID in booking record
+                await Booking.update(booking.id, {
+                  google_calendar_event_id: result.eventId
+                });
+              }
+            } catch (calendarError) {
+              console.warn('⚠️ Calendar event creation failed:', calendarError);
+            }
           }
           
           alert('✅ Booking confirmed successfully! Deposit was already paid.');
@@ -395,21 +422,48 @@ export default function OwnerDashboard() {
             }
           }
 
-          // Create Google Calendar event
-          try {
-            await realGoogleCalendarService.createBookingEvent({
-              title: `Boat Booking: ${boat.name}`,
-              start: booking.start_date,
-              end: booking.end_date,
-              description: `Booking confirmed for ${booking.customer_name}. Deposit paid: $${depositAmount}. Total: $${totalAmount}`,
-              location: boat.location || 'Boat location',
-              customerEmail: booking.customer_email,
-              boatName: boat.name,
-              bookingId: booking.id
-            });
-            console.log('✅ Calendar event created');
-          } catch (calendarError) {
-            console.warn('⚠️ Calendar event creation failed:', calendarError);
+          // Create Google Calendar event if integration exists
+          if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
+            try {
+              // Get fresh access token using refresh token from database
+              const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
+              
+              // Construct ISO-compatible date strings
+              const bookingDate = new Date(booking.start_date);
+              const startDateString = bookingDate.toISOString().split('T')[0];
+              
+              // Convert time strings to full ISO format
+              const startTimeISO = `${startDateString}T${booking.start_time}:00`;
+              const endTimeISO = `${startDateString}T${booking.end_time}:00`;
+              
+              // Create event data with correct field names and null checks
+              const eventData = {
+                customer_name: booking.customer_name || 'Unknown Customer',
+                guests: booking.guests || 1,
+                customer_email: booking.customer_email || 'no-email@example.com',
+                customer_phone: booking.customer_phone || 'No phone provided',
+                start_datetime: startTimeISO,
+                end_datetime: endTimeISO,
+                special_requests: booking.special_requests || 'None'
+              };
+              
+              const result = await realGoogleCalendarService.createBookingEvent(
+                currentUser.google_calendar_id, 
+                eventData, 
+                freshTokenData.access_token
+              );
+              
+              if (result.success) {
+                console.log("✅ Successfully created Google Calendar event:", result.eventId);
+                
+                // Store Google Calendar event ID in booking record
+                await Booking.update(booking.id, {
+                  google_calendar_event_id: result.eventId
+                });
+              }
+            } catch (calendarError) {
+              console.warn('⚠️ Calendar event creation failed:', calendarError);
+            }
           }
 
           alert('✅ Booking confirmed and payment processed successfully!');
