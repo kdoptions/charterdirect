@@ -314,8 +314,18 @@ export default function OwnerDashboard() {
               const startDateString = bookingDate.toISOString().split('T')[0];
               
               // Convert time strings to full ISO format
-              const startTimeISO = `${startDateString}T${booking.start_time}:00`;
-              const endTimeISO = `${startDateString}T${booking.end_time}:00`;
+              console.log('📅 Raw time values:', { 
+                start_time: booking.start_time, 
+                end_time: booking.end_time,
+                startDateString 
+              });
+              
+              // Ensure time format is correct (HH:MM:SS)
+              const startTime = booking.start_time.includes(':00') ? booking.start_time : `${booking.start_time}:00`;
+              const endTime = booking.end_time.includes(':00') ? booking.end_time : `${booking.end_time}:00`;
+              
+              const startTimeISO = `${startDateString}T${startTime}`;
+              const endTimeISO = `${startDateString}T${endTime}`;
               
               console.log('📅 Event time data:', { startTimeISO, endTimeISO });
               
