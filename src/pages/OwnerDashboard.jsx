@@ -92,8 +92,9 @@ export default function OwnerDashboard() {
       console.log("Loading boats for owner ID:", currentUser.id);
       console.log("Current user object:", currentUser);
       
+      let userBoats = [];
       try {
-        const userBoats = await Boat.filter({ owner_id: currentUser.id });
+        userBoats = await Boat.filter({ owner_id: currentUser.id });
         console.log("User boats found:", userBoats);
         console.log("User boats length:", userBoats?.length);
         setBoats(userBoats);
@@ -131,44 +132,37 @@ export default function OwnerDashboard() {
       // Check integration status from user data instead of separate entity
       const hasStripe = userBoats.some(boat => boat.stripe_account_id);
       
-        // Check calendar integration from database
-  let hasCalendar = false;
-  let userCalendarData = null;
-  
-  // If we have a currentUser with Google Calendar data, use it
-  if (currentUser?.google_integration_active !== undefined) {
-    hasCalendar = currentUser.google_integration_active;
-  } else {
-    // Fallback: directly fetch user data from database
-    try {
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('google_integration_active, google_calendar_id, google_refresh_token')
-        .eq('id', currentUser?.id)
-        .single();
+      // Check calendar integration from database
+      let hasCalendar = false;
+      let userCalendarData = null;
       
-      if (!error && userData) {
-        hasCalendar = userData.google_integration_active || false;
-        userCalendarData = userData;
-        console.log('🔍 Fetched Google Calendar status from database:', userData);
+      // Always fetch user data from database to ensure it's fresh
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('google_integration_active, google_calendar_id, google_refresh_token')
+          .eq('id', currentUser?.id)
+          .single();
         
-        // Store calendar integration data in local state
-        setUserCalendarData(userData);
+        if (!error && userData) {
+          hasCalendar = userData.google_integration_active || false;
+          userCalendarData = userData;
+          console.log('🔍 Fetched Google Calendar status from database:', userData);
+          setUserCalendarData(userData); // Update local state
+        }
+      } catch (dbError) {
+        console.error('Error fetching Google Calendar status:', dbError);
       }
-    } catch (dbError) {
-      console.error('Error fetching Google Calendar status:', dbError);
-    }
-  }
-  
-  console.log('🔍 Calendar Integration Debug:', {
-    currentUserId: currentUser?.id,
-    googleIntegrationActive: currentUser?.google_integration_active,
-    hasCalendar: hasCalendar,
-    userCalendarData: userCalendarData
-  });
-  
-  setStripeConnected(hasStripe);
-  setCalendarConnected(hasCalendar);
+      
+      console.log('🔍 Calendar Integration Debug:', {
+        currentUserId: currentUser?.id,
+        googleIntegrationActive: userCalendarData?.google_integration_active,
+        hasCalendar: hasCalendar,
+        userCalendarData: userCalendarData
+      });
+      
+      setStripeConnected(hasStripe);
+      setCalendarConnected(hasCalendar);
 
     } catch (error) {
       console.error("❌ Error loading owner data:", error);
