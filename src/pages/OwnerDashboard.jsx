@@ -104,7 +104,7 @@ export default function OwnerDashboard() {
 
       // Load bookings for user's boats
       try {
-        const allBookings = await Booking.filter(); // Get all bookings
+        const allBookings = await Booking.filter({}); // Pass empty object to get all real bookings
         console.log("All bookings loaded:", allBookings);
         console.log("All bookings length:", allBookings?.length);
         
@@ -304,11 +304,16 @@ export default function OwnerDashboard() {
             status: 'confirmed'
           });
           
-          // Create Google Calendar event if integration exists
+          // Create Google Calendar event if integration exists - FIRST INSTANCE
           if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
+            console.log('📅 Calendar integration enabled, creating event for booking:', booking.id);
+            console.log('📅 User calendar data:', userCalendarData);
+            
             try {
               // Get fresh access token using refresh token from database
+              console.log('📅 Getting fresh access token...');
               const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(userCalendarData.google_refresh_token);
+              console.log('📅 Fresh token data:', freshTokenData);
               
               // Construct ISO-compatible date strings
               const bookingDate = new Date(booking.start_date);
@@ -317,6 +322,8 @@ export default function OwnerDashboard() {
               // Convert time strings to full ISO format
               const startTimeISO = `${startDateString}T${booking.start_time}:00`;
               const endTimeISO = `${startDateString}T${booking.end_time}:00`;
+              
+              console.log('📅 Event time data:', { startTimeISO, endTimeISO });
               
               // Create event data with correct field names and null checks
               const eventData = {
@@ -329,11 +336,15 @@ export default function OwnerDashboard() {
                 special_requests: booking.special_requests || 'None'
               };
               
+              console.log('📅 Creating calendar event with data:', eventData);
+              
               const result = await realGoogleCalendarService.createBookingEvent(
                 userCalendarData.google_calendar_id, 
                 eventData, 
                 freshTokenData.access_token
               );
+              
+              console.log('📅 Calendar event creation result:', result);
               
               if (result.success) {
                 console.log("✅ Successfully created Google Calendar event:", result.eventId);
@@ -342,10 +353,23 @@ export default function OwnerDashboard() {
                 await Booking.update(booking.id, {
                   google_calendar_event_id: result.eventId
                 });
+              } else {
+                console.error('❌ Calendar event creation failed:', result.error);
               }
             } catch (calendarError) {
-              console.warn('⚠️ Calendar event creation failed:', calendarError);
+              console.error('❌ Calendar event creation error:', calendarError);
+              console.error('❌ Error details:', {
+                message: calendarError.message,
+                stack: calendarError.stack,
+                userCalendarData: userCalendarData
+              });
             }
+          } else {
+            console.log('📅 Calendar integration not enabled or missing data:', {
+              google_integration_active: userCalendarData?.google_integration_active,
+              google_calendar_id: userCalendarData?.google_calendar_id,
+              userCalendarData: userCalendarData
+            });
           }
           
           alert('✅ Booking confirmed successfully! Deposit was already paid.');
