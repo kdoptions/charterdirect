@@ -486,8 +486,8 @@ export const Booking = {
       
       // Handle case where params is undefined or null
       if (!params) {
-        console.log("⚠️ No params provided, returning all mock bookings");
-        return mockBookings;
+        console.log("⚠️ No params provided, fetching all bookings from Supabase");
+        params = {}; // Set to empty object to fetch all
       }
       
       let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });

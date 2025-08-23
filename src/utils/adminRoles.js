@@ -27,14 +27,15 @@ export const getUserRole = (user) => {
 export const hasPermission = (user, permission) => {
   const role = getUserRole(user);
   
-  // Debug logging
-  console.log('🔍 Permission check:', {
-    user: user?.email,
-    permission,
-    role,
-    isAdmin: isAdmin(user),
-    adminEmails: ADMIN_EMAILS
-  });
+  // Debug logging (reduced for production)
+  if (import.meta.env.DEV) {
+    console.log('🔍 Permission check:', {
+      user: user?.email,
+      permission,
+      role,
+      isAdmin: isAdmin(user)
+    });
+  }
   
   switch (permission) {
     case 'access_admin_panel':

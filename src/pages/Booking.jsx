@@ -110,13 +110,15 @@ const stripeInstance = await stripeService.getStripe();
     if (cardElement) {
       const mountCardElement = () => {
         const cardElementDiv = document.getElementById('card-element');
-        if (cardElementDiv) {
+        if (cardElementDiv && !cardElementDiv.hasChildNodes()) {
           try {
             cardElement.mount('#card-element');
             console.log('✅ Stripe card element mounted successfully');
           } catch (error) {
             console.error('❌ Failed to mount Stripe card element:', error);
           }
+        } else if (cardElementDiv && cardElementDiv.hasChildNodes()) {
+          console.log('✅ Stripe card element already mounted');
         } else {
           console.log('⚠️ Card element div not found yet, will retry');
           // Retry with increasing delays
@@ -520,8 +522,8 @@ const stripeInstance = await stripeService.getStripe();
           metadata: {
             bookingId: newBooking.id,
             boatId: boat.id,
-            customerName: customerName,
-            customerEmail: customerEmail,
+            customerName: customerDetails.name,
+            customerEmail: customerDetails.email,
             type: 'deposit',
             totalAmount: totalAmount.toString()
           }
@@ -546,7 +548,7 @@ const stripeInstance = await stripeService.getStripe();
         console.error("❌ PaymentIntent creation failed:", paymentError);
         // Still create the booking but mark payment as failed
         await BookingEntity.update(newBooking.id, {
-          payment_status: 'payment_failed',
+          payment_status: 'failed',
           payment_error: paymentError.message
         });
         console.log("⚠️ Booking created but PaymentIntent failed - owner will need to handle");

@@ -91,21 +91,10 @@ export default function Layout({ children, currentPageName }) {
 
     // Add owner-specific items (if they have approved boats)
     if (userRole === 'admin' || userBoats.length > 0) {
-      console.log('🔍 Adding owner navigation items:', {
-        userRole,
-        userBoatsCount: userBoats.length,
-        hasApprovedBoats: userBoats.length > 0
-      });
       items.push(
         { label: "Owner Dashboard", href: createPageUrl("OwnerDashboard"), icon: Ship },
         { label: "My Boats", href: createPageUrl("MyBoats"), icon: Ship }
       );
-    } else {
-      console.log('🔍 No owner navigation items:', {
-        userRole,
-        userBoatsCount: userBoats.length,
-        hasApprovedBoats: userBoats.length > 0
-      });
     }
 
     // Add admin panel for admins
@@ -118,7 +107,6 @@ export default function Layout({ children, currentPageName }) {
     // Add List Your Boat for all logged in users
     items.push({ label: "List Your Boat", href: createPageUrl("ListBoat"), icon: Plus });
 
-    console.log('🔍 Final navigation items:', items.map(item => item.label));
     return items;
   };
 

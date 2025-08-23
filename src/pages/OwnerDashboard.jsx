@@ -321,7 +321,7 @@ export default function OwnerDashboard() {
             
             // Update booking with payment failure
             await Booking.update(bookingId, {
-              payment_status: 'payment_failed',
+              payment_status: 'failed',
               payment_error: paymentError.message,
               payment_failed_at: new Date().toISOString()
             });
