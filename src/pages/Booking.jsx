@@ -495,9 +495,9 @@ const stripeInstance = await stripeService.getStripe();
       const newBooking = await BookingEntity.create(bookingData);
       console.log("Booking created successfully:", newBooking);
       
-      // Process deposit payment immediately
+      // Create PaymentIntent for later confirmation (no charge yet)
       try {
-        console.log("💳 Processing deposit payment...");
+        console.log("💳 Creating PaymentIntent for deposit payment...");
         
         // Calculate deposit amount and platform fee
         const depositAmount = Number(totalAmount * (boat.down_payment_percentage / 100));
@@ -510,28 +510,46 @@ const stripeInstance = await stripeService.getStripe();
           downPaymentPercentage: boat.down_payment_percentage
         });
         
-        // For now, simulate successful payment since we're in demo mode
-        // In production, this would create a Stripe PaymentIntent and process the payment
-        console.log("✅ Deposit payment processed successfully (demo mode)");
+        // Create Stripe PaymentIntent but don't confirm it yet
+        const stripeService = new StripeService();
+        await stripeService.initialize();
         
-        // Update booking with payment confirmation
-        await BookingEntity.update(newBooking.id, {
-          payment_status: 'deposit_paid',
-          platform_fee_collected: platformFee,
-          deposit_paid_at: new Date().toISOString()
+        // Create PaymentIntent for the deposit amount (no connected account needed yet)
+        const paymentIntent = await stripeService.createPaymentIntent({
+          amount: Math.round(depositAmount * 100), // Convert to cents
+          metadata: {
+            bookingId: newBooking.id,
+            boatId: boat.id,
+            customerName: customerName,
+            customerEmail: customerEmail,
+            type: 'deposit',
+            totalAmount: totalAmount.toString()
+          }
         });
         
-        console.log("📋 Booking created and deposit paid - awaiting owner approval");
+        console.log("✅ PaymentIntent created successfully:", paymentIntent.id);
+        
+        // Update booking with PaymentIntent ID and pending status
+        await BookingEntity.update(newBooking.id, {
+          payment_status: 'pending_approval',
+          stripe_payment_intent_id: paymentIntent.id,
+          deposit_amount: depositAmount,
+          platform_fee: platformFee,
+          created_at: new Date().toISOString()
+        });
+        
+        console.log("📋 Booking created with PaymentIntent - awaiting owner approval");
+        console.log("💳 Payment will be processed when owner approves");
         console.log("📅 Calendar event will be created when owner approves");
         
       } catch (paymentError) {
-        console.error("❌ Deposit payment failed:", paymentError);
+        console.error("❌ PaymentIntent creation failed:", paymentError);
         // Still create the booking but mark payment as failed
         await BookingEntity.update(newBooking.id, {
           payment_status: 'payment_failed',
           payment_error: paymentError.message
         });
-        console.log("⚠️ Booking created but payment failed - owner will need to handle");
+        console.log("⚠️ Booking created but PaymentIntent failed - owner will need to handle");
       }
         
       // Navigate to confirmation page

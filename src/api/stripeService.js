@@ -56,10 +56,10 @@ class StripeService {
           amount: amount,
           currency: 'usd',
           status: 'requires_payment_method',
-          application_fee_amount: applicationFeeAmount,
-          transfer_data: {
+          application_fee_amount: applicationFeeAmount || 0,
+          transfer_data: connectedAccountId ? {
             destination: connectedAccountId
-          },
+          } : undefined,
           metadata: metadata
         };
         
@@ -422,6 +422,93 @@ class StripeService {
       
     } catch (error) {
       console.error('❌ Error retrieving Connect account:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async confirmPaymentIntent(paymentIntentId) {
+    try {
+      console.log('💳 Confirming PaymentIntent:', paymentIntentId);
+      
+      // For development, simulate successful confirmation
+      if (import.meta.env.DEV || !import.meta.env.VITE_STRIPE_SECRET_KEY) {
+        console.log('🔄 Development mode - simulating PaymentIntent confirmation');
+        
+        // Simulate a delay for realistic behavior
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const mockPaymentIntent = {
+          id: paymentIntentId,
+          status: 'succeeded',
+          amount: 1000, // Mock amount
+          currency: 'usd',
+          created: Date.now() / 1000
+        };
+        
+        console.log('✅ Mock PaymentIntent confirmed successfully');
+        return { success: true, paymentIntent: mockPaymentIntent };
+      }
+
+      // Production API call
+      const response = await fetch('/api/confirm-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIntentId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to confirm payment intent');
+      }
+
+      const paymentIntent = await response.json();
+      return { success: true, paymentIntent };
+      
+    } catch (error) {
+      console.error('❌ Error confirming PaymentIntent:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async cancelPaymentIntent(paymentIntentId) {
+    try {
+      console.log('💳 Cancelling PaymentIntent:', paymentIntentId);
+      
+      // For development, simulate successful cancellation
+      if (import.meta.env.DEV || !import.meta.env.VITE_STRIPE_SECRET_KEY) {
+        console.log('🔄 Development mode - simulating PaymentIntent cancellation');
+        
+        // Simulate a delay for realistic behavior
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        console.log('✅ Mock PaymentIntent cancelled successfully');
+        return { success: true };
+      }
+
+      // Production API call
+      const response = await fetch('/api/cancel-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIntentId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to cancel payment intent');
+      }
+
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Error cancelling PaymentIntent:', error);
       return { success: false, error: error.message };
     }
   }

@@ -289,8 +289,55 @@ export default function OwnerDashboard() {
           connectedAccount: selectedConnectedAccount
         });
 
-        // Check if deposit is already paid
-        if (booking.payment_status === 'deposit_paid') {
+        // Check if payment is pending approval
+        if (booking.payment_status === 'pending_approval' && booking.stripe_payment_intent_id) {
+          console.log('💳 Payment pending approval, processing payment now...');
+          
+          try {
+            // Confirm the PaymentIntent to charge the customer
+            const stripeService = new StripeService();
+            await stripeService.initialize();
+            
+            // Confirm the PaymentIntent
+            const confirmResult = await stripeService.confirmPaymentIntent(booking.stripe_payment_intent_id);
+            
+            if (confirmResult.success) {
+              console.log('✅ Payment confirmed successfully:', confirmResult.paymentIntent);
+              
+              // Update booking status to confirmed and mark payment as completed
+              await Booking.update(bookingId, {
+                status: 'confirmed',
+                payment_status: 'deposit_paid',
+                deposit_paid_at: new Date().toISOString(),
+                platform_fee_collected: booking.platform_fee || 0
+              });
+              
+              console.log('✅ Booking confirmed and payment processed');
+            } else {
+              throw new Error(confirmResult.error || 'Payment confirmation failed');
+            }
+          } catch (paymentError) {
+            console.error('❌ Payment confirmation failed:', paymentError);
+            
+            // Update booking with payment failure
+            await Booking.update(bookingId, {
+              payment_status: 'payment_failed',
+              payment_error: paymentError.message,
+              payment_failed_at: new Date().toISOString()
+            });
+            
+            // Show error to owner and set grace period
+            const gracePeriodEnd = new Date();
+            gracePeriodEnd.setHours(gracePeriodEnd.getHours() + 24);
+            
+            await Booking.update(bookingId, {
+              payment_grace_period_until: gracePeriodEnd.toISOString()
+            });
+            
+            alert(`❌ Payment failed: ${paymentError.message}\n\nCustomer has 24 hours to update their payment method.\nGrace period ends: ${gracePeriodEnd.toLocaleString()}`);
+            return;
+          }
+        } else if (booking.payment_status === 'deposit_paid') {
           console.log('✅ Deposit already paid, proceeding with confirmation');
           
           // Update booking status to confirmed
@@ -570,9 +617,43 @@ export default function OwnerDashboard() {
         }
 
       } else if (action === 'rejected') {
-        // Reject the booking
+        // Reject the booking and cancel any pending payments
         const reason = prompt('Please provide a reason for rejection:') || 'No reason provided';
-        await Booking.reject(bookingId, reason);
+        
+        try {
+          // Cancel PaymentIntent if payment is pending
+          if (booking.payment_status === 'pending_approval' && booking.stripe_payment_intent_id) {
+            console.log('💳 Cancelling PaymentIntent for rejected booking...');
+            
+            const stripeService = new StripeService();
+            await stripeService.initialize();
+            
+            // Cancel the PaymentIntent
+            const cancelResult = await stripeService.cancelPaymentIntent(booking.stripe_payment_intent_id);
+            
+            if (cancelResult.success) {
+              console.log('✅ PaymentIntent cancelled successfully');
+            } else {
+              console.warn('⚠️ Failed to cancel PaymentIntent:', cancelResult.error);
+            }
+          }
+          
+          // Reject the booking
+          await Booking.reject(bookingId, reason);
+          
+          // Close the action dialog
+          setActionDialog({ open: false, type: '', booking: null });
+          
+          // Show success message
+          alert('❌ Booking rejected successfully. No payment was charged.');
+          
+          // Refresh data
+          await loadOwnerData();
+          
+        } catch (error) {
+          console.error('❌ Error rejecting booking:', error);
+          alert('Failed to reject booking. Please try again.');
+        }
       } else {
         // Other actions
         const updateData = { status: action };
