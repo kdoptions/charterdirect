@@ -298,7 +298,7 @@ export default function OwnerDashboard() {
             status: 'confirmed'
           });
           
-          // Create Google Calendar event if integration exists - FIRST INSTANCE
+          // Create Google Calendar event for boat owner's calendar only (not for customer) - FIRST INSTANCE
           if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
             console.log('📅 Calendar integration enabled, creating event for booking:', booking.id);
             console.log('📅 User calendar data:', userCalendarData);
@@ -376,8 +376,28 @@ export default function OwnerDashboard() {
             });
           }
           
-          alert('✅ Booking confirmed successfully! Deposit was already paid.');
-          // Refresh the data instead of reloading the page
+          // Send confirmation email to customer
+          try {
+            await notifications.notifyCustomerBookingConfirmed(booking.customer_email, {
+              customerName: booking.customer_name,
+              boatName: boats.find(b => b.id === booking.boat_id)?.name,
+              startDate: booking.start_date,
+              startTime: booking.start_time,
+              endTime: booking.end_time,
+              guests: booking.guests,
+              totalAmount: booking.total_amount,
+              bookingId: booking.id
+            });
+            console.log("📧 Confirmation email sent to customer:", booking.customer_email);
+          } catch (emailError) {
+            console.warn("⚠️ Failed to send confirmation email:", emailError);
+          }
+          
+          // Close the action dialog automatically
+          setActionDialog({ open: false, type: '', booking: null });
+          
+          // Show success message and refresh data
+          alert('✅ Booking confirmed successfully! Deposit was already paid. Confirmation email sent to customer.');
           await loadOwnerData();
           return;
         }
@@ -476,7 +496,7 @@ export default function OwnerDashboard() {
             }
           }
 
-          // Create Google Calendar event if integration exists
+          // Create Google Calendar event for boat owner's calendar only (not for customer)
           if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
             try {
               // Get fresh access token using refresh token from database
@@ -490,7 +510,7 @@ export default function OwnerDashboard() {
               const startTimeISO = `${startDateString}T${booking.start_time}:00`;
               const endTimeISO = `${startDateString}T${booking.end_time}:00`;
               
-              // Create event data with correct field names and null checks
+              // Create event data for boat owner's calendar
               const eventData = {
                 customer_name: booking.customer_name || 'Unknown Customer',
                 guests: booking.guests || 1,
@@ -508,7 +528,7 @@ export default function OwnerDashboard() {
               );
               
               if (result.success) {
-                console.log("✅ Successfully created Google Calendar event:", result.eventId);
+                console.log("✅ Successfully created Google Calendar event for boat owner:", result.eventId);
                 
                 // Store Google Calendar event ID in booking record
                 await Booking.update(booking.id, {
@@ -520,8 +540,28 @@ export default function OwnerDashboard() {
             }
           }
 
-          alert('✅ Booking confirmed and payment processed successfully!');
-          // Refresh the data instead of reloading the page
+          // Send confirmation email to customer
+          try {
+            await notifications.notifyCustomerBookingConfirmed(booking.customer_email, {
+              customerName: booking.customer_name,
+              boatName: boats.find(b => b.id === booking.boat_id)?.name,
+              startDate: booking.start_date,
+              startTime: booking.start_time,
+              endTime: booking.end_time,
+              guests: booking.guests,
+              totalAmount: booking.total_amount,
+              bookingId: booking.id
+            });
+            console.log("📧 Confirmation email sent to customer:", booking.customer_email);
+          } catch (emailError) {
+            console.warn("⚠️ Failed to send confirmation email:", emailError);
+          }
+          
+          // Close the action dialog automatically
+          setActionDialog({ open: false, type: '', booking: null });
+          
+          // Show success message and refresh data
+          alert('✅ Booking confirmed and payment processed successfully! Confirmation email sent to customer.');
           await loadOwnerData();
 
         } catch (paymentError) {
