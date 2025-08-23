@@ -90,24 +90,43 @@ export default function OwnerDashboard() {
       
       // Load boats owned by current user
       console.log("Loading boats for owner ID:", currentUser.id);
-      const userBoats = await Boat.filter({ owner_id: currentUser.id }, "-created_date");
-      console.log("User boats found:", userBoats);
-      setBoats(userBoats);
+      console.log("Current user object:", currentUser);
+      
+      try {
+        const userBoats = await Boat.filter({ owner_id: currentUser.id });
+        console.log("User boats found:", userBoats);
+        console.log("User boats length:", userBoats?.length);
+        setBoats(userBoats);
+      } catch (boatError) {
+        console.error("Error loading boats:", boatError);
+        setBoats([]);
+      }
 
       // Load bookings for user's boats
-      const allBookings = await Booking.filter(); // Get all bookings
-      console.log("All bookings loaded:", allBookings);
-      const boatIds = userBoats.map(boat => boat.id);
-      console.log("Owner boat IDs:", boatIds);
-      
-      // Debug each booking to see why it's not matching
-      allBookings.forEach(booking => {
-        console.log(`Booking ${booking.id}: boat_id=${booking.boat_id}, matches=${boatIds.includes(booking.boat_id)}`);
-      });
-      
-      const ownerBookings = allBookings.filter(booking => boatIds.includes(booking.boat_id));
-      console.log("Owner bookings filtered:", ownerBookings);
-      setBookings(ownerBookings);
+      try {
+        const allBookings = await Booking.filter(); // Get all bookings
+        console.log("All bookings loaded:", allBookings);
+        console.log("All bookings length:", allBookings?.length);
+        
+        const boatIds = userBoats?.map(boat => boat.id) || [];
+        console.log("Owner boat IDs:", boatIds);
+        console.log("Owner boat IDs length:", boatIds.length);
+        
+        // Debug each booking to see why it's not matching
+        if (allBookings && allBookings.length > 0) {
+          allBookings.forEach(booking => {
+            console.log(`Booking ${booking.id}: boat_id=${booking.boat_id}, matches=${boatIds.includes(booking.boat_id)}`);
+          });
+        }
+        
+        const ownerBookings = allBookings?.filter(booking => boatIds.includes(booking.boat_id)) || [];
+        console.log("Owner bookings filtered:", ownerBookings);
+        console.log("Owner bookings length:", ownerBookings.length);
+        setBookings(ownerBookings);
+      } catch (bookingError) {
+        console.error("Error loading bookings:", bookingError);
+        setBookings([]);
+      }
 
       // Check integration status from user data instead of separate entity
       const hasStripe = userBoats.some(boat => boat.stripe_account_id);
