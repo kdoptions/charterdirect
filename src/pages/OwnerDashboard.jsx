@@ -41,6 +41,7 @@ export default function OwnerDashboard() {
   const [stripeConnected, setStripeConnected] = useState(false);
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [selectedConnectedAccount, setSelectedConnectedAccount] = useState(null);
+  const [userCalendarData, setUserCalendarData] = useState(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -113,6 +114,7 @@ export default function OwnerDashboard() {
       
         // Check calendar integration from database
   let hasCalendar = false;
+  let userCalendarData = null;
   
   // If we have a currentUser with Google Calendar data, use it
   if (currentUser?.google_integration_active !== undefined) {
@@ -122,13 +124,17 @@ export default function OwnerDashboard() {
     try {
       const { data: userData, error } = await supabase
         .from('users')
-        .select('google_integration_active, google_calendar_id')
+        .select('google_integration_active, google_calendar_id, google_refresh_token')
         .eq('id', currentUser?.id)
         .single();
       
       if (!error && userData) {
         hasCalendar = userData.google_integration_active || false;
+        userCalendarData = userData;
         console.log('🔍 Fetched Google Calendar status from database:', userData);
+        
+        // Store calendar integration data in local state
+        setUserCalendarData(userData);
       }
     } catch (dbError) {
       console.error('Error fetching Google Calendar status:', dbError);
@@ -138,7 +144,8 @@ export default function OwnerDashboard() {
   console.log('🔍 Calendar Integration Debug:', {
     currentUserId: currentUser?.id,
     googleIntegrationActive: currentUser?.google_integration_active,
-    hasCalendar: hasCalendar
+    hasCalendar: hasCalendar,
+    userCalendarData: userCalendarData
   });
   
   setStripeConnected(hasStripe);
@@ -279,10 +286,10 @@ export default function OwnerDashboard() {
           });
           
           // Create Google Calendar event if integration exists
-          if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
+          if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
             try {
               // Get fresh access token using refresh token from database
-              const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
+              const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(userCalendarData.google_refresh_token);
               
               // Construct ISO-compatible date strings
               const bookingDate = new Date(booking.start_date);
@@ -304,7 +311,7 @@ export default function OwnerDashboard() {
               };
               
               const result = await realGoogleCalendarService.createBookingEvent(
-                currentUser.google_calendar_id, 
+                userCalendarData.google_calendar_id, 
                 eventData, 
                 freshTokenData.access_token
               );
@@ -423,10 +430,10 @@ export default function OwnerDashboard() {
           }
 
           // Create Google Calendar event if integration exists
-          if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
+          if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
             try {
               // Get fresh access token using refresh token from database
-              const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
+              const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(userCalendarData.google_refresh_token);
               
               // Construct ISO-compatible date strings
               const bookingDate = new Date(booking.start_date);
@@ -448,7 +455,7 @@ export default function OwnerDashboard() {
               };
               
               const result = await realGoogleCalendarService.createBookingEvent(
-                currentUser.google_calendar_id, 
+                userCalendarData.google_calendar_id, 
                 eventData, 
                 freshTokenData.access_token
               );
@@ -502,16 +509,16 @@ export default function OwnerDashboard() {
         // Create Google Calendar event if integration exists
         console.log("Checking for calendar integration...");
         
-        if (currentUser?.google_integration_active && currentUser?.google_calendar_id) {
+        if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
           console.log("✅ Calendar integration found, attempting to create event...");
           console.log("🔍 Calendar integration details:", {
-            isActive: currentUser.google_integration_active,
-            calendarId: currentUser.google_calendar_id,
-            hasRefreshToken: !!currentUser.google_refresh_token
+            isActive: userCalendarData.google_integration_active,
+            calendarId: userCalendarData.google_calendar_id,
+            hasRefreshToken: !!userCalendarData.google_refresh_token
           });
           try {
             // Get fresh access token using refresh token from database
-            const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(currentUser.google_refresh_token);
+            const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(userCalendarData.google_refresh_token);
             
             // Construct ISO-compatible date strings
             const bookingDate = new Date(booking.start_date);
@@ -548,7 +555,7 @@ export default function OwnerDashboard() {
             });
 
             const result = await realGoogleCalendarService.createBookingEvent(
-              currentUser.google_calendar_id, 
+              userCalendarData.google_calendar_id, 
               eventData, 
               freshTokenData.access_token
             );
