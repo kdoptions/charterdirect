@@ -1,6 +1,7 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
+import "./calendar.css"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -12,17 +13,13 @@ function Calendar({
   ...props
 }) {
   return (
-    (<DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-4", className)}
-      style={{
-        '--rdp-cell-size': '40px',
-        '--rdp-accent-color': '#3b82f6',
-        '--rdp-background-color': '#f8fafc',
-      }}
-      classNames={{
+    (<div className="w-full max-w-sm">
+      <DayPicker
+        showOutsideDays={showOutsideDays}
+        className={cn("p-4", className)}
+        classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4 bg-white rounded-xl shadow-lg border-0 p-6 min-w-[320px]",
+        month: "space-y-4 bg-white rounded-xl shadow-lg border border-gray-200 p-6",
         caption: "flex justify-center pt-1 relative items-center mb-4",
         caption_label: "text-lg font-semibold text-gray-900",
         nav: "space-x-1 flex items-center",
@@ -32,30 +29,22 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-2",
-        head_row: "flex mb-3",
-        head_cell:
-          "text-gray-700 rounded-md w-10 font-semibold text-sm uppercase tracking-wide pb-2",
-        cell: cn(
-          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md",
-          props.mode === "range"
-            ? "[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
-            : "[&:has([aria-selected])]:rounded-md"
-        ),
+        table: "w-full border-collapse",
+        head_row: "flex",
+        head_cell: "text-gray-700 font-semibold text-sm uppercase tracking-wide pb-2 px-1",
+        row: "flex w-full mt-2",
+        cell: "text-center p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-10 w-10 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 hover:bg-blue-50 hover:border-blue-200 hover:scale-105 rounded-md border border-transparent"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-blue-50 hover:text-blue-700 rounded-md"
         ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-blue-100 text-blue-700 font-semibold border-2 border-blue-400 shadow-sm",
-        day_outside:
-          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-gray-400 opacity-60 bg-gray-100 line-through cursor-not-allowed",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_selected: "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+        day_today: "bg-blue-100 text-blue-700 font-semibold",
+        day_outside: "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+        day_disabled: "text-muted-foreground opacity-30 bg-gray-100 line-through cursor-not-allowed",
+        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
       }}
@@ -68,7 +57,8 @@ function Calendar({
         ),
 
       }}
-      {...props} />)
+      {...props} />
+    </div>)
   );
 }
 Calendar.displayName = "Calendar"
