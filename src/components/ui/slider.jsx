@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils"
 const Slider = React.forwardRef(({ className, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
-    className={cn("relative flex w-full touch-none select-none items-center", className)}
+    className={cn("relative flex w-full select-none items-center", className)}
+    step={props.step || 1}
+    minStepsBetweenThumbs={0}
     {...props}>
     <SliderPrimitive.Track
       className="relative h-2 w-full grow overflow-hidden rounded-full bg-slate-200">
