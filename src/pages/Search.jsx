@@ -37,6 +37,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Search() {
   const [searchParams] = useSearchParams();
+  
+  // Get search parameters from URL FIRST
+  const urlLocation = searchParams.get("location") || "";
+  const urlDate = searchParams.get("date") || "";
+  
   const [boats, setBoats] = useState([]);
   const [filteredBoats, setFilteredBoats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,12 +51,8 @@ export default function Search() {
     priceRange: [0, 1000],
     guests: 1,
     withCaptain: null,
-    location: searchParams.get("location") || ""
+    location: urlLocation
   });
-  
-  // Get search parameters from URL
-  const urlLocation = searchParams.get("location") || "";
-  const urlDate = searchParams.get("date") || "";
 
   useEffect(() => {
     // Load boats with URL search parameters
@@ -125,7 +126,10 @@ export default function Search() {
     <div className="space-y-6">
       <div>
         <h3 className="font-semibold mb-3">Boat Type</h3>
-        <Select value={filters.boatType} onValueChange={(value) => setFilters({...filters, boatType: value})}>
+        <Select value={filters.boatType} onValueChange={(value) => {
+          setFilters({...filters, boatType: value});
+          setTimeout(() => applyFilters(), 300);
+        }}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -142,7 +146,10 @@ export default function Search() {
         <div className="px-2">
           <Slider
             value={filters.priceRange}
-            onValueChange={(value) => setFilters({...filters, priceRange: value})}
+            onValueChange={(value) => {
+              setFilters({...filters, priceRange: value});
+              setTimeout(() => applyFilters(), 300);
+            }}
             max={1000}
             min={0}
             step={50}
@@ -157,7 +164,10 @@ export default function Search() {
 
       <div>
         <h3 className="font-semibold mb-3">Number of Guests</h3>
-        <Select value={filters.guests.toString()} onValueChange={(value) => setFilters({...filters, guests: parseInt(value)})}>
+        <Select value={filters.guests.toString()} onValueChange={(value) => {
+          setFilters({...filters, guests: parseInt(value)});
+          setTimeout(() => applyFilters(), 300);
+        }}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -176,7 +186,10 @@ export default function Search() {
             <Checkbox 
               id="all-captain"
               checked={filters.withCaptain === null}
-              onCheckedChange={() => setFilters({...filters, withCaptain: null})}
+              onCheckedChange={() => {
+                setFilters({...filters, withCaptain: null});
+                setTimeout(() => applyFilters(), 300);
+              }}
             />
             <label htmlFor="all-captain" className="text-sm">All options</label>
           </div>
@@ -184,7 +197,10 @@ export default function Search() {
             <Checkbox 
               id="with-captain"
               checked={filters.withCaptain === true}
-              onCheckedChange={() => setFilters({...filters, withCaptain: true})}
+              onCheckedChange={() => {
+                setFilters({...filters, withCaptain: true});
+                setTimeout(() => applyFilters(), 300);
+              }}
             />
             <label htmlFor="with-captain" className="text-sm">With captain</label>
           </div>
@@ -192,7 +208,10 @@ export default function Search() {
             <Checkbox 
               id="without-captain"
               checked={filters.withCaptain === false}
-              onCheckedChange={() => setFilters({...filters, withCaptain: false})}
+              onCheckedChange={() => {
+                setFilters({...filters, withCaptain: false});
+                setTimeout(() => applyFilters(), 300);
+              }}
             />
             <label htmlFor="without-captain" className="text-sm">Self-drive</label>
           </div>
