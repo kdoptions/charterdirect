@@ -77,35 +77,53 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const featuredBoats = [
-    {
-      id: 1,
-      name: "Luxury Yacht Adelaide",
-      image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&h=300&fit=crop",
-      price: 450,
-      rating: 4.9,
-      guests: 12,
-      location: "Circular Quay"
-    },
-    {
-      id: 2, 
-      name: "Sunset Catamaran",
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=500&h=300&fit=crop",
-      price: 320,
-      rating: 4.8,
-      guests: 20,
-      location: "Darling Harbour"
-    },
-    {
-      id: 3,
-      name: "Party Pontoon",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=300&fit=crop",
-      price: 280,
-      rating: 4.7,
-      guests: 15,
-      location: "Rose Bay"
-    }
-  ];
+  const [featuredBoats, setFeaturedBoats] = React.useState([]);
+  const [loadingFeatured, setLoadingFeatured] = React.useState(true);
+
+  // Fetch random featured boats
+  React.useEffect(() => {
+    const fetchFeaturedBoats = async () => {
+      try {
+        setLoadingFeatured(true);
+        const allBoats = await Boat.filter({ status: "approved" });
+        
+        // Shuffle and take first 3 boats
+        const shuffled = allBoats.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 3);
+        
+        // Transform to match the expected format
+        const transformed = selected.map(boat => ({
+          id: boat.id,
+          name: boat.name,
+          image: boat.images?.[0] || "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&h=300&fit=crop",
+          price: boat.price_per_hour,
+          rating: 4.8, // Default rating since we don't have ratings yet
+          guests: boat.max_guests,
+          location: boat.location
+        }));
+        
+        setFeaturedBoats(transformed);
+      } catch (error) {
+        console.error("Error fetching featured boats:", error);
+        // Fallback to some default boats if there's an error
+        setFeaturedBoats([
+          {
+            id: "fallback-1",
+            name: "Luxury Yacht Experience",
+            image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&h=300&fit=crop",
+            price: 450,
+            rating: 4.9,
+            guests: 12,
+            location: "Sydney Harbour"
+          }
+        ]);
+      } finally {
+        setLoadingFeatured(false);
+      }
+    };
+    
+    fetchFeaturedBoats();
+  }, []);
 
   const steps = [
     {
@@ -270,8 +288,30 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredBoats.map((boat) => (
-              <Card key={boat.id} className="group cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+            {loadingFeatured ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <Card key={`loading-${index}`} className="border-0 shadow-lg overflow-hidden">
+                  <div className="animate-pulse">
+                    <div className="w-full h-64 bg-slate-200" />
+                    <CardContent className="p-6">
+                      <div className="h-6 bg-slate-200 rounded mb-2" />
+                      <div className="h-4 bg-slate-200 rounded mb-4 w-3/4" />
+                      <div className="flex justify-between items-center">
+                        <div className="h-4 bg-slate-200 rounded w-1/3" />
+                        <div className="text-right">
+                          <div className="h-6 bg-slate-200 rounded w-20 mb-1" />
+                          <div className="h-3 bg-slate-200 rounded w-16" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              featuredBoats.map((boat) => (
+                <Link key={boat.id} to={createPageUrl(`BoatDetails?id=${boat.id}`)}>
+                  <Card className="group cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
                 <div className="relative overflow-hidden">
                   <img 
                     src={boat.image} 
@@ -305,7 +345,9 @@ export default function Home() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+                </Link>
+              ))
+            )}
           </div>
 
           <div className="text-center mt-12 space-y-4">
