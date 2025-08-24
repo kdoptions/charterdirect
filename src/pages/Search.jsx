@@ -41,7 +41,6 @@ export default function Search() {
   const [filteredBoats, setFilteredBoats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(urlLocation);
-  const [confirmedBookings, setConfirmedBookings] = useState([]);
   const [filters, setFilters] = useState({
     boatType: "all",
     priceRange: [0, 1000],
@@ -55,32 +54,29 @@ export default function Search() {
   const urlDate = searchParams.get("date") || "";
 
   useEffect(() => {
-    loadBoats();
-  }, []);
+    // Load boats with URL search parameters
+    const initialSearchParams = {
+      status: "approved",
+      location: urlLocation,
+      date: urlDate
+    };
+    
+    // Remove empty values
+    Object.keys(initialSearchParams).forEach(key => 
+      !initialSearchParams[key] ? delete initialSearchParams[key] : {}
+    );
+    
+    loadBoats(initialSearchParams);
+  }, [urlLocation, urlDate]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [boats, filters, searchTerm]);
 
-  const loadBoats = async () => {
+
+  const loadBoats = async (searchParams = { status: "approved" }) => {
     try {
-      const boatData = await Boat.filter({ status: "approved" }, "-created_date");
+      setLoading(true);
+      const boatData = await Boat.filter(searchParams);
       setBoats(boatData);
-      
-      // If we have a date, also fetch confirmed bookings for availability checking
-      if (urlDate) {
-        try {
-          const { Booking } = await import("@/api/entities");
-          const bookings = await Booking.filter({
-            start_date: urlDate,
-            status: 'confirmed'
-          });
-          setConfirmedBookings(bookings);
-        } catch (error) {
-          console.error("Error loading confirmed bookings:", error);
-          setConfirmedBookings([]);
-        }
-      }
+      setFilteredBoats(boatData); // Backend already filtered the results
     } catch (error) {
       console.error("Error loading boats:", error);
     } finally {
@@ -88,64 +84,30 @@ export default function Search() {
     }
   };
 
-  // Check if a boat is available on a specific date
-  const isBoatAvailableOnDate = (boatId, date, confirmedBookings) => {
-    if (!date) return true; // If no date specified, assume available
-    
-    // Check if any confirmed booking overlaps with this boat and date
-    const hasConflict = confirmedBookings.some(booking => 
-      booking.boat_id === boatId && 
-      booking.start_date === date && 
-      booking.status === 'confirmed'
-    );
-    
-    return !hasConflict;
-  };
+
 
   const applyFilters = () => {
-    let filtered = boats.filter(boat => {
-      // Search term filter
-      if (searchTerm && !boat.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-          !boat.location.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
+    // Use the enhanced backend filtering instead of frontend filtering
+    const searchParams = {
+      status: "approved",
+      boatType: filters.boatType,
+      location: searchTerm || filters.location,
+      max_guests: filters.guests,
+      with_captain: filters.withCaptain,
+      min_price: filters.priceRange[0],
+      max_price: filters.priceRange[1],
+      date: urlDate // This will trigger availability filtering in the backend
+    };
 
-      // Boat type filter
-      if (filters.boatType !== "all" && boat.boat_type !== filters.boatType) {
-        return false;
-      }
+    // Remove undefined/null values
+    Object.keys(searchParams).forEach(key => 
+      searchParams[key] === undefined || searchParams[key] === null || searchParams[key] === "" 
+        ? delete searchParams[key] 
+        : {}
+    );
 
-      // Price range filter
-      if (boat.price_per_hour < filters.priceRange[0] || boat.price_per_hour > filters.priceRange[1]) {
-        return false;
-      }
-
-      // Guest capacity filter
-      if (boat.max_guests < filters.guests) {
-        return false;
-      }
-
-      // Captain filter
-      if (filters.withCaptain !== null && boat.with_captain !== filters.withCaptain) {
-        return false;
-      }
-
-      // Location filter
-      if (filters.location && !boat.location.toLowerCase().includes(filters.location.toLowerCase())) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // If we have a date, filter by availability using pre-fetched data
-    if (urlDate && confirmedBookings.length > 0) {
-      filtered = filtered.filter(boat => 
-        isBoatAvailableOnDate(boat.id, urlDate, confirmedBookings)
-      );
-    }
-
-    setFilteredBoats(filtered);
+    // Fetch filtered boats from backend
+    loadBoats(searchParams);
   };
 
   const boatTypes = [
@@ -242,7 +204,10 @@ export default function Search() {
         <Input
           placeholder="Enter location..."
           value={filters.location}
-          onChange={(e) => setFilters({...filters, location: e.target.value})}
+          onChange={(e) => {
+            setFilters({...filters, location: e.target.value});
+            setTimeout(() => applyFilters(), 500);
+          }}
         />
       </div>
     </div>
@@ -302,10 +267,19 @@ export default function Search() {
                 className="pl-10 h-12 text-lg"
               />
             </div>
+            <Button 
+              onClick={applyFilters}
+              className="h-12 px-8 bg-blue-600 hover:bg-blue-700"
+            >
+              Search
+            </Button>
             
             {/* Desktop Filters */}
             <div className="hidden lg:flex gap-4">
-              <Select value={filters.boatType} onValueChange={(value) => setFilters({...filters, boatType: value})}>
+              <Select value={filters.boatType} onValueChange={(value) => {
+                setFilters({...filters, boatType: value});
+                setTimeout(() => applyFilters(), 300);
+              }}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
@@ -316,7 +290,10 @@ export default function Search() {
                 </SelectContent>
               </Select>
               
-              <Select value={filters.guests.toString()} onValueChange={(value) => setFilters({...filters, guests: parseInt(value)})}>
+              <Select value={filters.guests.toString()} onValueChange={(value) => {
+                setFilters({...filters, guests: parseInt(value)});
+                setTimeout(() => applyFilters(), 300);
+              }}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>

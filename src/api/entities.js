@@ -302,7 +302,7 @@ export const Boat = {
         .select('*')
         .order('created_at', { ascending: false });
       
-      // Apply filters
+      // Apply basic filters
       if (params) {
         if (params.id) {
           query = query.eq('id', params.id);
@@ -313,11 +313,52 @@ export const Boat = {
         if (params.status) {
           query = query.eq('status', params.status);
         }
+        if (params.boat_type && params.boat_type !== 'all') {
+          query = query.eq('boat_type', params.boat_type);
+        }
+        if (params.location) {
+          query = query.ilike('location', `%${params.location}%`);
+        }
+        if (params.max_guests) {
+          query = query.gte('max_guests', params.max_guests);
+        }
+        if (params.with_captain !== null && params.with_captain !== undefined) {
+          query = query.eq('with_captain', params.with_captain);
+        }
+        if (params.min_price !== undefined) {
+          query = query.gte('price_per_hour', params.min_price);
+        }
+        if (params.max_price !== undefined) {
+          query = query.lte('price_per_hour', params.max_price);
+        }
       }
       
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      let boats = data || [];
+      
+      // If we have a date parameter, filter by availability
+      if (params && params.date) {
+        try {
+          // Get confirmed bookings for this date
+          const { data: bookings, error: bookingError } = await supabase
+            .from('bookings')
+            .select('boat_id')
+            .eq('start_date', params.date)
+            .eq('status', 'confirmed');
+          
+          if (!bookingError && bookings) {
+            const bookedBoatIds = new Set(bookings.map(b => b.boat_id));
+            boats = boats.filter(boat => !bookedBoatIds.has(boat.id));
+          }
+        } catch (availabilityError) {
+          console.error('Error checking availability:', availabilityError);
+          // Continue without availability filtering if it fails
+        }
+      }
+      
+      return boats;
     } catch (error) {
       console.error('Error filtering boats from Supabase:', error);
       // Fallback to mock data for now
@@ -331,6 +372,26 @@ export const Boat = {
         }
         if (params.status) {
           boats = boats.filter(boat => boat.status === params.status);
+        }
+        if (params.boat_type && params.boat_type !== 'all') {
+          boats = boats.filter(boat => boat.boat_type === params.boat_type);
+        }
+        if (params.location) {
+          boats = boats.filter(boat => 
+            boat.location.toLowerCase().includes(params.location.toLowerCase())
+          );
+        }
+        if (params.max_guests) {
+          boats = boats.filter(boat => boat.max_guests >= params.max_guests);
+        }
+        if (params.with_captain !== null && params.with_captain !== undefined) {
+          boats = boats.filter(boat => boat.with_captain === params.with_captain);
+        }
+        if (params.min_price !== undefined) {
+          boats = boats.filter(boat => boat.price_per_hour >= params.min_price);
+        }
+        if (params.max_price !== undefined) {
+          boats = boats.filter(boat => boat.price_per_hour <= params.max_price);
         }
       }
       return boats;
