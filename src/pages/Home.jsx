@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function Home() {
   const [searchLocation, setSearchLocation] = React.useState("");
+  const [searchDate, setSearchDate] = React.useState("");
 
   const featuredBoats = [
     {
@@ -113,11 +114,13 @@ export default function Home() {
               <div>
                 <Input
                   type="date"
+                  value={searchDate}
+                  onChange={(e) => setSearchDate(e.target.value)}
                   className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500 text-black"
                 />
               </div>
               <div>
-                <Link to={createPageUrl("Search")}>
+                <Link to={`${createPageUrl("Search")}?location=${encodeURIComponent(searchLocation)}&date=${encodeURIComponent(searchDate)}`}>
                   <Button className="w-full h-14 text-lg luxury-gradient hover:opacity-90 transition-opacity duration-300">
                     <Search className="w-5 h-5 mr-2" />
                     Search Boats

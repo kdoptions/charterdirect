@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Boat } from "@/api/entities";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,17 +36,22 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Search() {
+  const [searchParams] = useSearchParams();
   const [boats, setBoats] = useState([]);
   const [filteredBoats, setFilteredBoats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(urlLocation);
   const [filters, setFilters] = useState({
     boatType: "all",
     priceRange: [0, 1000],
     guests: 1,
     withCaptain: null,
-    location: ""
+    location: searchParams.get("location") || ""
   });
+  
+  // Get search parameters from URL
+  const urlLocation = searchParams.get("location") || "";
+  const urlDate = searchParams.get("date") || "";
 
   useEffect(() => {
     loadBoats();
@@ -67,7 +72,30 @@ export default function Search() {
     }
   };
 
-  const applyFilters = () => {
+  // Check if a boat is available on a specific date
+  const isBoatAvailableOnDate = async (boatId, date) => {
+    if (!date) return true; // If no date specified, assume available
+    
+    try {
+      // Import Booking entity to check availability
+      const { Booking } = await import("@/api/entities");
+      
+      // Check for confirmed bookings on this date
+      const bookings = await Booking.filter({
+        boat_id: boatId,
+        start_date: date,
+        status: 'confirmed'
+      });
+      
+      // If no confirmed bookings, boat is available
+      return bookings.length === 0;
+    } catch (error) {
+      console.error(`Error checking availability for boat ${boatId}:`, error);
+      return true; // Assume available if check fails
+    }
+  };
+
+  const applyFilters = async () => {
     let filtered = boats.filter(boat => {
       // Search term filter
       if (searchTerm && !boat.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
@@ -102,6 +130,18 @@ export default function Search() {
 
       return true;
     });
+
+    // If we have a date, filter by availability
+    if (urlDate) {
+      const availableBoats = [];
+      for (const boat of filtered) {
+        const isAvailable = await isBoatAvailableOnDate(boat.id, urlDate);
+        if (isAvailable) {
+          availableBoats.push(boat);
+        }
+      }
+      filtered = availableBoats;
+    }
 
     setFilteredBoats(filtered);
   };
@@ -227,6 +267,27 @@ export default function Search() {
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
             Discover Your Perfect Boat
           </h1>
+          
+          {/* Search Parameters Display */}
+          {(urlLocation || urlDate) && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h2 className="text-lg font-semibold text-blue-900 mb-2">Search Criteria:</h2>
+              <div className="flex flex-wrap gap-4 text-sm text-blue-800">
+                {urlLocation && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>Location: {urlLocation}</span>
+                  </div>
+                )}
+                {urlDate && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>Date: {new Date(urlDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* Search and Filter */}
           <div className="flex flex-col lg:flex-row gap-4">
