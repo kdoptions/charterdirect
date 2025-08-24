@@ -54,12 +54,6 @@ export default function Layout({ children, currentPageName }) {
         const boats = await supabaseHelpers.getBoats({ owner_id: currentUser.id });
         // Only count approved boats for navigation access
         const approvedBoats = boats.filter(boat => boat.status === 'approved');
-        console.log('🔍 Navigation Debug:', {
-          userId: currentUser.id,
-          totalBoats: boats.length,
-          approvedBoats: approvedBoats.length,
-          boatStatuses: boats.map(b => ({ id: b.id, status: b.status }))
-        });
         setUserBoats(approvedBoats);
       } catch (error) {
         console.error('Error fetching user boats:', error);

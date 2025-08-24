@@ -45,6 +45,11 @@ class StripeService {
         throw new Error('Stripe not initialized');
       }
 
+      // Validate required parameters
+      if (!amount) {
+        throw new Error('Missing required field: amount');
+      }
+
       // For development without backend, create a mock payment intent
       if (import.meta.env.DEV) {
         console.log('🔄 Development mode - creating mock payment intent for testing');

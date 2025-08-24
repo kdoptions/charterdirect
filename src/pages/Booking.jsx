@@ -519,6 +519,8 @@ const stripeInstance = await stripeService.getStripe();
         // Create PaymentIntent for the deposit amount (no connected account needed yet)
         const paymentIntent = await stripeService.createPaymentIntent({
           amount: Math.round(depositAmount * 100), // Convert to cents
+          connectedAccountId: null, // No connected account needed for initial PaymentIntent
+          applicationFeeAmount: 0, // No application fee yet
           metadata: {
             bookingId: newBooking.id,
             boatId: boat.id,
