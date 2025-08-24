@@ -88,16 +88,16 @@ export default function Search() {
 
 
 
-  const applyFilters = () => {
+  const applyFiltersWithParams = (filterParams, searchTermParam) => {
     // Use the enhanced backend filtering instead of frontend filtering
     const searchParams = {
       status: "approved",
-      boat_type: filters.boatType, // Match database column name
-      searchTerm: searchTerm, // Search by boat name OR location
-      max_guests: filters.guests, // Match database column name
-      with_captain: filters.withCaptain, // Match database column name
-      min_price: filters.priceRange[0],
-      max_price: filters.priceRange[1],
+      boat_type: filterParams.boatType, // Match database column name
+      searchTerm: searchTermParam, // Search by boat name OR location
+      max_guests: filterParams.guests, // Match database column name
+      with_captain: filterParams.withCaptain, // Match database column name
+      min_price: filterParams.priceRange[0],
+      max_price: filterParams.priceRange[1],
       date: urlDate // This will trigger availability filtering in the backend
     };
 
@@ -109,10 +109,14 @@ export default function Search() {
     );
 
     console.log('🔍 Applying filters with params:', searchParams);
-    console.log('🔍 Current filters state:', filters);
+    console.log('🔍 Current filters state:', filterParams);
 
     // Fetch filtered boats from backend
     loadBoats(searchParams);
+  };
+
+  const applyFilters = () => {
+    applyFiltersWithParams(filters, searchTerm);
   };
 
   const boatTypes = [
@@ -131,8 +135,12 @@ export default function Search() {
       <div>
         <h3 className="font-semibold mb-3">Boat Type</h3>
         <Select value={filters.boatType} onValueChange={(value) => {
-          setFilters({...filters, boatType: value});
-          setTimeout(() => applyFilters(), 300);
+          setFilters(prevFilters => {
+            const newFilters = {...prevFilters, boatType: value};
+            // Apply filters immediately with the new value
+            setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+            return newFilters;
+          });
         }}>
           <SelectTrigger>
             <SelectValue />
@@ -148,11 +156,14 @@ export default function Search() {
       <div>
         <h3 className="font-semibold mb-3">Price Range (per hour)</h3>
         <div className="px-2">
-          <Slider
+                      <Slider
             value={filters.priceRange}
             onValueChange={(value) => {
-              setFilters({...filters, priceRange: value});
-              setTimeout(() => applyFilters(), 300);
+              setFilters(prevFilters => {
+                const newFilters = {...prevFilters, priceRange: value};
+                setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+                return newFilters;
+              });
             }}
             max={1000}
             min={0}
@@ -169,8 +180,11 @@ export default function Search() {
       <div>
         <h3 className="font-semibold mb-3">Number of Guests</h3>
         <Select value={filters.guests.toString()} onValueChange={(value) => {
-          setFilters({...filters, guests: parseInt(value)});
-          setTimeout(() => applyFilters(), 300);
+          setFilters(prevFilters => {
+            const newFilters = {...prevFilters, guests: parseInt(value)};
+            setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+            return newFilters;
+          });
         }}>
           <SelectTrigger>
             <SelectValue />
@@ -191,8 +205,11 @@ export default function Search() {
               id="all-captain"
               checked={filters.withCaptain === null}
               onCheckedChange={() => {
-                setFilters({...filters, withCaptain: null});
-                setTimeout(() => applyFilters(), 300);
+                setFilters(prevFilters => {
+                  const newFilters = {...prevFilters, withCaptain: null};
+                  setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+                  return newFilters;
+                });
               }}
             />
             <label htmlFor="all-captain" className="text-sm">All options</label>
@@ -202,8 +219,11 @@ export default function Search() {
               id="with-captain"
               checked={filters.withCaptain === true}
               onCheckedChange={() => {
-                setFilters({...filters, withCaptain: true});
-                setTimeout(() => applyFilters(), 300);
+                setFilters(prevFilters => {
+                  const newFilters = {...prevFilters, withCaptain: true};
+                  setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+                  return newFilters;
+                });
               }}
             />
             <label htmlFor="with-captain" className="text-sm">With captain</label>
@@ -213,8 +233,11 @@ export default function Search() {
               id="without-captain"
               checked={filters.withCaptain === false}
               onCheckedChange={() => {
-                setFilters({...filters, withCaptain: false});
-                setTimeout(() => applyFilters(), 300);
+                setFilters(prevFilters => {
+                  const newFilters = {...prevFilters, withCaptain: false};
+                  setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+                  return newFilters;
+                });
               }}
             />
             <label htmlFor="without-captain" className="text-sm">Self-drive</label>
@@ -307,8 +330,11 @@ export default function Search() {
             {/* Desktop Filters */}
             <div className="hidden lg:flex gap-4">
               <Select value={filters.boatType} onValueChange={(value) => {
-                setFilters({...filters, boatType: value});
-                setTimeout(() => applyFilters(), 300);
+                setFilters(prevFilters => {
+                  const newFilters = {...prevFilters, boatType: value};
+                  setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+                  return newFilters;
+                });
               }}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
@@ -321,8 +347,11 @@ export default function Search() {
               </Select>
               
               <Select value={filters.guests.toString()} onValueChange={(value) => {
-                setFilters({...filters, guests: parseInt(value)});
-                setTimeout(() => applyFilters(), 300);
+                setFilters(prevFilters => {
+                  const newFilters = {...prevFilters, guests: parseInt(value)};
+                  setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
+                  return newFilters;
+                });
               }}>
                 <SelectTrigger className="w-40">
                   <SelectValue />

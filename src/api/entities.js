@@ -341,6 +341,10 @@ export const Boat = {
       
       let boats = data || [];
       
+      console.log('🔍 Backend filter params:', params);
+      console.log('🔍 Backend query result count:', boats.length);
+      console.log('🔍 Backend boat types found:', [...new Set(boats.map(b => b.boat_type))]);
+      
       // If we have a date parameter, filter by availability
       if (params && params.date) {
         try {
