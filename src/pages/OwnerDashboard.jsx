@@ -345,8 +345,8 @@ export default function OwnerDashboard() {
             status: 'confirmed'
           });
           
-          // Create Google Calendar event for boat owner's calendar only (not for customer) - FIRST INSTANCE
-          if (userCalendarData?.google_integration_active && userCalendarData?.google_calendar_id) {
+          // Create Google Calendar event for boat owner's calendar only (not for customer)
+          if (userCalendarData?.google_integration_active) {
             console.log('📅 Calendar integration enabled, creating event for booking:', booking.id);
             console.log('📅 User calendar data:', userCalendarData);
             
@@ -355,6 +355,11 @@ export default function OwnerDashboard() {
               console.log('📅 Getting fresh access token...');
               const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(userCalendarData.google_refresh_token);
               console.log('📅 Fresh token data:', freshTokenData);
+              
+              // Get the appropriate calendar ID for this boat
+              const boat = boats.find(b => b.id === booking.boat_id);
+              const calendarId = realGoogleCalendarService.getBoatCalendarId(boat, userCalendarData);
+              console.log('📅 Using calendar ID:', calendarId);
               
               // Construct ISO-compatible date strings
               const bookingDate = new Date(booking.start_date);
@@ -390,7 +395,7 @@ export default function OwnerDashboard() {
               console.log('📅 Creating calendar event with data:', eventData);
               
               const result = await realGoogleCalendarService.createBookingEvent(
-                userCalendarData.google_calendar_id, 
+                calendarId, 
                 eventData, 
                 freshTokenData.access_token
               );
@@ -398,7 +403,7 @@ export default function OwnerDashboard() {
               console.log('📅 Calendar event creation result:', result);
               
               if (result.success) {
-                console.log("✅ Successfully created Google Calendar event:", result.eventId);
+                console.log("✅ Successfully created Google Calendar event for boat owner:", result.eventId);
                 
                 // Store Google Calendar event ID in booking record
                 await Booking.update(booking.id, {
@@ -418,7 +423,6 @@ export default function OwnerDashboard() {
           } else {
             console.log('📅 Calendar integration not enabled or missing data:', {
               google_integration_active: userCalendarData?.google_integration_active,
-              google_calendar_id: userCalendarData?.google_calendar_id,
               userCalendarData: userCalendarData
             });
           }

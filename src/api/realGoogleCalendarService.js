@@ -344,6 +344,53 @@ class RealGoogleCalendarService {
       primary: calendar.primary || false,
     }));
   }
+
+  // Get the appropriate calendar ID for a boat
+  // This handles boat-specific calendars vs owner default calendar
+  getBoatCalendarId(boat, ownerCalendarData) {
+    // If boat has a specific calendar assigned and it's not using owner default
+    if (boat.google_calendar_id && !boat.use_owner_default_calendar) {
+      console.log(`📅 Using boat-specific calendar: ${boat.calendar_name || boat.google_calendar_id}`);
+      return boat.google_calendar_id;
+    }
+    
+    // Otherwise use owner's default calendar
+    if (ownerCalendarData?.google_calendar_id) {
+      console.log(`📅 Using owner default calendar: ${ownerCalendarData.google_calendar_id}`);
+      return ownerCalendarData.google_calendar_id;
+    }
+    
+    // Fallback to primary calendar
+    console.log('📅 Using primary calendar as fallback');
+    return 'primary';
+  }
+
+  // Check availability across multiple calendars for a boat
+  async checkBoatAvailability(boat, ownerCalendarData, startTime, endTime, accessToken) {
+    const calendarId = this.getBoatCalendarId(boat, ownerCalendarData);
+    
+    // Get events in the specified time range
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` +
+      `timeMin=${startTime}&timeMax=${endTime}&singleEvents=true&orderBy=startTime`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to check calendar availability');
+    }
+
+    const data = await response.json();
+    return {
+      calendarId,
+      events: data.items || [],
+      isAvailable: data.items.length === 0
+    };
+  }
 }
 
 // Export singleton instance
