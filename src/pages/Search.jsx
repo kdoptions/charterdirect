@@ -41,6 +41,7 @@ export default function Search() {
   const [filteredBoats, setFilteredBoats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(urlLocation);
+  const [confirmedBookings, setConfirmedBookings] = useState([]);
   const [filters, setFilters] = useState({
     boatType: "all",
     priceRange: [0, 1000],
@@ -65,6 +66,21 @@ export default function Search() {
     try {
       const boatData = await Boat.filter({ status: "approved" }, "-created_date");
       setBoats(boatData);
+      
+      // If we have a date, also fetch confirmed bookings for availability checking
+      if (urlDate) {
+        try {
+          const { Booking } = await import("@/api/entities");
+          const bookings = await Booking.filter({
+            start_date: urlDate,
+            status: 'confirmed'
+          });
+          setConfirmedBookings(bookings);
+        } catch (error) {
+          console.error("Error loading confirmed bookings:", error);
+          setConfirmedBookings([]);
+        }
+      }
     } catch (error) {
       console.error("Error loading boats:", error);
     } finally {
@@ -73,29 +89,20 @@ export default function Search() {
   };
 
   // Check if a boat is available on a specific date
-  const isBoatAvailableOnDate = async (boatId, date) => {
+  const isBoatAvailableOnDate = (boatId, date, confirmedBookings) => {
     if (!date) return true; // If no date specified, assume available
     
-    try {
-      // Import Booking entity to check availability
-      const { Booking } = await import("@/api/entities");
-      
-      // Check for confirmed bookings on this date
-      const bookings = await Booking.filter({
-        boat_id: boatId,
-        start_date: date,
-        status: 'confirmed'
-      });
-      
-      // If no confirmed bookings, boat is available
-      return bookings.length === 0;
-    } catch (error) {
-      console.error(`Error checking availability for boat ${boatId}:`, error);
-      return true; // Assume available if check fails
-    }
+    // Check if any confirmed booking overlaps with this boat and date
+    const hasConflict = confirmedBookings.some(booking => 
+      booking.boat_id === boatId && 
+      booking.start_date === date && 
+      booking.status === 'confirmed'
+    );
+    
+    return !hasConflict;
   };
 
-  const applyFilters = async () => {
+  const applyFilters = () => {
     let filtered = boats.filter(boat => {
       // Search term filter
       if (searchTerm && !boat.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
@@ -131,16 +138,11 @@ export default function Search() {
       return true;
     });
 
-    // If we have a date, filter by availability
-    if (urlDate) {
-      const availableBoats = [];
-      for (const boat of filtered) {
-        const isAvailable = await isBoatAvailableOnDate(boat.id, urlDate);
-        if (isAvailable) {
-          availableBoats.push(boat);
-        }
-      }
-      filtered = availableBoats;
+    // If we have a date, filter by availability using pre-fetched data
+    if (urlDate && confirmedBookings.length > 0) {
+      filtered = filtered.filter(boat => 
+        isBoatAvailableOnDate(boat.id, urlDate, confirmedBookings)
+      );
     }
 
     setFilteredBoats(filtered);
