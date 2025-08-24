@@ -360,7 +360,12 @@ export default function MyBoats() {
                         variant="outline" 
                         size="sm" 
                         className="w-full mt-2"
-                        onClick={() => setSelectedBoatForCalendar(boat)}
+                        onClick={() => {
+                          console.log('🔍 Calendar button clicked for boat:', boat.name);
+                          console.log('🔍 Setting selectedBoatForCalendar:', boat);
+                          setSelectedBoatForCalendar(boat);
+                          setShowCalendarModal(true);
+                        }}
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         {boat.calendar_integration_enabled ? "Manage Calendar" : "Setup Calendar"}
@@ -375,6 +380,7 @@ export default function MyBoats() {
       </div>
 
       {/* Calendar Integration Modal */}
+      {console.log('🔍 Modal state:', { showCalendarModal, selectedBoatForCalendar: selectedBoatForCalendar?.name })}
       {showCalendarModal && selectedBoatForCalendar && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">

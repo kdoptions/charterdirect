@@ -45,7 +45,11 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
       setError(null);
       
       // Check if user has Google Calendar integration
-      if (!currentUser?.user_metadata?.google_calendar_integration) {
+      console.log('🔍 CalendarSelector - currentUser:', currentUser);
+      console.log('🔍 CalendarSelector - checking for calendar integration...');
+      
+      // Check if user has Google Calendar integration (updated path)
+      if (!currentUser?.google_integration_active) {
         setError('Google Calendar integration not set up. Please connect your Google Calendar first.');
         return;
       }
