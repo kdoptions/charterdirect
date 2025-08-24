@@ -50,15 +50,14 @@ export default function Search() {
     boatType: "all",
     priceRange: [0, 1000],
     guests: 1,
-    withCaptain: null,
-    location: urlLocation
+    withCaptain: null
   });
 
   useEffect(() => {
     // Load boats with URL search parameters
     const initialSearchParams = {
       status: "approved",
-      location: urlLocation,
+      searchTerm: urlLocation, // Use location as search term for boat name OR location
       date: urlDate
     };
     
@@ -92,7 +91,7 @@ export default function Search() {
     const searchParams = {
       status: "approved",
       boatType: filters.boatType,
-      location: searchTerm || filters.location,
+      searchTerm: searchTerm, // Search by boat name OR location
       max_guests: filters.guests,
       with_captain: filters.withCaptain,
       min_price: filters.priceRange[0],
@@ -219,15 +218,22 @@ export default function Search() {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-3">Location</h3>
-        <Input
-          placeholder="Enter location..."
-          value={filters.location}
-          onChange={(e) => {
-            setFilters({...filters, location: e.target.value});
-            setTimeout(() => applyFilters(), 500);
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            setFilters({
+              boatType: "all",
+              priceRange: [0, 1000],
+              guests: 1,
+              withCaptain: null
+            });
+            setSearchTerm("");
+            setTimeout(() => applyFilters(), 100);
           }}
-        />
+          className="w-full"
+        >
+          Clear All Filters
+        </Button>
       </div>
     </div>
   );
@@ -347,7 +353,12 @@ export default function Search() {
           </div>
           
           <div className="mt-4 text-slate-600">
-            {filteredBoats.length} boats available
+            {filteredBoats.length} boat{filteredBoats.length !== 1 ? 's' : ''} available
+            {searchTerm && (
+              <span className="ml-2 text-blue-600">
+                for "{searchTerm}"
+              </span>
+            )}
           </div>
         </div>
       </div>

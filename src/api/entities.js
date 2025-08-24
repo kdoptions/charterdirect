@@ -316,7 +316,10 @@ export const Boat = {
         if (params.boat_type && params.boat_type !== 'all') {
           query = query.eq('boat_type', params.boat_type);
         }
-        if (params.location) {
+        if (params.searchTerm) {
+          // Search by boat name OR location
+          query = query.or(`name.ilike.%${params.searchTerm}%,location.ilike.%${params.searchTerm}%`);
+        } else if (params.location) {
           query = query.ilike('location', `%${params.location}%`);
         }
         if (params.max_guests) {
@@ -376,7 +379,13 @@ export const Boat = {
         if (params.boat_type && params.boat_type !== 'all') {
           boats = boats.filter(boat => boat.boat_type === params.boat_type);
         }
-        if (params.location) {
+        if (params.searchTerm) {
+          // Search by boat name OR location
+          boats = boats.filter(boat => 
+            boat.name.toLowerCase().includes(params.searchTerm.toLowerCase()) ||
+            boat.location.toLowerCase().includes(params.searchTerm.toLowerCase())
+          );
+        } else if (params.location) {
           boats = boats.filter(boat => 
             boat.location.toLowerCase().includes(params.location.toLowerCase())
           );
