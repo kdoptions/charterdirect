@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Settings, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabaseHelpers } from '@/lib/supabase';
+import { realGoogleCalendarService } from '@/api/realGoogleCalendarService';
 
 export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }) {
   const [calendars, setCalendars] = useState([]);
@@ -17,6 +18,7 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [userCalendarData, setUserCalendarData] = useState(null);
 
   // Calendar color options (Google Calendar standard colors)
   const calendarColors = [
@@ -34,10 +36,39 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
   ];
 
   useEffect(() => {
-    if (isEnabled) {
+    if (currentUser) {
+      loadUserCalendarData();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (isEnabled && userCalendarData?.google_integration_active) {
       loadUserCalendars();
     }
-  }, [isEnabled, currentUser]);
+  }, [isEnabled, userCalendarData]);
+
+  const loadUserCalendarData = async () => {
+    try {
+      console.log('🔍 Loading user calendar data from database...');
+      
+      // Fetch user's calendar integration status from database
+      const { data: userData, error } = await supabaseHelpers.supabase
+        .from('users')
+        .select('google_integration_active, google_calendar_id, google_refresh_token')
+        .eq('id', currentUser?.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user calendar data:', error);
+        return;
+      }
+      
+      console.log('🔍 User calendar data loaded:', userData);
+      setUserCalendarData(userData);
+    } catch (error) {
+      console.error('Error loading user calendar data:', error);
+    }
+  };
 
   const loadUserCalendars = async () => {
     try {
@@ -45,30 +76,27 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
       setError(null);
       
       // Check if user has Google Calendar integration
-      console.log('🔍 CalendarSelector - currentUser:', currentUser);
+      console.log('🔍 CalendarSelector - userCalendarData:', userCalendarData);
       console.log('🔍 CalendarSelector - checking for calendar integration...');
       
-      // Check if user has Google Calendar integration (updated path)
-      if (!currentUser?.google_integration_active) {
+      // Check if user has Google Calendar integration from database
+      if (!userCalendarData?.google_integration_active) {
         setError('Google Calendar integration not set up. Please connect your Google Calendar first.');
         return;
       }
 
-      // In a real implementation, this would fetch calendars from Google Calendar API
-      // For now, we'll simulate with common calendar types
-      const mockCalendars = [
-        { id: 'primary', name: 'Primary Calendar', accessRole: 'owner' },
-        { id: 'work', name: 'Work Calendar', accessRole: 'owner' },
-        { id: 'personal', name: 'Personal Calendar', accessRole: 'owner' },
-        { id: 'boat-business', name: 'Boat Business', accessRole: 'owner' }
-      ];
-
-      setCalendars(mockCalendars);
+      // Fetch real calendars from Google Calendar API
+      const freshTokenData = await realGoogleCalendarService.getFreshAccessToken(
+        userCalendarData.google_refresh_token
+      );
+      
+      const realCalendars = await realGoogleCalendarService.getUserCalendars(freshTokenData.access_token);
+      setCalendars(realCalendars);
       
       // If no calendar is selected, use the default or first available
-      if (!selectedCalendar && mockCalendars.length > 0) {
-        setSelectedCalendar(mockCalendars[0].id);
-        setCalendarName(mockCalendars[0].name);
+      if (!selectedCalendar && realCalendars.length > 0) {
+        setSelectedCalendar(realCalendars[0].id);
+        setCalendarName(realCalendars[0].name);
       }
     } catch (err) {
       console.error('Error loading calendars:', err);
