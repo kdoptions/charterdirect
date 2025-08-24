@@ -354,11 +354,11 @@ const stripeInstance = await stripeService.getStripe();
     if (selectedBlock) {
       console.log("⏰ Selected block hours:", { 
         blockName: selectedBlock.name, 
-        duration: selectedBlock.duration_hours,
+        duration: selectedBlock.duration,
         start: selectedBlock.start,
         end: selectedBlock.end
       });
-      return selectedBlock.duration_hours || 0;
+      return selectedBlock.duration || 0;
     }
     
     console.log("⏰ No time block selected, hours: 0");
@@ -392,8 +392,8 @@ const stripeInstance = await stripeService.getStripe();
     try {
       // Create proper datetime strings for the booking
       const bookingDate = format(selectedDate, 'yyyy-MM-dd');
-      const startTime = showCustomTime ? customStartTime : selectedBlock.start_time;
-      const endTime = showCustomTime ? customEndTime : selectedBlock.end_time;
+      const startTime = showCustomTime ? customStartTime : selectedBlock.start;
+      const endTime = showCustomTime ? customEndTime : selectedBlock.end;
       const startDateTime = `${bookingDate}T${startTime}:00`;
       const endDateTime = `${bookingDate}T${endTime}:00`;
       
