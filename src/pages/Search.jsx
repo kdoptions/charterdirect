@@ -48,7 +48,7 @@ export default function Search() {
   const [searchTerm, setSearchTerm] = useState(urlLocation);
   const [filters, setFilters] = useState({
     boatType: "all",
-    priceRange: [0, 1000],
+    priceRange: [0, 2000],
     guests: 1,
     withCaptain: null
   });
@@ -153,10 +153,10 @@ export default function Search() {
         </Select>
       </div>
 
-      <div>
+            <div>
         <h3 className="font-semibold mb-3">Price Range (per hour)</h3>
         <div className="px-2">
-                      <Slider
+          <Slider
             value={filters.priceRange}
             onValueChange={(value) => {
               setFilters(prevFilters => {
@@ -165,14 +165,20 @@ export default function Search() {
                 return newFilters;
               });
             }}
-            max={1000}
+            max={2000}
             min={0}
-            step={50}
+            step={25}
             className="w-full"
           />
           <div className="flex justify-between text-sm text-slate-600 mt-2">
-            <span>${filters.priceRange[0]}</span>
-            <span>${filters.priceRange[1]}</span>
+            <span className="font-medium text-blue-600">${filters.priceRange[0].toLocaleString()}</span>
+            <span className="font-medium text-blue-600">${filters.priceRange[1].toLocaleString()}</span>
+          </div>
+          <div className="text-xs text-slate-500 text-center mt-1">
+            {filters.priceRange[0] === 0 && filters.priceRange[1] === 2000 
+              ? "All prices" 
+              : `$${filters.priceRange[0].toLocaleString()} - $${filters.priceRange[1].toLocaleString()} per hour`
+            }
           </div>
         </div>
       </div>
@@ -251,7 +257,7 @@ export default function Search() {
           onClick={() => {
             setFilters({
               boatType: "all",
-              priceRange: [0, 1000],
+              priceRange: [0, 2000],
               guests: 1,
               withCaptain: null
             });
