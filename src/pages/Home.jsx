@@ -14,13 +14,68 @@ import {
   Shield,
   Award,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  ChevronDown
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Boat } from "@/api/entities";
 
 export default function Home() {
   const [searchLocation, setSearchLocation] = React.useState("");
   const [searchDate, setSearchDate] = React.useState("");
+  const [availableLocations, setAvailableLocations] = React.useState([]);
+  const [showLocationDropdown, setShowLocationDropdown] = React.useState(false);
+  const [filteredLocations, setFilteredLocations] = React.useState([]);
+
+  // Fetch available locations from boats
+  React.useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const boats = await Boat.filter({ status: "approved" });
+        const locations = [...new Set(boats.map(boat => boat.location).filter(Boolean))];
+        setAvailableLocations(locations);
+        setFilteredLocations(locations);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
+
+  // Handle location input changes
+  const handleLocationChange = (value) => {
+    setSearchLocation(value);
+    
+    if (value.trim() === "") {
+      setFilteredLocations(availableLocations);
+      setShowLocationDropdown(false);
+    } else {
+      const filtered = availableLocations.filter(location =>
+        location.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredLocations(filtered);
+      setShowLocationDropdown(filtered.length > 0);
+    }
+  };
+
+  // Handle location selection
+  const handleLocationSelect = (location) => {
+    setSearchLocation(location);
+    setShowLocationDropdown(false);
+  };
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.location-input-container')) {
+        setShowLocationDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const featuredBoats = [
     {
@@ -103,13 +158,33 @@ export default function Home() {
           {/* Search Bar */}
           <div className="glass-effect rounded-2xl p-6 max-w-4xl mx-auto mb-8">
             <div className="grid md:grid-cols-4 gap-4">
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 relative location-input-container">
                 <Input
                   placeholder="Where would you like to explore?"
                   value={searchLocation}
-                  onChange={(e) => setSearchLocation(e.target.value)}
-                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-600"
+                  onChange={(e) => handleLocationChange(e.target.value)}
+                  onFocus={() => setShowLocationDropdown(filteredLocations.length > 0)}
+                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-600 pr-10"
                 />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                
+                {/* Location Dropdown */}
+                {showLocationDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                    {filteredLocations.map((location, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleLocationSelect(location)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-black"
+                      >
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-blue-500" />
+                          <span>{location}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <Input
