@@ -631,13 +631,25 @@ const stripeInstance = await stripeService.getStripe();
               <div className="space-y-6">
                 <div>
                   <Label className="font-bold text-lg">1. Select Date</Label>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                    className="rounded-md border mt-2"
-                  />
+                  <div className="mt-2">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                      className="rounded-lg shadow-lg border-0"
+                    />
+                    <div className="mt-3 text-xs text-gray-500 flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-100 border-2 border-blue-400 rounded"></div>
+                        <span>Today</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded line-through"></div>
+                        <span>Past dates</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
