@@ -107,13 +107,13 @@ export default function Home() {
                   placeholder="Where would you like to explore?"
                   value={searchLocation}
                   onChange={(e) => setSearchLocation(e.target.value)}
-                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500"
+                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-600"
                 />
               </div>
               <div>
                 <Input
                   type="date"
-                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500"
+                  className="h-14 text-lg bg-white/90 border-0 focus:ring-2 focus:ring-blue-500 text-black"
                 />
               </div>
               <div>
