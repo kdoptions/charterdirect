@@ -156,14 +156,14 @@ export default function Search() {
             <div>
         <h3 className="font-semibold mb-3">Price Range (per hour)</h3>
         <div className="px-2">
-          <Slider
+                      <Slider
             value={filters.priceRange}
             onValueChange={(value) => {
-              setFilters(prevFilters => {
-                const newFilters = {...prevFilters, priceRange: value};
-                setTimeout(() => applyFiltersWithParams(newFilters, searchTerm), 100);
-                return newFilters;
-              });
+              setFilters(prevFilters => ({...prevFilters, priceRange: value}));
+            }}
+            onValueCommit={(value) => {
+              // Only apply filters when user finishes dragging
+              setTimeout(() => applyFiltersWithParams({...filters, priceRange: value}, searchTerm), 100);
             }}
             max={2000}
             min={0}
