@@ -15,9 +15,14 @@ function Calendar({
     (<DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-4", className)}
+      style={{
+        '--rdp-cell-size': '40px',
+        '--rdp-accent-color': '#3b82f6',
+        '--rdp-background-color': '#f8fafc',
+      }}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4 bg-white rounded-xl shadow-lg border-0 p-6",
+        month: "space-y-4 bg-white rounded-xl shadow-lg border-0 p-6 min-w-[320px]",
         caption: "flex justify-center pt-1 relative items-center mb-4",
         caption_label: "text-lg font-semibold text-gray-900",
         nav: "space-x-1 flex items-center",
@@ -27,10 +32,10 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex mb-2",
+        table: "w-full border-collapse space-y-2",
+        head_row: "flex mb-3",
         head_cell:
-          "text-gray-700 rounded-md w-9 font-semibold text-sm uppercase tracking-wide pb-2",
+          "text-gray-700 rounded-md w-10 font-semibold text-sm uppercase tracking-wide pb-2",
         cell: cn(
           "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md",
           props.mode === "range"
@@ -39,7 +44,7 @@ function Calendar({
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 hover:bg-blue-50 hover:border-blue-200 hover:scale-105 rounded-md border border-transparent"
+          "h-10 w-10 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 hover:bg-blue-50 hover:border-blue-200 hover:scale-105 rounded-md border border-transparent"
         ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
