@@ -338,11 +338,33 @@ class RealGoogleCalendarService {
     }
 
     const data = await response.json();
-    return data.items.map(calendar => ({
-      id: calendar.id,
-      summary: calendar.summary,
-      primary: calendar.primary || false,
-    }));
+    
+    // Filter and clean calendar data
+    const validCalendars = data.items
+      .filter(calendar => {
+        // Only include calendars you own or have write access to
+        const hasAccess = calendar.accessRole === 'owner' || calendar.accessRole === 'writer';
+        const hasName = calendar.summary && calendar.summary.trim() !== '';
+        return hasAccess && hasName;
+      })
+      .map(calendar => ({
+        id: calendar.id,
+        summary: calendar.summary || `Calendar ${calendar.id}`,
+        primary: calendar.primary || false,
+        accessRole: calendar.accessRole,
+        description: calendar.description || ''
+      }))
+      .sort((a, b) => {
+        // Sort primary calendar first, then alphabetically
+        if (a.primary) return -1;
+        if (b.primary) return 1;
+        return a.summary.localeCompare(b.summary);
+      });
+
+    console.log('📅 Raw Google Calendar API response:', data.items);
+    console.log('📅 Filtered valid calendars:', validCalendars);
+    
+    return validCalendars;
   }
 
   // Get the appropriate calendar ID for a boat

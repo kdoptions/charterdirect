@@ -92,12 +92,13 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
       );
       
       const realCalendars = await realGoogleCalendarService.getUserCalendars(freshTokenData.access_token);
+      console.log('📅 Calendars received from Google API:', realCalendars);
       setCalendars(realCalendars);
       
       // If no calendar is selected, use the default or first available
       if (!selectedCalendar && realCalendars.length > 0) {
         setSelectedCalendar(realCalendars[0].id);
-        setCalendarName(realCalendars[0].name);
+        setCalendarName(realCalendars[0].summary); // Use 'summary' not 'name'
       }
     } catch (err) {
       console.error('Error loading calendars:', err);
@@ -199,9 +200,9 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
                     <SelectItem key={calendar.id} value={calendar.id}>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {calendar.name}
-                        {calendar.accessRole === 'owner' && (
-                          <Badge variant="secondary" className="text-xs">Owner</Badge>
+                        {calendar.summary}
+                        {calendar.primary && (
+                          <Badge variant="secondary" className="text-xs">Primary</Badge>
                         )}
                       </div>
                     </SelectItem>
