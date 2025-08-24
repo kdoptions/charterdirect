@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Settings, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabaseHelpers } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { realGoogleCalendarService } from '@/api/realGoogleCalendarService';
+import { Boat } from '@/api/entities';
 
 export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }) {
   const [calendars, setCalendars] = useState([]);
@@ -52,7 +53,7 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
       console.log('🔍 Loading user calendar data from database...');
       
       // Fetch user's calendar integration status from database
-      const { data: userData, error } = await supabaseHelpers.supabase
+      const { data: userData, error } = await supabase
         .from('users')
         .select('google_integration_active, google_calendar_id, google_refresh_token')
         .eq('id', currentUser?.id)
@@ -125,7 +126,7 @@ export default function CalendarSelector({ boat, onCalendarUpdate, currentUser }
         calendar_integration_enabled: isEnabled
       };
 
-      await supabaseHelpers.updateBoat(boat.id, updateData);
+      await Boat.update(boat.id, updateData);
       
       setSuccess(true);
       if (onCalendarUpdate) {
