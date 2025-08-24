@@ -74,7 +74,9 @@ export default function Search() {
   const loadBoats = async (searchParams = { status: "approved" }) => {
     try {
       setLoading(true);
+      console.log('🚤 Loading boats with search params:', searchParams);
       const boatData = await Boat.filter(searchParams);
+      console.log('🚤 Received boat data:', boatData);
       setBoats(boatData);
       setFilteredBoats(boatData); // Backend already filtered the results
     } catch (error) {
@@ -90,10 +92,10 @@ export default function Search() {
     // Use the enhanced backend filtering instead of frontend filtering
     const searchParams = {
       status: "approved",
-      boatType: filters.boatType,
+      boat_type: filters.boatType, // Match database column name
       searchTerm: searchTerm, // Search by boat name OR location
-      max_guests: filters.guests,
-      with_captain: filters.withCaptain,
+      max_guests: filters.guests, // Match database column name
+      with_captain: filters.withCaptain, // Match database column name
       min_price: filters.priceRange[0],
       max_price: filters.priceRange[1],
       date: urlDate // This will trigger availability filtering in the backend
@@ -105,6 +107,9 @@ export default function Search() {
         ? delete searchParams[key] 
         : {}
     );
+
+    console.log('🔍 Applying filters with params:', searchParams);
+    console.log('🔍 Current filters state:', filters);
 
     // Fetch filtered boats from backend
     loadBoats(searchParams);
