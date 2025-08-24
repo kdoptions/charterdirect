@@ -14,11 +14,32 @@ function Calendar({
   // Debug logging
   console.log('Calendar props:', props);
   console.log('Calendar classNames:', classNames);
+  
+  // Add useEffect to monitor selection changes
+  React.useEffect(() => {
+    if (props.selected) {
+      console.log('🎯 Date selected:', props.selected);
+      console.log('🎯 Selected date type:', typeof props.selected);
+      console.log('🎯 Selected date value:', props.selected);
+    }
+  }, [props.selected]);
     return (
     <div className="bg-gray-100 rounded-lg p-4 shadow-sm">
       <DayPicker
         showOutsideDays={showOutsideDays}
         className={cn("", className)}
+        modifiers={{
+          selected: props.selected ? [props.selected] : [],
+        }}
+        modifiersStyles={{
+          selected: {
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            fontWeight: '600',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            transform: 'scale(1.05)',
+          }
+        }}
         classNames={{
           months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
           month: "space-y-4",
