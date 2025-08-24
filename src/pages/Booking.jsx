@@ -694,8 +694,8 @@ const stripeInstance = await stripeService.getStripe();
                             {availableSlots.map((block, index) => (
                               <SelectItem key={index} value={JSON.stringify(block)}>
                                 <div className="flex items-center justify-between">
-                                  <span>{block.name}: {block.start_time} - {block.end_time}</span>
-                                  <span className="text-green-600 font-semibold">({block.duration_hours}h)</span>
+                                  <span>{block.name}: {block.start} - {block.end}</span>
+                                  <span className="text-green-600 font-semibold">({block.duration}h)</span>
                                 </div>
                               </SelectItem>
                             ))}
