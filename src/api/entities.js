@@ -446,14 +446,69 @@ export const Boat = {
   // Update boat
   update: async (boatId, updateData) => {
     try {
+      // Clean up the data before sending to Supabase
+      const cleanedData = { ...updateData };
+      
+      // Ensure numeric fields are properly formatted
+      if (cleanedData.price_per_hour !== undefined) {
+        cleanedData.price_per_hour = parseFloat(cleanedData.price_per_hour) || 0;
+      }
+      if (cleanedData.extended_booking_price !== undefined) {
+        cleanedData.extended_booking_price = parseFloat(cleanedData.extended_booking_price) || 0;
+      }
+      if (cleanedData.weekend_price !== undefined) {
+        cleanedData.weekend_price = parseFloat(cleanedData.weekend_price) || 0;
+      }
+      if (cleanedData.off_season_discount !== undefined) {
+        cleanedData.off_season_discount = parseInt(cleanedData.off_season_discount) || 0;
+      }
+      if (cleanedData.down_payment_percentage !== undefined) {
+        cleanedData.down_payment_percentage = parseInt(cleanedData.down_payment_percentage) || 30;
+      }
+      if (cleanedData.early_bird_discount !== undefined) {
+        cleanedData.early_bird_discount = parseInt(cleanedData.early_bird_discount) || 0;
+      }
+      if (cleanedData.early_bird_days !== undefined) {
+        cleanedData.early_bird_days = parseInt(cleanedData.early_bird_days) || 14;
+      }
+      if (cleanedData.max_guests !== undefined) {
+        cleanedData.max_guests = parseInt(cleanedData.max_guests) || 1;
+      }
+      
+      // Ensure JSONB fields are properly formatted
+      if (cleanedData.availability_blocks && !Array.isArray(cleanedData.availability_blocks)) {
+        cleanedData.availability_blocks = [];
+      }
+      if (cleanedData.special_pricing && !Array.isArray(cleanedData.special_pricing)) {
+        cleanedData.special_pricing = [];
+      }
+      if (cleanedData.amenities && !Array.isArray(cleanedData.amenities)) {
+        cleanedData.amenities = [];
+      }
+      if (cleanedData.additional_services && !Array.isArray(cleanedData.additional_services)) {
+        cleanedData.additional_services = [];
+      }
+      if (cleanedData.images && !Array.isArray(cleanedData.images)) {
+        cleanedData.images = [];
+      }
+      if (cleanedData.additional_media && !Array.isArray(cleanedData.additional_media)) {
+        cleanedData.additional_media = [];
+      }
+      
+      console.log('🚤 Updating boat with cleaned data:', cleanedData);
+      
       const { data, error } = await supabase
         .from('boats')
-        .update(updateData)
+        .update(cleanedData)
         .eq('id', boatId)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
+      
       console.log('✅ Boat updated in Supabase:', data);
       return data;
     } catch (error) {

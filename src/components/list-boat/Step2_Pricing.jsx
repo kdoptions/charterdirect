@@ -24,14 +24,21 @@ export default function Step2_Pricing({ data, updateData }) {
     // Validate the new block immediately
     try {
       const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      if (!timeRegex.test(newBlock.start_time) || !timeRegex.test(newBlock.end_time)) {
+      if (!newBlock.start_time || !newBlock.end_time || !timeRegex.test(newBlock.start_time) || !timeRegex.test(newBlock.end_time)) {
         newBlock.error = "Invalid time format. Use HH:MM (e.g., 09:00)";
         newBlock.duration_hours = 0;
       } else {
         const [startHour, startMinute] = newBlock.start_time.split(':').map(Number);
         const [endHour, endMinute] = newBlock.end_time.split(':').map(Number);
-        const startMinutes = startHour * 60 + startMinute;
-        const endMinutes = endHour * 60 + endMinute;
+        
+        // Validate parsed numbers
+        if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
+          console.error("❌ Invalid time values in new block:", { startHour, startMinute, endHour, endMinute });
+          newBlock.error = "Invalid time values";
+          newBlock.duration_hours = 0;
+        } else {
+          const startMinutes = startHour * 60 + startMinute;
+          const endMinutes = endHour * 60 + endMinute;
         
         let durationMinutes;
         if (endMinutes <= startMinutes) {
@@ -41,7 +48,13 @@ export default function Step2_Pricing({ data, updateData }) {
         }
         
         const duration = durationMinutes / 60;
-        newBlock.duration_hours = Math.round(duration * 100) / 100;
+        
+        // Validate duration
+        if (isNaN(duration) || duration <= 0) {
+          newBlock.duration_hours = 0;
+          newBlock.error = "Invalid duration calculated";
+        } else {
+          newBlock.duration_hours = Math.round(duration * 100) / 100;
         
         // Log the new format
         const totalMinutes = Math.round(newBlock.duration_hours * 60);
@@ -49,6 +62,8 @@ export default function Step2_Pricing({ data, updateData }) {
         const minutes = totalMinutes % 60;
         const durationDisplay = minutes === 0 ? `${hours}h` : `${hours}:${minutes.toString().padStart(2, '0')}`;
         console.log("✅ New block duration:", { duration: newBlock.duration_hours, durationDisplay });
+        }
+        }
       }
     } catch (error) {
       console.error("❌ Error validating new block:", error);
@@ -73,7 +88,7 @@ export default function Step2_Pricing({ data, updateData }) {
         const startTime = newBlocks[index].start_time;
         const endTime = newBlocks[index].end_time;
         
-        if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+        if (!startTime || !endTime || !timeRegex.test(startTime) || !timeRegex.test(endTime)) {
           console.error("❌ Invalid time format:", { startTime, endTime });
           newBlocks[index].duration_hours = 0;
           newBlocks[index].error = "Invalid time format. Use HH:MM (e.g., 09:00)";
@@ -81,6 +96,14 @@ export default function Step2_Pricing({ data, updateData }) {
           // Parse times properly
           const [startHour, startMinute] = startTime.split(':').map(Number);
           const [endHour, endMinute] = endTime.split(':').map(Number);
+          
+          // Validate parsed numbers
+          if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
+            console.error("❌ Invalid time values:", { startHour, startMinute, endHour, endMinute });
+            newBlocks[index].duration_hours = 0;
+            newBlocks[index].error = "Invalid time values";
+            return;
+          }
           
           // Convert to minutes for accurate calculation
           const startMinutes = startHour * 60 + startMinute;
@@ -98,7 +121,7 @@ export default function Step2_Pricing({ data, updateData }) {
           const duration = durationMinutes / 60;
           
           // Validate duration
-          if (duration <= 0) {
+          if (isNaN(duration) || duration <= 0) {
             newBlocks[index].duration_hours = 0;
             newBlocks[index].error = "End time must be after start time";
           } else if (duration > 24) {
@@ -152,7 +175,7 @@ export default function Step2_Pricing({ data, updateData }) {
     // Add new pricing
     filteredPricing.push({
       date: dateString,
-      price_per_hour: parseFloat(specialPrice)
+      price_per_hour: parseFloat(specialPrice) || 0
     });
     
     updateData({ special_pricing: filteredPricing });
@@ -205,13 +228,16 @@ export default function Step2_Pricing({ data, updateData }) {
             id="price_per_hour" 
             type="text" 
             inputMode="decimal"
-            value={data.price_per_hour} 
+            value={data.price_per_hour || ''} 
             onChange={(e) => {
               if (/^\d*\.?\d*$/.test(e.target.value)) {
                 updateData({ price_per_hour: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ price_per_hour: parseFloat(e.target.value) || 0 })}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              updateData({ price_per_hour: value ? parseFloat(value) || 0 : 0 });
+            }}
           />
         </div>
         <div className="space-y-2">
@@ -220,13 +246,16 @@ export default function Step2_Pricing({ data, updateData }) {
             id="extended_booking_price" 
             type="text" 
             inputMode="decimal"
-            value={data.extended_booking_price} 
+            value={data.extended_booking_price || ''} 
             onChange={(e) => {
               if (/^\d*\.?\d*$/.test(e.target.value)) {
                 updateData({ extended_booking_price: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ extended_booking_price: parseFloat(e.target.value) || 0 })}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              updateData({ extended_booking_price: value ? parseFloat(value) || 0 : 0 });
+            }}
           />
         </div>
       </div>
@@ -303,18 +332,20 @@ export default function Step2_Pricing({ data, updateData }) {
                 <Label>Start Time</Label>
                 <Input
                   type="time"
-                  value={block.start_time}
+                  value={block.start_time || ''}
                   onChange={(e) => updateAvailabilityBlock(index, 'start_time', e.target.value)}
                   className={block.error ? 'border-red-500' : ''}
+                  required
                 />
               </div>
               <div className="space-y-1">
                 <Label>End Time</Label>
                 <Input
                   type="time"
-                  value={block.end_time}
+                  value={block.end_time || ''}
                   onChange={(e) => updateAvailabilityBlock(index, 'end_time', e.target.value)}
                   className={block.error ? 'border-red-500' : ''}
+                  required
                 />
               </div>
               <div className="space-y-1">
@@ -406,6 +437,12 @@ export default function Step2_Pricing({ data, updateData }) {
                     setSpecialPrice(e.target.value);
                   }
                 }}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  if (value && !isNaN(parseFloat(value))) {
+                    setSpecialPrice(parseFloat(value).toString());
+                  }
+                }}
                 placeholder="Enter price per hour"
               />
             </div>
@@ -476,7 +513,10 @@ export default function Step2_Pricing({ data, updateData }) {
                 updateData({ weekend_price: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ weekend_price: parseFloat(e.target.value) || 0 })}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              updateData({ weekend_price: value ? parseFloat(value) || 0 : 0 });
+            }}
           />
         </div>
         <div className="space-y-2">
@@ -485,13 +525,16 @@ export default function Step2_Pricing({ data, updateData }) {
             id="off_season_discount" 
             type="text" 
             inputMode="numeric"
-            value={data.off_season_discount} 
+            value={data.off_season_discount || ''} 
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
                 updateData({ off_season_discount: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ off_season_discount: parseInt(e.target.value, 10) || 0 })}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              updateData({ off_season_discount: value ? parseInt(value, 10) || 0 : 0 });
+            }}
           />
         </div>
       </div>
@@ -504,16 +547,17 @@ export default function Step2_Pricing({ data, updateData }) {
             id="down_payment" 
             type="text" 
             inputMode="numeric"
-            value={data.down_payment_percentage} 
+            value={data.down_payment_percentage || ''} 
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
                 updateData({ down_payment_percentage: e.target.value });
               }
             }}
             onBlur={(e) => {
-              const value = parseInt(e.target.value, 10) || 30;
+              const value = e.target.value.trim();
+              const parsedValue = value ? parseInt(value, 10) || 30 : 30;
               // Ensure minimum 10% down payment
-              const validatedValue = Math.max(10, value);
+              const validatedValue = Math.max(10, parsedValue);
               updateData({ down_payment_percentage: validatedValue });
             }}
             min="10"
@@ -527,13 +571,16 @@ export default function Step2_Pricing({ data, updateData }) {
             id="early_bird_discount" 
             type="text" 
             inputMode="numeric"
-            value={data.early_bird_discount} 
+            value={data.early_bird_discount || ''} 
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
                 updateData({ early_bird_discount: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ early_bird_discount: parseInt(e.target.value, 10) || 0 })}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              updateData({ early_bird_discount: value ? parseInt(value, 10) || 0 : 0 });
+            }}
           />
         </div>
         <div className="space-y-2">
@@ -542,13 +589,16 @@ export default function Step2_Pricing({ data, updateData }) {
             id="early_bird_days" 
             type="text" 
             inputMode="numeric"
-            value={data.early_bird_days} 
+            value={data.early_bird_days || ''} 
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
                 updateData({ early_bird_days: e.target.value });
               }
             }}
-            onBlur={(e) => updateData({ early_bird_days: parseInt(e.target.value, 10) || 14 })}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              updateData({ early_bird_days: value ? parseInt(value, 10) || 14 : 14 });
+            }}
           />
         </div>
       </div>
