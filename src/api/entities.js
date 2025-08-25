@@ -936,14 +936,105 @@ export const Booking = {
   }
 };
 
-// Mock Review entity
+// Review entity with Google Reviews integration
 export const Review = {
   create: async (reviewData) => {
-    console.log("Mock review created:", reviewData);
-    return {
-      id: "mock-review-" + Date.now(),
-      ...reviewData
-    };
+    try {
+      console.log("Creating review in Supabase:", reviewData);
+      
+      const { data: newReview, error } = await supabase
+        .from('reviews')
+        .insert([reviewData])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Failed to create review in Supabase:', error);
+        throw error;
+      }
+      
+      console.log("✅ Review created successfully in Supabase:", newReview);
+      return newReview;
+    } catch (error) {
+      console.error('❌ Error creating review:', error);
+      throw error;
+    }
+  },
+  
+  filter: async (params, orderBy = null) => {
+    try {
+      console.log("Filtering reviews from Supabase with params:", params);
+      
+      let query = supabase.from('reviews').select('*');
+      
+      // Apply filters
+      if (params.boat_id) {
+        query = query.eq('boat_id', params.boat_id);
+      }
+      if (params.source) {
+        query = query.eq('source', params.source);
+      }
+      if (params.customer_id) {
+        query = query.eq('customer_id', params.customer_id);
+      }
+      
+      // Apply ordering
+      if (orderBy) {
+        if (orderBy.startsWith('-')) {
+          query = query.order(orderBy.substring(1), { ascending: false });
+        } else {
+          query = query.order(orderBy, { ascending: true });
+        }
+      } else {
+        query = query.order('review_date', { ascending: false });
+      }
+      
+      const { data: reviews, error } = await query;
+      
+      if (error) {
+        console.error("❌ Error fetching reviews from Supabase:", error);
+        throw error;
+      }
+      
+      console.log("✅ Reviews fetched from Supabase:", reviews?.length || 0);
+      return reviews || [];
+    } catch (error) {
+      console.error("❌ Error in Review.filter:", error);
+      throw error;
+    }
+  },
+  
+  getBoatReviews: async (boatId) => {
+    try {
+      console.log("Getting reviews for boat:", boatId);
+      
+      const { data: reviews, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('boat_id', boatId)
+        .order('review_date', { ascending: false });
+      
+      if (error) {
+        console.error("❌ Error fetching boat reviews:", error);
+        throw error;
+      }
+      
+      // Separate Google and platform reviews
+      const googleReviews = reviews.filter(r => r.source === 'google');
+      const platformReviews = reviews.filter(r => r.source === 'platform');
+      
+      return {
+        allReviews: reviews || [],
+        googleReviews,
+        platformReviews,
+        totalCount: reviews?.length || 0,
+        googleCount: googleReviews.length,
+        platformCount: platformReviews.length
+      };
+    } catch (error) {
+      console.error("❌ Error getting boat reviews:", error);
+      throw error;
+    }
   }
 };
 

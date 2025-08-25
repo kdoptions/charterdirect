@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Boat, Review } from "@/api/entities";
+import { Boat } from "@/api/entities";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, addDays } from "date-fns";
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
+import ReviewsDisplay from "@/components/ReviewsDisplay";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -29,7 +30,6 @@ import {
 export default function BoatDetails() {
   const navigate = useNavigate();
   const [boat, setBoat] = useState(null);
-  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [availabilityData, setAvailabilityData] = useState({});
@@ -81,9 +81,6 @@ export default function BoatDetails() {
       if (boats.length > 0) {
         const boatData = boats[0];
         setBoat(boatData);
-        // Load reviews for this boat
-        const boatReviews = await Review.filter({ boat_id: boatId }, "-created_date");
-        setReviews(boatReviews);
         // Check availability
         await checkAvailability(boatData);
       }
@@ -421,39 +418,7 @@ export default function BoatDetails() {
               </div>
 
               {/* Reviews */}
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Reviews</h3>
-                {reviews.length > 0 ? (
-                  <div className="space-y-4">
-                    {reviews.slice(0, 3).map((review) => (
-                      <div key={review.id} className="p-4 bg-white rounded-lg border">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm font-semibold">
-                                {review.customer_name?.[0] || "A"}
-                              </span>
-                            </div>
-                            <span className="font-semibold">{review.customer_name || "Anonymous"}</span>
-                          </div>
-                          <div className="flex items-center">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        {review.title && <h4 className="font-semibold mb-1">{review.title}</h4>}
-                        <p className="text-slate-600">{review.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-slate-500">No reviews yet. Be the first to book and review!</p>
-                )}
-              </div>
+              <ReviewsDisplay boatId={boatId} />
             </div>
           </div>
 

@@ -7,6 +7,8 @@ import stripeConnect from '../components/api/stripeConnect';
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from '../api/stripeService';
 import { notifications } from "../components/api/notifications";
+import ReviewsDisplay from "@/components/ReviewsDisplay";
+import GoogleReviewsImport from "@/components/GoogleReviewsImport";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +25,9 @@ import {
   CreditCard,
   Bell,
   TrendingUp,
-  RefreshCw
+  RefreshCw,
+  Star,
+  MessageSquare
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -42,6 +46,8 @@ export default function OwnerDashboard() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [selectedConnectedAccount, setSelectedConnectedAccount] = useState(null);
   const [userCalendarData, setUserCalendarData] = useState(null);
+  const [selectedBoatForReviews, setSelectedBoatForReviews] = useState(null);
+  const [showReviewsImport, setShowReviewsImport] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -1031,6 +1037,10 @@ export default function OwnerDashboard() {
             <TabsTrigger value="boats">
               My Boats ({boats.length})
             </TabsTrigger>
+            <TabsTrigger value="reviews">
+              <Star className="w-4 h-4 mr-2" />
+              Reviews
+            </TabsTrigger>
             <TabsTrigger value="earnings">
               Earnings
             </TabsTrigger>
@@ -1190,6 +1200,82 @@ export default function OwnerDashboard() {
                   <div className="text-slate-500 text-center py-8">
                     <p>No bookings yet</p>
                     <p className="text-xs mt-2">Debug: Check console for booking data</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  <span>Boat Reviews</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {boats.length > 0 ? (
+                  <div className="space-y-6">
+                    {boats.map(boat => (
+                      <div key={boat.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="font-semibold text-lg">{boat.name}</h3>
+                            <p className="text-sm text-slate-600">{boat.location}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedBoatForReviews(boat);
+                                setShowReviewsImport(false);
+                              }}
+                            >
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              View Reviews
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedBoatForReviews(boat);
+                                setShowReviewsImport(true);
+                              }}
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Import Google Reviews
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {selectedBoatForReviews?.id === boat.id && (
+                          <div className="mt-4">
+                            {showReviewsImport ? (
+                              <GoogleReviewsImport 
+                                boat={boat}
+                                onReviewsImported={(result) => {
+                                  console.log('Reviews imported:', result);
+                                  setShowReviewsImport(false);
+                                }}
+                              />
+                            ) : (
+                              <ReviewsDisplay 
+                                boatId={boat.id}
+                                showImportButton={true}
+                                onImportClick={() => setShowReviewsImport(true)}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-center py-8">
+                    <p>No boats found</p>
+                    <p className="text-xs mt-2">Add a boat to start managing reviews</p>
                   </div>
                 )}
               </CardContent>
