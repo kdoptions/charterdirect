@@ -9,6 +9,8 @@ import StripeService from '../api/stripeService';
 import { notifications } from "../components/api/notifications";
 import ReviewsDisplay from "@/components/ReviewsDisplay";
 import GoogleReviewsImport from "@/components/GoogleReviewsImport";
+import ManualReviewEntry from "@/components/ManualReviewEntry";
+import CSVReviewImport from "@/components/CSVReviewImport";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +50,7 @@ export default function OwnerDashboard() {
   const [userCalendarData, setUserCalendarData] = useState(null);
   const [selectedBoatForReviews, setSelectedBoatForReviews] = useState(null);
   const [showReviewsImport, setShowReviewsImport] = useState(false);
+  const [reviewMethod, setReviewMethod] = useState('view'); // 'view', 'import', 'manual', 'csv'
 
   useEffect(() => {
     if (currentUser) {
@@ -1231,7 +1234,7 @@ export default function OwnerDashboard() {
                               variant="outline"
                               onClick={() => {
                                 setSelectedBoatForReviews(boat);
-                                setShowReviewsImport(false);
+                                setReviewMethod('view');
                               }}
                             >
                               <MessageSquare className="w-4 h-4 mr-2" />
@@ -1239,32 +1242,70 @@ export default function OwnerDashboard() {
                             </Button>
                             <Button
                               size="sm"
+                              variant="outline"
                               onClick={() => {
                                 setSelectedBoatForReviews(boat);
-                                setShowReviewsImport(true);
+                                setReviewMethod('manual');
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Manually
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedBoatForReviews(boat);
+                                setReviewMethod('csv');
+                              }}
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              Import CSV
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedBoatForReviews(boat);
+                                setReviewMethod('import');
                               }}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              Import Google Reviews
+                              Import Google
                             </Button>
                           </div>
                         </div>
                         
                         {selectedBoatForReviews?.id === boat.id && (
                           <div className="mt-4">
-                            {showReviewsImport ? (
+                            {reviewMethod === 'import' ? (
                               <GoogleReviewsImport 
                                 boat={boat}
                                 onReviewsImported={(result) => {
                                   console.log('Reviews imported:', result);
-                                  setShowReviewsImport(false);
+                                  setReviewMethod('view');
+                                }}
+                              />
+                            ) : reviewMethod === 'manual' ? (
+                              <ManualReviewEntry 
+                                boat={boat}
+                                onReviewAdded={(reviews) => {
+                                  console.log('Reviews added manually:', reviews);
+                                  setReviewMethod('view');
+                                }}
+                              />
+                            ) : reviewMethod === 'csv' ? (
+                              <CSVReviewImport 
+                                boat={boat}
+                                onReviewsImported={(reviews) => {
+                                  console.log('Reviews imported via CSV:', reviews);
+                                  setReviewMethod('view');
                                 }}
                               />
                             ) : (
                               <ReviewsDisplay 
                                 boatId={boat.id}
                                 showImportButton={true}
-                                onImportClick={() => setShowReviewsImport(true)}
+                                onImportClick={() => setReviewMethod('import')}
                               />
                             )}
                           </div>
