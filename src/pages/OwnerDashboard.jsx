@@ -1081,6 +1081,11 @@ export default function OwnerDashboard() {
                                 💬 Special requests: {booking.special_requests}
                               </p>
                             )}
+                            {booking.additional_services && booking.additional_services.length > 0 && (
+                              <p className="text-xs text-indigo-600 mt-1">
+                                🎯 Additional services: {booking.additional_services.map(service => service.name).join(', ')}
+                              </p>
+                            )}
                             {booking.is_custom_time && (
                               <p className="text-xs text-red-600 mt-1">
                                 ⚠️ Outside regular hours - requires special approval
@@ -1155,6 +1160,11 @@ export default function OwnerDashboard() {
                             <p className="text-sm text-slate-600">
                               {format(new Date(booking.start_date), 'MMM d, yyyy')} • {booking.start_time}-{booking.end_time}
                             </p>
+                            {booking.additional_services && booking.additional_services.length > 0 && (
+                              <p className="text-xs text-indigo-600 mt-1">
+                                🎯 Services: {booking.additional_services.map(service => service.name).join(', ')}
+                              </p>
+                            )}
                             <p className="text-xs text-slate-400">
                               ID: {booking.id} | Boat: {booking.boat_id} | Status: {booking.status}
                             </p>
@@ -1261,6 +1271,29 @@ export default function OwnerDashboard() {
                   <h3 className="font-semibold text-purple-900 mb-2">Payment Information</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
+                      <span className="font-medium">Base Price:</span> ${actionDialog.booking.base_price || 0}
+                    </div>
+                    <div>
+                      <span className="font-medium">Duration:</span> {actionDialog.booking.total_hours || 0} hours
+                    </div>
+                    {actionDialog.booking.additional_services && actionDialog.booking.additional_services.length > 0 && (
+                      <>
+                        <div>
+                          <span className="font-medium">Services Cost:</span> $
+                          {actionDialog.booking.additional_services.reduce((total, service) => {
+                            if (service.pricing_type === 'per_hour') {
+                              return total + (service.price * (actionDialog.booking.total_hours || 1));
+                            } else {
+                              return total + service.price;
+                            }
+                          }, 0).toFixed(2)}
+                        </div>
+                        <div>
+                          <span className="font-medium">Total Amount:</span> ${actionDialog.booking.total_amount}
+                        </div>
+                      </>
+                    )}
+                    <div>
                       <span className="font-medium">Deposit:</span> ${actionDialog.booking.down_payment}
                     </div>
                     <div>
@@ -1279,6 +1312,47 @@ export default function OwnerDashboard() {
                     </p>
                   </div>
                 </div>
+
+                {/* Additional Services */}
+                {actionDialog.booking.additional_services && actionDialog.booking.additional_services.length > 0 && (
+                  <div className="bg-indigo-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-indigo-900 mb-2">Additional Services Booked</h3>
+                    <div className="space-y-2">
+                      {actionDialog.booking.additional_services.map((service, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-white rounded border border-indigo-200">
+                          <div>
+                            <span className="font-medium text-indigo-800">{service.name}</span>
+                            {service.description && (
+                              <p className="text-xs text-indigo-600 mt-1">{service.description}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold text-indigo-900">
+                              ${service.price}
+                            </span>
+                            <span className="text-xs text-indigo-600 block">
+                              {service.pricing_type === 'per_hour' ? 'per hour' : 'per booking'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="mt-3 pt-2 border-t border-indigo-200">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-indigo-800">Total Services Cost:</span>
+                          <span className="font-semibold text-indigo-900">
+                            ${actionDialog.booking.additional_services.reduce((total, service) => {
+                              if (service.pricing_type === 'per_hour') {
+                                return total + (service.price * (actionDialog.booking.total_hours || 1));
+                              } else {
+                                return total + service.price;
+                              }
+                            }, 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Special Requests */}
                 {actionDialog.booking.special_requests && (
