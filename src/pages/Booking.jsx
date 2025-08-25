@@ -848,7 +848,21 @@ const stripeInstance = await stripeService.getStripe();
                             }
                           }
                           
-                          console.log('🔍 Service object:', serviceObj);
+                          // Handle double-encoded JSON (JSON string stored as name field)
+                          if (serviceObj.name && typeof serviceObj.name === 'string' && serviceObj.name.startsWith('{')) {
+                            try {
+                              const parsedName = JSON.parse(serviceObj.name);
+                              serviceObj = {
+                                name: parsedName.name || serviceObj.name,
+                                price: parsedName.price || serviceObj.price || 0,
+                                description: parsedName.description || serviceObj.description || ''
+                              };
+                            } catch (e) {
+                              console.error('Failed to parse double-encoded service name:', serviceObj.name);
+                            }
+                          }
+                          
+                          console.log('🔍 Final service object:', serviceObj);
                           
                           return (
                             <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
