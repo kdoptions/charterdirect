@@ -297,6 +297,7 @@ export const Boat = {
   // Filter boats with parameters
   filter: async (params) => {
     try {
+      console.log('🔍 Boat.filter called with params:', params);
       let query = supabase
         .from('boats')
         .select('*')
@@ -449,53 +450,111 @@ export const Boat = {
       // Clean up the data before sending to Supabase
       const cleanedData = { ...updateData };
       
+      // Remove any undefined or null values that might cause issues
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === undefined || cleanedData[key] === null) {
+          delete cleanedData[key];
+        }
+      });
+      
       // Ensure numeric fields are properly formatted
       if (cleanedData.price_per_hour !== undefined) {
-        cleanedData.price_per_hour = parseFloat(cleanedData.price_per_hour) || 0;
+        const price = parseFloat(cleanedData.price_per_hour);
+        cleanedData.price_per_hour = isNaN(price) ? 0 : price;
       }
       if (cleanedData.extended_booking_price !== undefined) {
-        cleanedData.extended_booking_price = parseFloat(cleanedData.extended_booking_price) || 0;
+        const price = parseFloat(cleanedData.extended_booking_price);
+        cleanedData.extended_booking_price = isNaN(price) ? 0 : price;
       }
       if (cleanedData.weekend_price !== undefined) {
-        cleanedData.weekend_price = parseFloat(cleanedData.weekend_price) || 0;
+        const price = parseFloat(cleanedData.weekend_price);
+        cleanedData.weekend_price = isNaN(price) ? 0 : price;
       }
       if (cleanedData.off_season_discount !== undefined) {
-        cleanedData.off_season_discount = parseInt(cleanedData.off_season_discount) || 0;
+        const discount = parseInt(cleanedData.off_season_discount);
+        cleanedData.off_season_discount = isNaN(discount) ? 0 : discount;
       }
       if (cleanedData.down_payment_percentage !== undefined) {
-        cleanedData.down_payment_percentage = parseInt(cleanedData.down_payment_percentage) || 30;
+        const percentage = parseInt(cleanedData.down_payment_percentage);
+        cleanedData.down_payment_percentage = isNaN(percentage) ? 30 : Math.max(10, percentage);
       }
       if (cleanedData.early_bird_discount !== undefined) {
-        cleanedData.early_bird_discount = parseInt(cleanedData.early_bird_discount) || 0;
+        const discount = parseInt(cleanedData.early_bird_discount);
+        cleanedData.early_bird_discount = isNaN(discount) ? 0 : discount;
       }
       if (cleanedData.early_bird_days !== undefined) {
-        cleanedData.early_bird_days = parseInt(cleanedData.early_bird_days) || 14;
+        const days = parseInt(cleanedData.early_bird_days);
+        cleanedData.early_bird_days = isNaN(days) ? 14 : days;
       }
       if (cleanedData.max_guests !== undefined) {
-        cleanedData.max_guests = parseInt(cleanedData.max_guests) || 1;
+        const guests = parseInt(cleanedData.max_guests);
+        cleanedData.max_guests = isNaN(guests) ? 1 : Math.max(1, guests);
       }
       
       // Ensure JSONB fields are properly formatted
-      if (cleanedData.availability_blocks && !Array.isArray(cleanedData.availability_blocks)) {
-        cleanedData.availability_blocks = [];
+      if (cleanedData.availability_blocks !== undefined) {
+        if (!Array.isArray(cleanedData.availability_blocks)) {
+          console.warn('⚠️ availability_blocks is not an array, setting to empty array');
+          cleanedData.availability_blocks = [];
+        } else {
+          // Clean each availability block
+          cleanedData.availability_blocks = cleanedData.availability_blocks.map(block => ({
+            name: block.name || '',
+            start_time: block.start_time || '09:00',
+            end_time: block.end_time || '13:00',
+            duration_hours: parseFloat(block.duration_hours) || 4,
+            error: null
+          }));
+        }
       }
-      if (cleanedData.special_pricing && !Array.isArray(cleanedData.special_pricing)) {
-        cleanedData.special_pricing = [];
+      
+      if (cleanedData.special_pricing !== undefined) {
+        if (!Array.isArray(cleanedData.special_pricing)) {
+          console.warn('⚠️ special_pricing is not an array, setting to empty array');
+          cleanedData.special_pricing = [];
+        } else {
+          // Clean each special pricing entry
+          cleanedData.special_pricing = cleanedData.special_pricing.map(pricing => ({
+            date: pricing.date || '',
+            price_per_hour: parseFloat(pricing.price_per_hour) || 0
+          }));
+        }
       }
-      if (cleanedData.amenities && !Array.isArray(cleanedData.amenities)) {
-        cleanedData.amenities = [];
+      
+      if (cleanedData.amenities !== undefined) {
+        if (!Array.isArray(cleanedData.amenities)) {
+          console.warn('⚠️ amenities is not an array, setting to empty array');
+          cleanedData.amenities = [];
+        }
       }
-      if (cleanedData.additional_services && !Array.isArray(cleanedData.additional_services)) {
-        cleanedData.additional_services = [];
+      
+      if (cleanedData.additional_services !== undefined) {
+        if (!Array.isArray(cleanedData.additional_services)) {
+          console.warn('⚠️ additional_services is not an array, setting to empty array');
+          cleanedData.additional_services = [];
+        }
       }
-      if (cleanedData.images && !Array.isArray(cleanedData.images)) {
-        cleanedData.images = [];
+      
+      if (cleanedData.images !== undefined) {
+        if (!Array.isArray(cleanedData.images)) {
+          console.warn('⚠️ images is not an array, setting to empty array');
+          cleanedData.images = [];
+        }
       }
-      if (cleanedData.additional_media && !Array.isArray(cleanedData.additional_media)) {
-        cleanedData.additional_media = [];
+      
+      if (cleanedData.additional_media !== undefined) {
+        if (!Array.isArray(cleanedData.additional_media)) {
+          console.warn('⚠️ additional_media is not an array, setting to empty array');
+          cleanedData.additional_media = [];
+        }
       }
       
       console.log('🚤 Updating boat with cleaned data:', cleanedData);
+      
+      // Log the exact data being sent to help debug
+      console.log('🚤 Boat ID:', boatId);
+      console.log('🚤 Data keys:', Object.keys(cleanedData));
+      console.log('🚤 Data values:', Object.values(cleanedData));
       
       const { data, error } = await supabase
         .from('boats')
@@ -506,6 +565,12 @@ export const Boat = {
       
       if (error) {
         console.error('❌ Supabase update error:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
       

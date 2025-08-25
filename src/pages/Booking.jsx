@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Boat, Booking as BookingEntity, mockBoats } from "@/api/entities";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from "@/api/stripeService";
@@ -163,11 +164,39 @@ const stripeInstance = await stripeService.getStripe();
         
         let boatData;
         try {
+          // Check if Boat.filter is available
+          if (typeof Boat.filter !== 'function') {
+            console.error("❌ Boat.filter is not a function:", typeof Boat.filter);
+            throw new Error("Boat.filter method not available");
+          }
+          
           boatData = await Boat.filter({ id: boatId });
         } catch (error) {
           console.error("❌ Boat.filter failed, trying fallback:", error);
-          // Fallback: try to get boat directly from mock data
-          boatData = mockBoats.filter(boat => boat.id === boatId);
+          
+          // Try multiple fallback strategies
+          try {
+            // Fallback 1: Try to get boat directly from mock data
+            boatData = mockBoats.filter(boat => boat.id === boatId);
+            
+            if (boatData.length === 0) {
+              // Fallback 2: Try to get boat by ID directly from Supabase
+              const { data: supabaseData, error: supabaseError } = await supabase
+                .from('boats')
+                .select('*')
+                .eq('id', boatId)
+                .single();
+              
+              if (!supabaseError && supabaseData) {
+                boatData = [supabaseData];
+              } else {
+                console.error("❌ Supabase fallback also failed:", supabaseError);
+              }
+            }
+          } catch (fallbackError) {
+            console.error("❌ All fallback strategies failed:", fallbackError);
+            boatData = [];
+          }
         }
         
         console.log("Boat data found:", boatData);
