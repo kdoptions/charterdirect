@@ -165,7 +165,18 @@ const stripeInstance = await stripeService.getStripe();
           setLoading(false);
           return;
         }
-        setBoat(boatData[0]);
+        
+        const selectedBoat = boatData[0];
+        
+        // Debug additional services
+        if (selectedBoat.additional_services) {
+          console.log("🔍 Additional services raw data:", selectedBoat.additional_services);
+          console.log("🔍 Services type:", typeof selectedBoat.additional_services);
+          console.log("🔍 Services length:", selectedBoat.additional_services.length);
+          console.log("🔍 First service:", selectedBoat.additional_services[0]);
+        }
+        
+        setBoat(selectedBoat);
 
         // Fetch user data
         if (currentUser) {
@@ -789,38 +800,59 @@ const stripeInstance = await stripeService.getStripe();
                   <div>
                     <Label className="font-bold text-lg">4. Additional Services</Label>
                     <p className="text-sm text-slate-600 mb-3">Enhance your experience with these optional services:</p>
+                    
+                    {/* Debug: Show raw data */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                        <strong>Debug - Raw services data:</strong> {JSON.stringify(boat.additional_services)}
+                      </div>
+                    )}
+                    
                     <div className="space-y-3">
-                      {boat.additional_services.map((service, index) => (
+                      {boat.additional_services.map((service, index) => {
+                        // Handle both string and object formats
+                        let serviceObj = service;
+                        if (typeof service === 'string') {
+                          try {
+                            serviceObj = JSON.parse(service);
+                          } catch (e) {
+                            console.error('Failed to parse service:', service);
+                            serviceObj = { name: service, price: 0, description: '' };
+                          }
+                        }
+                        
+                        return (
                         <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
                           <div className="flex items-center space-x-3">
                             <input
                               type="checkbox"
                               id={`service-${index}`}
-                              checked={selectedServices.some(s => s.name === service.name)}
+                              checked={selectedServices.some(s => s.name === serviceObj.name)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedServices([...selectedServices, service]);
+                                  setSelectedServices([...selectedServices, serviceObj]);
                                 } else {
-                                  setSelectedServices(selectedServices.filter(s => s.name !== service.name));
+                                  setSelectedServices(selectedServices.filter(s => s.name !== serviceObj.name));
                                 }
                               }}
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <div>
                               <Label htmlFor={`service-${index}`} className="font-medium text-slate-900 cursor-pointer">
-                                {service.name}
+                                {serviceObj.name}
                               </Label>
-                              {service.description && (
-                                <p className="text-sm text-slate-600">{service.description}</p>
+                              {serviceObj.description && (
+                                <p className="text-sm text-slate-600">{serviceObj.description}</p>
                               )}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-slate-900">${service.price}</div>
+                            <div className="font-bold text-slate-900">${serviceObj.price}</div>
                             <div className="text-xs text-slate-500">per booking</div>
                           </div>
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                     {selectedServices.length > 0 && (
                       <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
