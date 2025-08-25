@@ -29,8 +29,11 @@ export default function GoogleReviewsImport({ boat, onReviewsImported }) {
   const [googleApiKey, setGoogleApiKey] = useState('');
 
   const searchPlaces = async () => {
-    if (!googleApiKey.trim()) {
-      setError('Please enter your Google Places API key');
+    // Use environment API key if available, otherwise use user input
+    const apiKeyToUse = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || googleApiKey.trim();
+    
+    if (!apiKeyToUse) {
+      setError('Please enter your Google Places API key or configure VITE_GOOGLE_PLACES_API_KEY in your environment');
       return;
     }
 
@@ -49,7 +52,7 @@ export default function GoogleReviewsImport({ boat, onReviewsImported }) {
       const places = await googleReviewsService.searchGooglePlaces(
         boat.name, 
         boat.location, 
-        googleApiKey
+        apiKeyToUse
       );
 
       setSearchResults(places);
@@ -80,10 +83,13 @@ export default function GoogleReviewsImport({ boat, onReviewsImported }) {
     try {
       console.log('📥 Importing reviews for place:', selectedPlace.place_id);
       
+      // Use environment API key if available, otherwise use user input
+      const apiKeyToUse = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || googleApiKey.trim();
+      
       const result = await googleReviewsService.importGoogleReviews(
         boat.id,
         selectedPlace.place_id,
-        googleApiKey
+        apiKeyToUse
       );
 
       console.log('✅ Import result:', result);
@@ -134,16 +140,32 @@ export default function GoogleReviewsImport({ boat, onReviewsImported }) {
 
           {/* API Key Input */}
           <div className="space-y-2">
-            <Label htmlFor="google-api-key">Google Places API Key</Label>
+            <Label htmlFor="google-api-key">
+              Google Places API Key
+              {import.meta.env.VITE_GOOGLE_PLACES_API_KEY && (
+                <Badge variant="outline" className="ml-2 text-xs">
+                  Environment Configured
+                </Badge>
+              )}
+            </Label>
             <Input
               id="google-api-key"
               type="password"
-              placeholder="Enter your Google Places API key"
+              placeholder={
+                import.meta.env.VITE_GOOGLE_PLACES_API_KEY 
+                  ? "Environment API key will be used (optional to override)"
+                  : "Enter your Google Places API key"
+              }
               value={googleApiKey}
               onChange={(e) => setGoogleApiKey(e.target.value)}
+              disabled={!!import.meta.env.VITE_GOOGLE_PLACES_API_KEY}
             />
             <p className="text-xs text-slate-500">
-              You'll need a Google Places API key. Get one from the{' '}
+              {import.meta.env.VITE_GOOGLE_PLACES_API_KEY 
+                ? "API key is configured in environment variables. You can override it above if needed."
+                : "You'll need a Google Places API key. Get one from the Google Cloud Console."
+              }
+              {' '}
               <a 
                 href="https://console.cloud.google.com/apis/credentials" 
                 target="_blank" 

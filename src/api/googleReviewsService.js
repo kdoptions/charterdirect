@@ -1,36 +1,83 @@
 import { supabase } from '@/lib/supabase';
 
+// Get API configuration from environment
+const getApiConfig = () => {
+  const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+  const apiVersion = import.meta.env.VITE_GOOGLE_PLACES_API_VERSION || 'v1';
+  
+  if (!apiKey) {
+    throw new Error('Google Places API key not configured. Please set VITE_GOOGLE_PLACES_API_KEY in your environment variables.');
+  }
+  
+  return { apiKey, apiVersion };
+};
+
 export const googleReviewsService = {
   // Fetch reviews from Google Places API
-  fetchGoogleReviews: async (placeId, apiKey) => {
+  fetchGoogleReviews: async (placeId, customApiKey = null) => {
     try {
       console.log('🔍 Fetching Google Reviews for place:', placeId);
       
-      // First, get the place details to ensure we have the right place
-      const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${apiKey}`;
+      const { apiKey, apiVersion } = getApiConfig();
+      const keyToUse = customApiKey || apiKey;
       
-      const placeResponse = await fetch(placeDetailsUrl);
-      const placeData = await placeResponse.json();
+      let placeDetailsUrl;
+      let placeData;
       
-      if (placeData.status !== 'OK') {
-        throw new Error(`Google Places API error: ${placeData.status} - ${placeData.error_message || 'Unknown error'}`);
+      if (apiVersion === 'v2') {
+        // New Places API v2
+        placeDetailsUrl = `https://places.googleapis.com/v1/places/${placeId}?fields=displayName,rating,userRatingCount,reviews&key=${keyToUse}`;
+        
+        const placeResponse = await fetch(placeDetailsUrl, {
+          headers: {
+            'X-Goog-Api-Key': keyToUse,
+            'X-Goog-FieldMask': 'displayName,rating,userRatingCount,reviews'
+          }
+        });
+        
+        if (!placeResponse.ok) {
+          const errorData = await placeResponse.json();
+          throw new Error(`Google Places API v2 error: ${placeResponse.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+        
+        placeData = await placeResponse.json();
+        
+        // Transform v2 response to match v1 format
+        return {
+          placeId,
+          placeName: placeData.displayName?.text || 'Unknown Place',
+          overallRating: placeData.rating || 0,
+          totalReviews: placeData.userRatingCount || 0,
+          reviews: placeData.reviews || []
+        };
+        
+      } else {
+        // Legacy Places API v1
+        placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${keyToUse}`;
+        
+        const placeResponse = await fetch(placeDetailsUrl);
+        placeData = await placeResponse.json();
+        
+        if (placeData.status !== 'OK') {
+          throw new Error(`Google Places API v1 error: ${placeData.status} - ${placeData.error_message || 'Unknown error'}`);
+        }
+        
+        const place = placeData.result;
+        console.log('✅ Place details fetched:', {
+          name: place.name,
+          rating: place.rating,
+          totalReviews: place.user_ratings_total,
+          reviewsCount: place.reviews?.length || 0
+        });
+        
+        return {
+          placeId,
+          placeName: place.name,
+          overallRating: place.rating,
+          totalReviews: place.user_ratings_total,
+          reviews: place.reviews || []
+        };
       }
-      
-      const place = placeData.result;
-      console.log('✅ Place details fetched:', {
-        name: place.name,
-        rating: place.rating,
-        totalReviews: place.user_ratings_total,
-        reviewsCount: place.reviews?.length || 0
-      });
-      
-      return {
-        placeId,
-        placeName: place.name,
-        overallRating: place.rating,
-        totalReviews: place.user_ratings_total,
-        reviews: place.reviews || []
-      };
       
     } catch (error) {
       console.error('❌ Error fetching Google Reviews:', error);
@@ -231,29 +278,72 @@ export const googleReviewsService = {
   },
   
   // Search for Google Places by business name and location
-  searchGooglePlaces: async (businessName, location, apiKey) => {
+  searchGooglePlaces: async (businessName, location, customApiKey = null) => {
     try {
       console.log('🔍 Searching Google Places for:', businessName, 'in', location);
       
-      const searchQuery = `${businessName} ${location}`;
-      const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&type=establishment&key=${apiKey}`;
+      const { apiKey, apiVersion } = getApiConfig();
+      const keyToUse = customApiKey || apiKey;
       
-      const response = await fetch(searchUrl);
-      const data = await response.json();
+      let places;
       
-      if (data.status !== 'OK') {
-        throw new Error(`Google Places Search API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
+      if (apiVersion === 'v2') {
+        // New Places API v2
+        const searchQuery = `${businessName} ${location}`;
+        const searchUrl = `https://places.googleapis.com/v1/places:searchText`;
+        
+        const response = await fetch(searchUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': keyToUse,
+            'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.types,places.photos'
+          },
+          body: JSON.stringify({
+            textQuery: searchQuery,
+            maxResultCount: 10
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Google Places API v2 error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+        
+        const data = await response.json();
+        
+        places = data.places?.map(place => ({
+          place_id: place.id,
+          name: place.displayName?.text || 'Unknown Place',
+          address: place.formattedAddress || 'No address',
+          rating: place.rating || 0,
+          user_ratings_total: place.userRatingCount || 0,
+          types: place.types || [],
+          photos: place.photos?.slice(0, 3) || []
+        })) || [];
+        
+      } else {
+        // Legacy Places API v1
+        const searchQuery = `${businessName} ${location}`;
+        const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&type=establishment&key=${keyToUse}`;
+        
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        
+        if (data.status !== 'OK') {
+          throw new Error(`Google Places Search API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
+        }
+        
+        places = data.results.map(place => ({
+          place_id: place.place_id,
+          name: place.name,
+          address: place.formatted_address,
+          rating: place.rating,
+          user_ratings_total: place.user_ratings_total,
+          types: place.types,
+          photos: place.photos?.slice(0, 3) || []
+        }));
       }
-      
-      const places = data.results.map(place => ({
-        place_id: place.place_id,
-        name: place.name,
-        address: place.formatted_address,
-        rating: place.rating,
-        user_ratings_total: place.user_ratings_total,
-        types: place.types,
-        photos: place.photos?.slice(0, 3) || []
-      }));
       
       console.log('✅ Found places:', places.length);
       return places;
