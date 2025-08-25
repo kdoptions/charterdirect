@@ -17,8 +17,38 @@ export default function Step2_Pricing({ data, updateData }) {
       name: '',
       start_time: '09:00',
       end_time: '13:00',
-      duration_hours: 4
+      duration_hours: 4,
+      error: null
     };
+    
+    // Validate the new block immediately
+    try {
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(newBlock.start_time) || !timeRegex.test(newBlock.end_time)) {
+        newBlock.error = "Invalid time format. Use HH:MM (e.g., 09:00)";
+        newBlock.duration_hours = 0;
+      } else {
+        const [startHour, startMinute] = newBlock.start_time.split(':').map(Number);
+        const [endHour, endMinute] = newBlock.end_time.split(':').map(Number);
+        const startMinutes = startHour * 60 + startMinute;
+        const endMinutes = endHour * 60 + endMinute;
+        
+        let durationMinutes;
+        if (endMinutes <= startMinutes) {
+          durationMinutes = (24 * 60 - startMinutes) + endMinutes;
+        } else {
+          durationMinutes = endMinutes - startMinutes;
+        }
+        
+        const duration = durationMinutes / 60;
+        newBlock.duration_hours = Math.round(duration * 100) / 100;
+      }
+    } catch (error) {
+      console.error("❌ Error validating new block:", error);
+      newBlock.error = "Error validating time block";
+      newBlock.duration_hours = 0;
+    }
+    
     updateData({
       availability_blocks: [...(data.availability_blocks || []), newBlock]
     });
@@ -30,10 +60,62 @@ export default function Step2_Pricing({ data, updateData }) {
     
     // Auto-calculate duration when times change
     if (field === 'start_time' || field === 'end_time') {
-      const start = new Date(`2000-01-01T${newBlocks[index].start_time}`);
-      const end = new Date(`2000-01-01T${newBlocks[index].end_time}`);
-      const duration = (end - start) / (1000 * 60 * 60);
-      newBlocks[index].duration_hours = Math.max(0, duration);
+      try {
+        // Validate time format (HH:MM)
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        const startTime = newBlocks[index].start_time;
+        const endTime = newBlocks[index].end_time;
+        
+        if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+          console.error("❌ Invalid time format:", { startTime, endTime });
+          newBlocks[index].duration_hours = 0;
+          newBlocks[index].error = "Invalid time format. Use HH:MM (e.g., 09:00)";
+        } else {
+          // Parse times properly
+          const [startHour, startMinute] = startTime.split(':').map(Number);
+          const [endHour, endMinute] = endTime.split(':').map(Number);
+          
+          // Convert to minutes for accurate calculation
+          const startMinutes = startHour * 60 + startMinute;
+          const endMinutes = endHour * 60 + endMinute;
+          
+          // Handle overnight bookings (end time < start time)
+          let durationMinutes;
+          if (endMinutes <= startMinutes) {
+            // Overnight booking (e.g., 22:00 to 02:00)
+            durationMinutes = (24 * 60 - startMinutes) + endMinutes;
+          } else {
+            durationMinutes = endMinutes - startMinutes;
+          }
+          
+          const duration = durationMinutes / 60;
+          
+          // Validate duration
+          if (duration <= 0) {
+            newBlocks[index].duration_hours = 0;
+            newBlocks[index].error = "End time must be after start time";
+          } else if (duration > 24) {
+            newBlocks[index].duration_hours = 24;
+            newBlocks[index].error = "Maximum duration is 24 hours";
+          } else {
+            newBlocks[index].duration_hours = Math.round(duration * 100) / 100; // Round to 2 decimal places
+            newBlocks[index].error = null; // Clear any previous errors
+          }
+          
+          console.log("✅ Time calculation:", { 
+            startTime, 
+            endTime, 
+            startMinutes, 
+            endMinutes, 
+            durationMinutes, 
+            duration: newBlocks[index].duration_hours 
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error calculating duration:", error);
+        newBlocks[index].duration_hours = 0;
+        newBlocks[index].error = "Error calculating duration";
+      }
     }
     
     updateData({ availability_blocks: newBlocks });
@@ -68,6 +150,33 @@ export default function Step2_Pricing({ data, updateData }) {
     const newSpecialPricing = (data.special_pricing || []).filter(p => p.date !== dateToRemove);
     updateData({ special_pricing: newSpecialPricing });
   };
+
+  // Validate all availability blocks
+  const validateAllBlocks = () => {
+    const blocks = data.availability_blocks || [];
+    const errorBlocks = blocks.filter(b => b.error);
+    return {
+      isValid: errorBlocks.length === 0,
+      errorCount: errorBlocks.length,
+      totalBlocks: blocks.length
+    };
+  };
+
+  // Get validation status for parent component
+  React.useEffect(() => {
+    if (data.availability_blocks) {
+      const validation = validateAllBlocks();
+      // Expose validation status to parent component
+      if (updateData && typeof updateData === 'function') {
+        updateData({ 
+          _validation: {
+            ...data._validation,
+            availabilityBlocks: validation
+          }
+        });
+      }
+    }
+  }, [data.availability_blocks]);
 
   return (
     <div className="space-y-8">
@@ -113,7 +222,12 @@ export default function Step2_Pricing({ data, updateData }) {
         <div className="flex justify-between items-center mb-4">
           <div>
             <Label className="font-semibold">Availability Blocks</Label>
-            <p className="text-sm text-slate-500">Define custom time blocks when your boat is available.</p>
+            <p className="text-sm text-slate-500">
+              Define custom time blocks when your boat is available. 
+              <span className="block mt-1 text-xs text-blue-600">
+                💡 Tip: Use 24-hour format (e.g., 09:00, 14:30). You can create blocks like "Morning (09:00-13:00)" or "Sunset (17:00-21:00)"
+              </span>
+            </p>
           </div>
           <Button variant="outline" size="sm" onClick={addAvailabilityBlock}>
             <Plus className="w-4 h-4 mr-2" />
@@ -121,15 +235,54 @@ export default function Step2_Pricing({ data, updateData }) {
           </Button>
         </div>
         
+        {/* Validation Summary */}
+        {(() => {
+          const blocks = data.availability_blocks || [];
+          const validBlocks = blocks.filter(b => !b.error && b.duration_hours > 0);
+          const errorBlocks = blocks.filter(b => b.error);
+          
+          if (blocks.length === 0) return null;
+          
+          return (
+            <div className={`mb-4 p-3 rounded-lg border ${
+              errorBlocks.length > 0 
+                ? 'bg-red-50 border-red-200' 
+                : 'bg-green-50 border-green-200'
+            }`}>
+              <div className="flex items-center gap-2 text-sm">
+                {errorBlocks.length > 0 ? (
+                  <>
+                    <span className="text-red-600">⚠️</span>
+                    <span className="text-red-700">
+                      {errorBlocks.length} time block{errorBlocks.length > 1 ? 's' : ''} have errors. 
+                      Please fix them before saving.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-green-600">✅</span>
+                    <span className="text-green-700">
+                      All {validBlocks.length} time block{validBlocks.length > 1 ? 's' : ''} are valid!
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+        
         <div className="space-y-4">
           {(data.availability_blocks || []).map((block, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end p-4 border rounded-lg">
+            <div key={index} className={`grid grid-cols-1 md:grid-cols-6 gap-3 items-end p-4 border rounded-lg ${
+              block.error ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}>
               <div className="space-y-1">
                 <Label>Block Name</Label>
                 <Input
                   value={block.name}
                   onChange={(e) => updateAvailabilityBlock(index, 'name', e.target.value)}
                   placeholder="e.g., Morning"
+                  className={block.error ? 'border-red-500' : ''}
                 />
               </div>
               <div className="space-y-1">
@@ -138,6 +291,7 @@ export default function Step2_Pricing({ data, updateData }) {
                   type="time"
                   value={block.start_time}
                   onChange={(e) => updateAvailabilityBlock(index, 'start_time', e.target.value)}
+                  className={block.error ? 'border-red-500' : ''}
                 />
               </div>
               <div className="space-y-1">
@@ -146,17 +300,34 @@ export default function Step2_Pricing({ data, updateData }) {
                   type="time"
                   value={block.end_time}
                   onChange={(e) => updateAvailabilityBlock(index, 'end_time', e.target.value)}
+                  className={block.error ? 'border-red-500' : ''}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Duration</Label>
-                <Badge variant="outline">{block.duration_hours || 0}h</Badge>
+                <Badge variant={block.error ? "destructive" : "outline"}>
+                  {block.duration_hours || 0}h
+                </Badge>
               </div>
               <div>
                 <Button variant="destructive" size="icon" onClick={() => removeAvailabilityBlock(index)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
+              
+              {/* Error Display */}
+              {block.error && (
+                <div className="col-span-full mt-2 p-2 bg-red-100 border border-red-300 rounded text-sm text-red-700">
+                  ⚠️ {block.error}
+                </div>
+              )}
+              
+              {/* Validation Warnings */}
+              {!block.error && block.duration_hours > 0 && (
+                <div className="col-span-full mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                  ✅ Valid time block: {block.start_time} - {block.end_time} ({block.duration_hours}h)
+                </div>
+              )}
             </div>
           ))}
           
