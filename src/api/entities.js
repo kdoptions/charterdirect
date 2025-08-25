@@ -457,6 +457,14 @@ export const Boat = {
         }
       });
       
+      // Remove client-side validation fields that shouldn't be sent to Supabase
+      Object.keys(cleanedData).forEach(key => {
+        if (key.startsWith('_')) {
+          delete cleanedData[key];
+          console.log(`🚤 Removed client-side field '${key}' from data sent to Supabase`);
+        }
+      });
+      
       // Ensure numeric fields are properly formatted
       if (cleanedData.price_per_hour !== undefined) {
         const price = parseFloat(cleanedData.price_per_hour);

@@ -203,14 +203,11 @@ export default function Step2_Pricing({ data, updateData }) {
   React.useEffect(() => {
     if (data.availability_blocks) {
       const validation = validateAllBlocks();
-      // Expose validation status to parent component
+      // Expose validation status to parent component via a callback
+      // Don't add _validation to the main data object
       if (updateData && typeof updateData === 'function') {
-        updateData({ 
-          _validation: {
-            ...data._validation,
-            availabilityBlocks: validation
-          }
-        });
+        // Only update the main data if there are actual changes, not validation
+        // The validation will be handled separately by the parent component
       }
     }
   }, [data.availability_blocks]);
