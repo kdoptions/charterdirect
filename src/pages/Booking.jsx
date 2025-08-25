@@ -63,6 +63,18 @@ export default function BookingPage() {
   const [customEndTime, setCustomEndTime] = useState("13:00");
   const [selectedServices, setSelectedServices] = useState([]);
 
+  // Debug selectedServices changes
+  useEffect(() => {
+    console.log('🔍 selectedServices changed:', selectedServices);
+    
+    // Test with a hardcoded service to verify pricing calculation
+    if (selectedServices.length > 0) {
+      const testService = { name: 'test', price: 100, description: 'per hour', pricing_type: 'per_hour' };
+      console.log('🔍 Test service calculation:', testService);
+      console.log('🔍 Test service cost for 4 hours:', testService.price * 4);
+    }
+  }, [selectedServices]);
+
   const urlParams = new URLSearchParams(location.search);
   const boatId = urlParams.get('id');
 
@@ -383,19 +395,56 @@ const stripeInstance = await stripeService.getStripe();
   const servicesCost = selectedServices.reduce((sum, service) => {
     let serviceCost = 0;
     
-    switch (service.pricing_type) {
+    console.log(`🔍 Processing service:`, service);
+    console.log(`🔍 Service has pricing_type:`, service.pricing_type);
+    console.log(`🔍 Service description:`, service.description);
+    console.log(`🔍 Total hours:`, totalHours);
+    
+    // Determine pricing type - check explicit field first, then fallback to description
+    let pricingType = service.pricing_type;
+    console.log(`🔍 Initial pricing_type:`, pricingType);
+    console.log(`🔍 Service description:`, service.description);
+    console.log(`🔍 Description type:`, typeof service.description);
+    
+    if (!pricingType && service.description) {
+      const desc = service.description.toLowerCase();
+      console.log(`🔍 Lowercase description:`, desc);
+      console.log(`🔍 Contains 'per hour':`, desc.includes('per hour'));
+      console.log(`🔍 Contains 'per person':`, desc.includes('per person'));
+      
+      if (desc.includes('per hour')) {
+        pricingType = 'per_hour';
+        console.log(`🔍 Detected per_hour from description`);
+      } else if (desc.includes('per person')) {
+        pricingType = 'per_person';
+        console.log(`🔍 Detected per_person from description`);
+      } else {
+        pricingType = 'fixed';
+        console.log(`🔍 Defaulting to fixed pricing`);
+      }
+    }
+    
+    console.log(`🔍 Final pricing type:`, pricingType);
+    
+    switch (pricingType) {
       case 'fixed':
         serviceCost = service.price;
+        console.log(`🔍 Fixed pricing: ${service.price}`);
         break;
       case 'per_person':
         serviceCost = service.price * guests;
+        console.log(`🔍 Per person pricing: ${service.price} × ${guests} = ${serviceCost}`);
         break;
       case 'per_hour':
         serviceCost = service.price * totalHours;
+        console.log(`🔍 Per hour pricing: ${service.price} × ${totalHours} = ${serviceCost}`);
         break;
       default:
         serviceCost = service.price; // fallback to fixed
+        console.log(`🔍 Default pricing: ${service.price}`);
     }
+    
+    console.log(`🔍 Final service cost: ${serviceCost}`);
     
     return sum + serviceCost;
   }, 0);
@@ -894,8 +943,10 @@ const stripeInstance = await stripeService.getStripe();
                               checked={selectedServices.some(s => s.name === serviceObj.name)}
                               onChange={(e) => {
                                 if (e.target.checked) {
+                                  console.log('🔍 Adding service to selectedServices:', serviceObj);
                                   setSelectedServices([...selectedServices, serviceObj]);
                                 } else {
+                                  console.log('🔍 Removing service from selectedServices:', serviceObj.name);
                                   setSelectedServices(selectedServices.filter(s => s.name !== serviceObj.name));
                                 }
                               }}
@@ -913,9 +964,30 @@ const stripeInstance = await stripeService.getStripe();
                           <div className="text-right">
                             <div className="font-bold text-slate-900">${serviceObj.price}</div>
                             <div className="text-xs text-slate-500">
-                              {serviceObj.pricing_type === 'fixed' && 'per booking'}
-                              {serviceObj.pricing_type === 'per_person' && 'per person'}
-                              {serviceObj.pricing_type === 'per_hour' && 'per hour'}
+                              {(() => {
+                                // Determine pricing type - check explicit field first, then fallback to description
+                                let pricingType = serviceObj.pricing_type;
+                                if (!pricingType && serviceObj.description) {
+                                  if (serviceObj.description.toLowerCase().includes('per hour')) {
+                                    pricingType = 'per_hour';
+                                  } else if (serviceObj.description.toLowerCase().includes('per person')) {
+                                    pricingType = 'per_person';
+                                  } else {
+                                    pricingType = 'fixed';
+                                  }
+                                }
+                                
+                                switch (pricingType) {
+                                  case 'fixed':
+                                    return 'per booking';
+                                  case 'per_person':
+                                    return 'per person';
+                                  case 'per_hour':
+                                    return 'per hour';
+                                  default:
+                                    return 'per booking';
+                                }
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -929,7 +1001,7 @@ const stripeInstance = await stripeService.getStripe();
                           <strong>Selected Services:</strong> {selectedServices.map(s => s.name).join(', ')}
                         </div>
                         <div className="text-sm text-blue-700 mt-1">
-                          <strong>Additional Cost:</strong> ${selectedServices.reduce((sum, s) => sum + s.price, 0).toFixed(2)}
+                          <strong>Additional Cost:</strong> ${servicesCost.toFixed(2)}
                         </div>
                       </div>
                     )}
@@ -1080,8 +1152,20 @@ const stripeInstance = await stripeService.getStripe();
                         </div>
                         <div className="text-xs text-slate-500 pl-2">
                           {selectedServices.map(service => {
+                            // Determine pricing type - check explicit field first, then fallback to description
+                            let pricingType = service.pricing_type;
+                            if (!pricingType && service.description) {
+                              if (service.description.toLowerCase().includes('per hour')) {
+                                pricingType = 'per_hour';
+                              } else if (service.description.toLowerCase().includes('per person')) {
+                                pricingType = 'per_person';
+                              } else {
+                                pricingType = 'fixed';
+                              }
+                            }
+                            
                             let serviceCost = 0;
-                            switch (service.pricing_type) {
+                            switch (pricingType) {
                               case 'fixed':
                                 serviceCost = service.price;
                                 break;
