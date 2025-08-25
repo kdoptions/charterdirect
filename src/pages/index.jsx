@@ -6,6 +6,8 @@ import Search from "./Search";
 
 import ListBoat from "./ListBoat";
 
+import EditBoat from "./EditBoat";
+
 import BoatDetails from "./BoatDetails";
 
 import MyBoats from "./MyBoats";
@@ -39,6 +41,8 @@ const PAGES = {
     Search: Search,
     
     ListBoat: ListBoat,
+    
+    EditBoat: EditBoat,
     
     BoatDetails: BoatDetails,
     
@@ -97,6 +101,8 @@ function PagesContent() {
                 <Route path="/search" element={<Search />} />
                 
                 <Route path="/list-boat" element={<ListBoat />} />
+                
+                <Route path="/edit-boat" element={<EditBoat />} />
                 
                 <Route path="/boat-details" element={<BoatDetails />} />
                 

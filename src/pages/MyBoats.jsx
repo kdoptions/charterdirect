@@ -323,10 +323,12 @@ export default function MyBoats() {
                         View
                       </Button>
                     </Link>
-                    <Button variant="outline" size="sm" className="flex-1" disabled>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
+                    <Link to={createPageUrl(`EditBoat?id=${boat.id}`)} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </Link>
                   </div>
 
                   {/* Calendar Integration Section */}
