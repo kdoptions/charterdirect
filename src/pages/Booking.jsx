@@ -805,24 +805,53 @@ const stripeInstance = await stripeService.getStripe();
                     {process.env.NODE_ENV === 'development' && (
                       <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
                         <strong>Debug - Raw services data:</strong> {JSON.stringify(boat.additional_services)}
+                        <br />
+                        <strong>Type:</strong> {typeof boat.additional_services}
+                        <br />
+                        <strong>Length:</strong> {boat.additional_services.length}
                       </div>
                     )}
                     
                     <div className="space-y-3">
-                      {boat.additional_services.map((service, index) => {
-                        // Handle both string and object formats
-                        let serviceObj = service;
-                        if (typeof service === 'string') {
+                      {(() => {
+                        // Parse services data - handle multiple formats
+                        let servicesArray = [];
+                        
+                        if (typeof boat.additional_services === 'string') {
+                          // Single JSON string - try to parse as array or object
                           try {
-                            serviceObj = JSON.parse(service);
+                            const parsed = JSON.parse(boat.additional_services);
+                            servicesArray = Array.isArray(parsed) ? parsed : [parsed];
                           } catch (e) {
-                            console.error('Failed to parse service:', service);
-                            serviceObj = { name: service, price: 0, description: '' };
+                            console.error('Failed to parse services string:', boat.additional_services);
+                            servicesArray = [];
                           }
+                        } else if (Array.isArray(boat.additional_services)) {
+                          // Already an array
+                          servicesArray = boat.additional_services;
+                        } else {
+                          // Single object or other format
+                          servicesArray = [boat.additional_services];
                         }
                         
-                        return (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
+                        console.log('🔍 Parsed services array:', servicesArray);
+                        
+                        return servicesArray.map((service, index) => {
+                          // Handle both string and object formats for individual services
+                          let serviceObj = service;
+                          if (typeof service === 'string') {
+                            try {
+                              serviceObj = JSON.parse(service);
+                            } catch (e) {
+                              console.error('Failed to parse service:', service);
+                              serviceObj = { name: service, price: 0, description: '' };
+                            }
+                          }
+                          
+                          console.log('🔍 Service object:', serviceObj);
+                          
+                          return (
+                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
                           <div className="flex items-center space-x-3">
                             <input
                               type="checkbox"
@@ -851,8 +880,9 @@ const stripeInstance = await stripeService.getStripe();
                             <div className="text-xs text-slate-500">per booking</div>
                           </div>
                         </div>
-                      );
-                      })}
+                          );
+                        });
+                      })()}
                     </div>
                     {selectedServices.length > 0 && (
                       <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
