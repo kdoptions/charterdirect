@@ -242,17 +242,66 @@ export default function BoatDetails() {
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 mb-4">Additional Services</h3>
                   <div className="space-y-3">
-                    {boat.additional_services.map((service, index) => (
-                      <div key={index} className="flex justify-between items-center p-4 bg-white rounded-lg border">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">{service.name}</h4>
-                          <p className="text-slate-600 text-sm">{service.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-slate-900">${service.price}</div>
-                        </div>
-                      </div>
-                    ))}
+                    {(() => {
+                      // Parse services data - handle multiple formats
+                      let servicesArray = [];
+                      
+                      if (typeof boat.additional_services === 'string') {
+                        // Single JSON string - try to parse as array or object
+                        try {
+                          const parsed = JSON.parse(boat.additional_services);
+                          servicesArray = Array.isArray(parsed) ? parsed : [parsed];
+                        } catch (e) {
+                          console.error('Failed to parse services string:', boat.additional_services);
+                          servicesArray = [];
+                        }
+                      } else if (Array.isArray(boat.additional_services)) {
+                        // Already an array
+                        servicesArray = boat.additional_services;
+                      } else {
+                        // Single object or other format
+                        servicesArray = [boat.additional_services];
+                      }
+                      
+                      return servicesArray.map((service, index) => {
+                        // Handle both string and object formats for individual services
+                        let serviceObj = service;
+                        if (typeof service === 'string') {
+                          try {
+                            serviceObj = JSON.parse(service);
+                          } catch (e) {
+                            console.error('Failed to parse service:', service);
+                            serviceObj = { name: service, price: 0, description: '' };
+                          }
+                        }
+                        
+                        // Handle double-encoded JSON (JSON string stored as name field)
+                        if (serviceObj.name && typeof serviceObj.name === 'string' && serviceObj.name.startsWith('{')) {
+                          try {
+                            const parsedName = JSON.parse(serviceObj.name);
+                            serviceObj = {
+                              name: parsedName.name || serviceObj.name,
+                              price: parsedName.price || serviceObj.price || 0,
+                              description: parsedName.description || serviceObj.description || ''
+                            };
+                          } catch (e) {
+                            console.error('Failed to parse double-encoded service name:', serviceObj.name);
+                          }
+                        }
+                        
+                        return (
+                          <div key={index} className="flex justify-between items-center p-4 bg-white rounded-lg border">
+                            <div>
+                              <h4 className="font-semibold text-slate-900">{serviceObj.name}</h4>
+                              <p className="text-slate-600 text-sm">{serviceObj.description}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-slate-900">${serviceObj.price}</div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               )}
