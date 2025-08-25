@@ -378,7 +378,28 @@ const stripeInstance = await stripeService.getStripe();
   };
   
   const totalHours = getTotalHours();
-  const servicesCost = selectedServices.reduce((sum, service) => sum + service.price, 0);
+  
+  // Calculate services cost based on pricing type
+  const servicesCost = selectedServices.reduce((sum, service) => {
+    let serviceCost = 0;
+    
+    switch (service.pricing_type) {
+      case 'fixed':
+        serviceCost = service.price;
+        break;
+      case 'per_person':
+        serviceCost = service.price * guests;
+        break;
+      case 'per_hour':
+        serviceCost = service.price * totalHours;
+        break;
+      default:
+        serviceCost = service.price; // fallback to fixed
+    }
+    
+    return sum + serviceCost;
+  }, 0);
+  
   const baseAmount = pricePerHour * totalHours;
   const totalAmount = baseAmount + servicesCost;
   
@@ -891,7 +912,11 @@ const stripeInstance = await stripeService.getStripe();
                           </div>
                           <div className="text-right">
                             <div className="font-bold text-slate-900">${serviceObj.price}</div>
-                            <div className="text-xs text-slate-500">per booking</div>
+                            <div className="text-xs text-slate-500">
+                              {serviceObj.pricing_type === 'fixed' && 'per booking'}
+                              {serviceObj.pricing_type === 'per_person' && 'per person'}
+                              {serviceObj.pricing_type === 'per_hour' && 'per hour'}
+                            </div>
                           </div>
                         </div>
                           );
@@ -1054,12 +1079,29 @@ const stripeInstance = await stripeService.getStripe();
                           <span>${servicesCost.toFixed(2)}</span>
                         </div>
                         <div className="text-xs text-slate-500 pl-2">
-                          {selectedServices.map(service => (
-                            <div key={service.name} className="flex justify-between">
-                              <span>• {service.name}</span>
-                              <span>${service.price.toFixed(2)}</span>
-                            </div>
-                          ))}
+                          {selectedServices.map(service => {
+                            let serviceCost = 0;
+                            switch (service.pricing_type) {
+                              case 'fixed':
+                                serviceCost = service.price;
+                                break;
+                              case 'per_person':
+                                serviceCost = service.price * guests;
+                                break;
+                              case 'per_hour':
+                                serviceCost = service.price * totalHours;
+                                break;
+                              default:
+                                serviceCost = service.price;
+                            }
+                            
+                            return (
+                              <div key={service.name} className="flex justify-between">
+                                <span>• {service.name}</span>
+                                <span>${serviceCost.toFixed(2)}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </>
                     )}

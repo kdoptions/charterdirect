@@ -294,9 +294,19 @@ export default function BoatDetails() {
                             <div>
                               <h4 className="font-semibold text-slate-900">{serviceObj.name}</h4>
                               <p className="text-slate-600 text-sm">{serviceObj.description}</p>
+                              <p className="text-xs text-slate-500 mt-1">
+                                {serviceObj.pricing_type === 'fixed' && 'Fixed price per booking'}
+                                {serviceObj.pricing_type === 'per_person' && `$${serviceObj.price} per person`}
+                                {serviceObj.pricing_type === 'per_hour' && `$${serviceObj.price} per hour`}
+                              </p>
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-slate-900">${serviceObj.price}</div>
+                              <div className="text-xs text-slate-500">
+                                {serviceObj.pricing_type === 'fixed' && 'per booking'}
+                                {serviceObj.pricing_type === 'per_person' && 'per person'}
+                                {serviceObj.pricing_type === 'per_hour' && 'per hour'}
+                              </div>
                             </div>
                           </div>
                         );

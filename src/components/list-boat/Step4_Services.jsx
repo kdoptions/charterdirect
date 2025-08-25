@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 
 const popularAmenities = [
@@ -28,7 +29,7 @@ export default function Step4_Services({ data, updateData }) {
     updateData({
       additional_services: [
         ...data.additional_services,
-        { name: '', price: 0, description: '' }
+        { name: '', price: 0, description: '', pricing_type: 'fixed' }
       ]
     });
   };
@@ -72,7 +73,7 @@ export default function Step4_Services({ data, updateData }) {
         </div>
         <div className="space-y-4">
           {data.additional_services.map((service, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end p-4 border rounded-lg">
+            <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-4 border rounded-lg">
               <div className="md:col-span-3 space-y-1">
                 <Label>Service Name</Label>
                 <Input
@@ -86,21 +87,45 @@ export default function Step4_Services({ data, updateData }) {
                 <Input
                   value={service.description}
                   onChange={(e) => handleServiceChange(index, 'description', e.target.value)}
-                  placeholder="e.g., per person"
+                  placeholder="e.g., Full catering service"
                 />
               </div>
-              <div className="md:col-span-1 space-y-1">
+              <div className="md:col-span-2 space-y-1">
+                <Label>Pricing Type</Label>
+                <Select
+                  value={service.pricing_type || 'fixed'}
+                  onValueChange={(value) => handleServiceChange(index, 'pricing_type', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Fixed Price</SelectItem>
+                    <SelectItem value="per_person">Per Person</SelectItem>
+                    <SelectItem value="per_hour">Per Hour</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2 space-y-1">
                 <Label>Price</Label>
                 <Input
                   type="number"
                   value={service.price}
                   onChange={(e) => handleServiceChange(index, 'price', parseFloat(e.target.value))}
+                  placeholder="0.00"
                 />
               </div>
               <div className="md:col-span-1">
                 <Button variant="destructive" size="icon" onClick={() => removeService(index)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
+              </div>
+              <div className="md:col-span-12 mt-2">
+                <div className="text-xs text-slate-500">
+                  {service.pricing_type === 'fixed' && 'Fixed price for the entire booking'}
+                  {service.pricing_type === 'per_person' && `$${service.price || 0} × number of guests`}
+                  {service.pricing_type === 'per_hour' && `$${service.price || 0} × trip duration (hours)`}
+                </div>
               </div>
             </div>
           ))}
