@@ -61,6 +61,7 @@ export default function BookingPage() {
   const [showCustomTime, setShowCustomTime] = useState(false);
   const [customStartTime, setCustomStartTime] = useState("09:00");
   const [customEndTime, setCustomEndTime] = useState("13:00");
+  const [selectedServices, setSelectedServices] = useState([]);
 
   const urlParams = new URLSearchParams(location.search);
   const boatId = urlParams.get('id');
@@ -366,11 +367,16 @@ const stripeInstance = await stripeService.getStripe();
   };
   
   const totalHours = getTotalHours();
-  const totalAmount = pricePerHour * totalHours;
+  const servicesCost = selectedServices.reduce((sum, service) => sum + service.price, 0);
+  const baseAmount = pricePerHour * totalHours;
+  const totalAmount = baseAmount + servicesCost;
   
   console.log("💰 Price calculation:", { 
     pricePerHour, 
     totalHours, 
+    baseAmount,
+    servicesCost,
+    selectedServices: selectedServices.map(s => s.name),
     totalAmount,
     selectedBlock: selectedBlock?.name,
     showCustomTime 
@@ -454,7 +460,7 @@ const stripeInstance = await stripeService.getStripe();
         guests: Number(guests),
         total_hours: Number(totalHours),
         base_price: Number(pricePerHour),
-        additional_services: [],
+        additional_services: selectedServices,
         total_amount: Number(totalAmount),
         commission_amount: Number(totalAmount * 0.10),
         down_payment: Number(totalAmount * (boat.down_payment_percentage / 100)),
@@ -777,12 +783,63 @@ const stripeInstance = await stripeService.getStripe();
                   />
                   <p className="text-xs text-slate-500 mt-1">Maximum {boat.max_guests} guests allowed.</p>
                 </div>
+
+                {/* Additional Services Selection */}
+                {boat.additional_services && boat.additional_services.length > 0 && (
+                  <div>
+                    <Label className="font-bold text-lg">4. Additional Services</Label>
+                    <p className="text-sm text-slate-600 mb-3">Enhance your experience with these optional services:</p>
+                    <div className="space-y-3">
+                      {boat.additional_services.map((service, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="checkbox"
+                              id={`service-${index}`}
+                              checked={selectedServices.some(s => s.name === service.name)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedServices([...selectedServices, service]);
+                                } else {
+                                  setSelectedServices(selectedServices.filter(s => s.name !== service.name));
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <div>
+                              <Label htmlFor={`service-${index}`} className="font-medium text-slate-900 cursor-pointer">
+                                {service.name}
+                              </Label>
+                              {service.description && (
+                                <p className="text-sm text-slate-600">{service.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-slate-900">${service.price}</div>
+                            <div className="text-xs text-slate-500">per booking</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedServices.length > 0 && (
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="text-sm text-blue-800">
+                          <strong>Selected Services:</strong> {selectedServices.map(s => s.name).join(', ')}
+                        </div>
+                        <div className="text-sm text-blue-700 mt-1">
+                          <strong>Additional Cost:</strong> ${selectedServices.reduce((sum, s) => sum + s.price, 0).toFixed(2)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Right Column: Customer & Payment */}
               <div className="space-y-6">
                 <div>
-                  <Label className="font-bold text-lg">4. Your Details</Label>
+                  <Label className="font-bold text-lg">{boat.additional_services && boat.additional_services.length > 0 ? '5. Your Details' : '4. Your Details'}</Label>
                   
                   {/* Test Customer Button */}
                   <div className="mb-3">
@@ -813,7 +870,7 @@ const stripeInstance = await stripeService.getStripe();
                 </div>
 
                 <div>
-                  <Label className="font-bold text-lg">5. Payment Details</Label>
+                  <Label className="font-bold text-lg">{boat.additional_services && boat.additional_services.length > 0 ? '6. Payment Details' : '5. Payment Details'}</Label>
                   <p className="text-sm text-slate-600 mb-3">Your card will only be charged when the booking is approved.</p>
                   
                   {/* Stripe Card Element */}
@@ -910,6 +967,26 @@ const stripeInstance = await stripeService.getStripe();
                       <span className="text-slate-600">Booking duration</span>
                       <span>{totalHours} hours</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Base price</span>
+                      <span>${baseAmount.toFixed(2)}</span>
+                    </div>
+                    {selectedServices.length > 0 && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Additional services</span>
+                          <span>${servicesCost.toFixed(2)}</span>
+                        </div>
+                        <div className="text-xs text-slate-500 pl-2">
+                          {selectedServices.map(service => (
+                            <div key={service.name} className="flex justify-between">
+                              <span>• {service.name}</span>
+                              <span>${service.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
                       <span>Total</span>
                       <span>${totalAmount.toFixed(2)}</span>
