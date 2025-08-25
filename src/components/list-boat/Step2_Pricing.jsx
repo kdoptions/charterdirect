@@ -42,6 +42,13 @@ export default function Step2_Pricing({ data, updateData }) {
         
         const duration = durationMinutes / 60;
         newBlock.duration_hours = Math.round(duration * 100) / 100;
+        
+        // Log the new format
+        const totalMinutes = Math.round(newBlock.duration_hours * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const durationDisplay = minutes === 0 ? `${hours}h` : `${hours}:${minutes.toString().padStart(2, '0')}`;
+        console.log("✅ New block duration:", { duration: newBlock.duration_hours, durationDisplay });
       }
     } catch (error) {
       console.error("❌ Error validating new block:", error);
@@ -102,13 +109,20 @@ export default function Step2_Pricing({ data, updateData }) {
             newBlocks[index].error = null; // Clear any previous errors
           }
           
+          // Format duration for display
+          const totalMinutes = Math.round(newBlocks[index].duration_hours * 60);
+          const hours = Math.floor(totalMinutes / 60);
+          const minutes = totalMinutes % 60;
+          const durationDisplay = minutes === 0 ? `${hours}h` : `${hours}:${minutes.toString().padStart(2, '0')}`;
+          
           console.log("✅ Time calculation:", { 
             startTime, 
             endTime, 
             startMinutes, 
             endMinutes, 
             durationMinutes, 
-            duration: newBlocks[index].duration_hours 
+            duration: newBlocks[index].duration_hours,
+            durationDisplay
           });
         }
       } catch (error) {
@@ -225,7 +239,7 @@ export default function Step2_Pricing({ data, updateData }) {
             <p className="text-sm text-slate-500">
               Define custom time blocks when your boat is available. 
               <span className="block mt-1 text-xs text-blue-600">
-                💡 Tip: Use 24-hour format (e.g., 09:00, 14:30). You can create blocks like "Morning (09:00-13:00)" or "Sunset (17:00-21:00)"
+                💡 Tip: Use 24-hour format (e.g., 09:00, 14:30). Duration shows as hours:minutes (e.g., 4:00 = 4 hours, 1:30 = 1.5 hours)
               </span>
             </p>
           </div>
@@ -306,7 +320,19 @@ export default function Step2_Pricing({ data, updateData }) {
               <div className="space-y-1">
                 <Label>Duration</Label>
                 <Badge variant={block.error ? "destructive" : "outline"}>
-                  {block.duration_hours || 0}h
+                  {(() => {
+                    if (!block.duration_hours || block.duration_hours === 0) return "0h";
+                    
+                    const totalMinutes = Math.round(block.duration_hours * 60);
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = totalMinutes % 60;
+                    
+                    if (minutes === 0) {
+                      return `${hours}h`;
+                    } else {
+                      return `${hours}:${minutes.toString().padStart(2, '0')}`;
+                    }
+                  })()}
                 </Badge>
               </div>
               <div>
@@ -325,7 +351,17 @@ export default function Step2_Pricing({ data, updateData }) {
               {/* Validation Warnings */}
               {!block.error && block.duration_hours > 0 && (
                 <div className="col-span-full mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-                  ✅ Valid time block: {block.start_time} - {block.end_time} ({block.duration_hours}h)
+                  ✅ Valid time block: {block.start_time} - {block.end_time} ({(() => {
+                    const totalMinutes = Math.round(block.duration_hours * 60);
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = totalMinutes % 60;
+                    
+                    if (minutes === 0) {
+                      return `${hours}h`;
+                    } else {
+                      return `${hours}:${minutes.toString().padStart(2, '0')}`;
+                    }
+                  })()})
                 </div>
               )}
             </div>
