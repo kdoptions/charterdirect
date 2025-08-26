@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
 import { imageUploadService } from '@/api/imageUploadService';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Loader2, Image as ImageIcon, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Step3_Media({ data, updateData }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -109,7 +109,7 @@ export default function Step3_Media({ data, updateData }) {
               </label>
               <p className="pl-1">or drag and drop</p>
             </div>
-            <p className="text-xs text-slate-500">PNG, JPG, GIF, WebP up to 10MB</p>
+            <p className="text-xs text-slate-500">PNG, JPG, GIF, WebP up to 20MB</p>
             {isDragOver && (
               <p className="text-xs text-blue-600 font-medium">Drop your image here</p>
             )}

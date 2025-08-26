@@ -11,10 +11,10 @@ export const imageUploadService = {
         throw new Error('No file provided');
       }
       
-      // Check file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      // Check file size (max 20MB)
+      const maxSize = 20 * 1024 * 1024; // 20MB
       if (file.size > maxSize) {
-        throw new Error('File size must be less than 10MB');
+        throw new Error('File size must be less than 20MB');
       }
       
       // Check file type

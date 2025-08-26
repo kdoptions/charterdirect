@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Calendar as CalendarIcon } from 'lucide-react'; // Added CalendarIcon import
 import { format } from 'date-fns';
+import CalendarIntegrationSelector from './CalendarIntegrationSelector';
 
 export default function Step2_Pricing({ data, updateData }) {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -400,6 +401,9 @@ export default function Step2_Pricing({ data, updateData }) {
           )}
         </div>
       </div>
+
+      {/* Google Calendar Integration */}
+      <CalendarIntegrationSelector data={data} updateData={updateData} />
 
       {/* Special Pricing Dates */}
       <div>

@@ -7,7 +7,7 @@ VALUES (
   'boat-images',
   'boat-images',
   true,
-  10485760, -- 10MB limit
+  20971520, -- 20MB limit
   ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
 )
 ON CONFLICT (id) DO NOTHING;
