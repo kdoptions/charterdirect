@@ -1,5 +1,9 @@
 // Test Calendar Integration Setup
 // Run this in your browser console to verify the setup
+// Note: This test assumes the following variables are available in global scope:
+// - realGoogleCalendarService (from @/api/realGoogleCalendarService)
+// - googleCalendarService (from @/api/googleCalendarService) 
+// - supabase (from @/lib/supabase)
 
 console.log('🧪 Testing Harbour Lux Calendar Integration...');
 

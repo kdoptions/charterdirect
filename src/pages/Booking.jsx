@@ -1,31 +1,28 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { Boat, Booking as BookingEntity, mockBoats } from "@/api/entities";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
-import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import StripeService from "@/api/stripeService";
-import { createPageUrl } from "@/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { format, parse, differenceInHours } from 'date-fns';
-import { 
-  ArrowLeft, 
-  Users, 
-  Clock, 
-  DollarSign, 
-  Ship,
-  Loader2,
-  AlertCircle,
-  Info,
-  Shield
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { createPageUrl } from "@/utils";
+import { format } from 'date-fns';
+import {
+    AlertCircle,
+    ArrowLeft,
+    DollarSign,
+    Info,
+    Loader2,
+    Shield,
+    Ship
 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function BookingPage() {
   const navigate = useNavigate();
@@ -736,7 +733,7 @@ const stripeInstance = await stripeService.getStripe();
                 <Ship className="w-5 h-5" />
                 <span className="font-semibold">{boat.name}</span>
               </div>
-              {process.env.NODE_ENV === 'development' && (
+              {import.meta.env.DEV && (
                 <div className="text-xs text-slate-500 mt-2">
                   Debug: Boat ID {boatId} loaded successfully
                 </div>
@@ -901,7 +898,7 @@ const stripeInstance = await stripeService.getStripe();
                     <p className="text-sm text-slate-600 mb-3">Enhance your experience with these optional services:</p>
                     
                     {/* Debug: Show raw data */}
-                    {process.env.NODE_ENV === 'development' && (
+                    {import.meta.env.DEV && (
                       <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
                         <strong>Debug - Raw services data:</strong> {JSON.stringify(boat.additional_services)}
                         <br />

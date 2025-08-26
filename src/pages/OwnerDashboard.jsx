@@ -29,7 +29,9 @@ import {
   TrendingUp,
   RefreshCw,
   Star,
-  MessageSquare
+  MessageSquare,
+  Plus,
+  Upload
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
