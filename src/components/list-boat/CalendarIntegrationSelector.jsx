@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calendar, Settings, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { realGoogleCalendarService } from '@/api/realGoogleCalendarService';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { AlertCircle, Calendar, CheckCircle, ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function CalendarIntegrationSelector({ data, updateData }) {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [calendars, setCalendars] = useState([]);
   const [selectedCalendar, setSelectedCalendar] = useState(data?.google_calendar_id || '');
   const [calendarName, setCalendarName] = useState(data?.calendar_name || '');
@@ -22,6 +22,8 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
   const [error, setError] = useState(null);
   const [userCalendarData, setUserCalendarData] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+
+
 
   // Calendar color options (Google Calendar standard colors)
   const calendarColors = [
@@ -39,10 +41,10 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
   ];
 
   useEffect(() => {
-    if (user) {
+    if (currentUser) {
       loadUserCalendarData();
     }
-  }, [user]);
+  }, [currentUser]);
 
   useEffect(() => {
     if (isEnabled && userCalendarData?.google_integration_active) {
@@ -62,13 +64,11 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
 
   const loadUserCalendarData = async () => {
     try {
-      console.log('🔍 Loading user calendar data from database...');
-      
       // Fetch user's calendar integration status from database
       const { data: userData, error } = await supabase
         .from('users')
         .select('google_integration_active, google_calendar_id, google_refresh_token')
-        .eq('id', user?.id)
+        .eq('id', currentUser?.id)
         .single();
       
       if (error) {
@@ -76,7 +76,6 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
         return;
       }
       
-      console.log('🔍 User calendar data loaded:', userData);
       setUserCalendarData(userData);
       setIsConnected(userData?.google_integration_active || false);
     } catch (error) {
@@ -100,7 +99,6 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
       );
       
       const realCalendars = await realGoogleCalendarService.getUserCalendars(freshTokenData.access_token);
-      console.log('📅 Calendars received from Google API:', realCalendars);
       setCalendars(realCalendars);
       
       // If no calendar is selected, use the default or first available
@@ -146,7 +144,7 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
     }
   };
 
-  if (!user) {
+  if (!currentUser) {
     return null;
   }
 
@@ -284,7 +282,7 @@ export default function CalendarIntegrationSelector({ data, updateData }) {
         {/* Help Text */}
         {!isConnected && (
           <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-md">
-            <p className="font-medium mb-1">💡 Why connect your Google Calendar?</p>
+            <div className="font-medium mb-1">💡 Why connect your Google Calendar?</div>
             <ul className="space-y-1">
               <li>• Automatically sync boat availability</li>
               <li>• Prevent double-bookings</li>
