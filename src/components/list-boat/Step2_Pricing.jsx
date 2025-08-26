@@ -1,17 +1,19 @@
 
-import React, { useState } from 'react';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Calendar as CalendarIcon } from 'lucide-react'; // Added CalendarIcon import
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { format } from 'date-fns';
+import { CalendarDays, Calendar as CalendarIcon, Clock, Plus, Trash2 } from 'lucide-react'; // Added CalendarIcon import
+import React, { useState } from 'react';
 import CalendarIntegrationSelector from './CalendarIntegrationSelector';
 
 export default function Step2_Pricing({ data, updateData }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [specialPrice, setSpecialPrice] = useState('');
+  const [specialDailyRate, setSpecialDailyRate] = useState('');
+  const [pricingType, setPricingType] = useState('hourly'); // 'hourly' or 'daily'
 
   const addAvailabilityBlock = () => {
     const newBlock = {
@@ -165,7 +167,7 @@ export default function Step2_Pricing({ data, updateData }) {
   };
 
   const addSpecialPricing = () => {
-    if (!selectedDate || !specialPrice) return;
+    if (!selectedDate) return;
     
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     const newSpecialPricing = [...(data.special_pricing || [])];
@@ -173,15 +175,27 @@ export default function Step2_Pricing({ data, updateData }) {
     // Remove existing pricing for this date if it exists
     const filteredPricing = newSpecialPricing.filter(p => p.date !== dateString);
     
-    // Add new pricing
-    filteredPricing.push({
-      date: dateString,
-      price_per_hour: parseFloat(specialPrice) || 0
-    });
+    // Add new pricing based on type
+    if (pricingType === 'hourly') {
+      if (!specialPrice) return;
+      filteredPricing.push({
+        date: dateString,
+        pricing_type: 'hourly',
+        price_per_hour: parseFloat(specialPrice) || 0
+      });
+    } else {
+      if (!specialDailyRate) return;
+      filteredPricing.push({
+        date: dateString,
+        pricing_type: 'daily',
+        price_per_day: parseFloat(specialDailyRate) || 0
+      });
+    }
     
     updateData({ special_pricing: filteredPricing });
     setSelectedDate(null);
     setSpecialPrice('');
+    setSpecialDailyRate('');
   };
 
   const removeSpecialPricing = (dateToRemove) => {
@@ -408,7 +422,7 @@ export default function Step2_Pricing({ data, updateData }) {
       {/* Special Pricing Dates */}
       <div>
         <Label className="font-semibold">Special Pricing Dates</Label>
-        <p className="text-sm text-slate-500 mb-4">Set custom prices for specific dates (e.g., holidays, events).</p>
+        <p className="text-sm text-slate-500 mb-4">Set custom hourly or daily rates for specific dates (e.g., holidays, events, peak season).</p>
         
         <div className="grid md:grid-cols-2 gap-6">
           {/* Calendar and Input */}
@@ -426,35 +440,83 @@ export default function Step2_Pricing({ data, updateData }) {
               </div>
             </div>
             
+            {/* Pricing Type Toggle */}
             <div className="space-y-2">
-              <Label htmlFor="special-price">Price for Selected Date (AUD)</Label>
+              <Label className="text-sm font-medium">Pricing Type</Label>
+              <div className="flex border rounded-lg p-1 bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPricingType('hourly');
+                    setSpecialDailyRate('');
+                  }}
+                  className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                    pricingType === 'hourly'
+                      ? 'bg-white text-slate-900 shadow-sm border'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Clock className="w-4 h-4 inline mr-2" />
+                  Per Hour
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPricingType('daily');
+                    setSpecialPrice('');
+                  }}
+                  className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                    pricingType === 'daily'
+                      ? 'bg-white text-slate-900 shadow-sm border'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <CalendarDays className="w-4 h-4 inline mr-2" />
+                  Per Day
+                </button>
+              </div>
+            </div>
+            
+            {/* Price Input */}
+            <div className="space-y-2">
+              <Label htmlFor="special-price">
+                {pricingType === 'hourly' ? 'Price per Hour' : 'Price per Day'} (AUD)
+              </Label>
               <Input
                 id="special-price"
                 type="text"
                 inputMode="decimal"
-                value={specialPrice}
+                value={pricingType === 'hourly' ? specialPrice : specialDailyRate}
                 onChange={(e) => {
                   if (/^\d*\.?\d*$/.test(e.target.value)) {
-                    setSpecialPrice(e.target.value);
+                    if (pricingType === 'hourly') {
+                      setSpecialPrice(e.target.value);
+                    } else {
+                      setSpecialDailyRate(e.target.value);
+                    }
                   }
                 }}
                 onBlur={(e) => {
                   const value = e.target.value.trim();
                   if (value && !isNaN(parseFloat(value))) {
-                    setSpecialPrice(parseFloat(value).toString());
+                    if (pricingType === 'hourly') {
+                      setSpecialPrice(parseFloat(value).toString());
+                    } else {
+                      setSpecialDailyRate(parseFloat(value).toString());
+                    }
                   }
                 }}
-                placeholder="Enter price per hour"
+                placeholder={pricingType === 'hourly' ? 'Enter price per hour' : 'Enter price per day'}
               />
             </div>
             
             <Button 
               onClick={addSpecialPricing}
-              disabled={!selectedDate || !specialPrice}
+              disabled={!selectedDate || (pricingType === 'hourly' ? !specialPrice : !specialDailyRate)}
               className="w-full"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add Special Pricing
+              Add Special {pricingType === 'hourly' ? 'Hourly' : 'Daily'} Pricing
             </Button>
           </div>
           
@@ -473,7 +535,22 @@ export default function Step2_Pricing({ data, updateData }) {
                           {format(new Date(pricing.date), 'EEEE, MMM d, yyyy')}
                         </div>
                         <div className="text-sm text-slate-600">
-                          ${pricing.price_per_hour}/hour
+                          {pricing.pricing_type === 'daily' || pricing.price_per_day ? (
+                            <>
+                              <CalendarDays className="w-4 h-4 inline mr-1" />
+                              ${pricing.price_per_day || pricing.price_per_hour}/day
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-4 h-4 inline mr-1" />
+                              ${pricing.price_per_hour}/hour
+                            </>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {pricing.pricing_type === 'daily' || pricing.price_per_day ? 'Daily Rate' : 'Hourly Rate'}
+                          </Badge>
                         </div>
                       </div>
                       <Button
@@ -492,7 +569,7 @@ export default function Step2_Pricing({ data, updateData }) {
                   {/* Changed Calendar to CalendarIcon here */}
                   <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-50" /> 
                   <p>No special pricing dates set</p>
-                  <p className="text-sm">Select dates on the calendar to add custom pricing</p>
+                  <p className="text-sm">Select dates on the calendar to add custom hourly or daily pricing</p>
                 </div>
               )}
             </div>
