@@ -1,31 +1,31 @@
-import React, { useState, useEffect } from "react";
 import { Boat } from "@/api/entities";
-import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, addDays } from "date-fns";
-import realGoogleCalendarService from "@/api/realGoogleCalendarService";
 import ReviewsDisplay from "@/components/ReviewsDisplay";
-import { 
-  ArrowLeft, 
-  MapPin, 
-  Users, 
-  Star, 
-  Calendar,
-  Clock,
-  Anchor,
-  Wifi,
-  Car,
-  Utensils,
-  Music,
-  Waves,
-  Shield,
-  DollarSign,
-  CheckCircle,
-  XCircle
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createPageUrl } from "@/utils";
+import { addDays, format } from "date-fns";
+import {
+    Anchor,
+    ArrowLeft,
+    Calendar,
+    CalendarDays,
+    Car,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    MapPin,
+    Music,
+    Shield,
+    Star,
+    Users,
+    Utensils,
+    Waves,
+    Wifi,
+    XCircle
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function BoatDetails() {
   const navigate = useNavigate();
@@ -475,25 +475,66 @@ export default function BoatDetails() {
             {boat.special_pricing && boat.special_pricing.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Special Event Pricing</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-orange-600" />
+                    Special Event Pricing
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    {boat.special_pricing.map((pricing, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                        <span className="text-sm">
-                          {new Date(pricing.date).toLocaleDateString('en-AU', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
-                        </span>
-                        <Badge variant="outline" className="text-orange-600 border-orange-200">
-                          ${pricing.price_per_hour}/hr
-                        </Badge>
+                  <div className="space-y-3">
+                    {boat.special_pricing
+                      .sort((a, b) => new Date(a.date) - new Date(b.date))
+                      .map((pricing, index) => (
+                      <div key={index} className="p-3 bg-slate-50 rounded-lg border border-orange-100">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <div className="font-semibold text-slate-900">
+                              {new Date(pricing.date).toLocaleDateString('en-AU', { 
+                                weekday: 'long',
+                                month: 'long', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                              {pricing.name && (
+                                <span className="ml-2 text-sm font-normal text-orange-600">
+                                  • {pricing.name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-slate-600 mt-1">
+                              {pricing.pricing_type === 'daily' || pricing.price_per_day ? (
+                                <>
+                                  <CalendarDays className="w-4 h-4 inline mr-1" />
+                                  ${pricing.price_per_day || pricing.price_per_hour}/day
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="w-4 h-4 inline mr-1" />
+                                  ${pricing.price_per_hour}/hour
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className={`text-xs ${
+                            pricing.pricing_type === 'daily' || pricing.price_per_day 
+                              ? 'text-purple-600 border-purple-200' 
+                              : 'text-orange-600 border-orange-200'
+                          }`}>
+                            {pricing.pricing_type === 'daily' || pricing.price_per_day ? 'Daily Rate' : 'Hourly Rate'}
+                          </Badge>
+                        </div>
+                        {pricing.start_time && pricing.end_time && (
+                          <div className="text-xs text-slate-500 mt-2 pt-2 border-t border-slate-200">
+                            <Clock className="w-3 h-3 inline mr-1" />
+                            Available: {pricing.start_time} - {pricing.end_time}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
+                  <p className="text-xs text-slate-500 mt-3 text-center">
+                    Special pricing may apply to holidays, events, or peak season dates
+                  </p>
                 </CardContent>
               </Card>
             )}

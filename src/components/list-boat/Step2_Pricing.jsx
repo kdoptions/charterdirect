@@ -14,6 +14,9 @@ export default function Step2_Pricing({ data, updateData }) {
   const [specialPrice, setSpecialPrice] = useState('');
   const [specialDailyRate, setSpecialDailyRate] = useState('');
   const [pricingType, setPricingType] = useState('hourly'); // 'hourly' or 'daily'
+  const [specialPricingName, setSpecialPricingName] = useState('');
+  const [specialStartTime, setSpecialStartTime] = useState('09:00');
+  const [specialEndTime, setSpecialEndTime] = useState('17:00');
 
   const addAvailabilityBlock = () => {
     const newBlock = {
@@ -181,14 +184,20 @@ export default function Step2_Pricing({ data, updateData }) {
       filteredPricing.push({
         date: dateString,
         pricing_type: 'hourly',
-        price_per_hour: parseFloat(specialPrice) || 0
+        price_per_hour: parseFloat(specialPrice) || 0,
+        name: specialPricingName || null,
+        start_time: specialStartTime,
+        end_time: specialEndTime
       });
     } else {
       if (!specialDailyRate) return;
       filteredPricing.push({
         date: dateString,
         pricing_type: 'daily',
-        price_per_day: parseFloat(specialDailyRate) || 0
+        price_per_day: parseFloat(specialDailyRate) || 0,
+        name: specialPricingName || null,
+        start_time: specialStartTime,
+        end_time: specialEndTime
       });
     }
     
@@ -196,6 +205,9 @@ export default function Step2_Pricing({ data, updateData }) {
     setSelectedDate(null);
     setSpecialPrice('');
     setSpecialDailyRate('');
+    setSpecialPricingName('');
+    setSpecialStartTime('09:00');
+    setSpecialEndTime('17:00');
   };
 
   const removeSpecialPricing = (dateToRemove) => {
@@ -449,6 +461,9 @@ export default function Step2_Pricing({ data, updateData }) {
                   onClick={() => {
                     setPricingType('hourly');
                     setSpecialDailyRate('');
+                    setSpecialPricingName('');
+                    setSpecialStartTime('09:00');
+                    setSpecialEndTime('17:00');
                   }}
                   className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
                     pricingType === 'hourly'
@@ -464,6 +479,9 @@ export default function Step2_Pricing({ data, updateData }) {
                   onClick={() => {
                     setPricingType('daily');
                     setSpecialPrice('');
+                    setSpecialPricingName('');
+                    setSpecialStartTime('09:00');
+                    setSpecialEndTime('17:00');
                   }}
                   className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
                     pricingType === 'daily'
@@ -477,6 +495,45 @@ export default function Step2_Pricing({ data, updateData }) {
               </div>
             </div>
             
+            {/* Optional Name */}
+            <div className="space-y-2">
+              <Label htmlFor="special-pricing-name">
+                Event Name (Optional)
+              </Label>
+              <Input
+                id="special-pricing-name"
+                type="text"
+                value={specialPricingName}
+                onChange={(e) => setSpecialPricingName(e.target.value)}
+                placeholder="e.g., Christmas Day, New Year's Eve, Peak Season"
+              />
+            </div>
+
+            {/* Custom Times */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Custom Booking Times</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="special-start-time" className="text-xs">Start Time</Label>
+                  <Input
+                    id="special-start-time"
+                    type="time"
+                    value={specialStartTime}
+                    onChange={(e) => setSpecialStartTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="special-end-time" className="text-xs">End Time</Label>
+                  <Input
+                    id="special-end-time"
+                    type="time"
+                    value={specialEndTime}
+                    onChange={(e) => setSpecialEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Price Input */}
             <div className="space-y-2">
               <Label htmlFor="special-price">
@@ -529,12 +586,17 @@ export default function Step2_Pricing({ data, updateData }) {
                   {(data.special_pricing || [])
                     .sort((a, b) => new Date(a.date) - new Date(b.date))
                     .map((pricing, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border">
-                      <div>
+                    <div key={index} className="flex justify-between items-start p-3 bg-slate-50 rounded-lg border">
+                      <div className="flex-1">
                         <div className="font-semibold text-slate-900">
                           {format(new Date(pricing.date), 'EEEE, MMM d, yyyy')}
+                          {pricing.name && (
+                            <span className="ml-2 text-sm font-normal text-blue-600">
+                              • {pricing.name}
+                            </span>
+                          )}
                         </div>
-                        <div className="text-sm text-slate-600">
+                        <div className="text-sm text-slate-600 mt-1">
                           {pricing.pricing_type === 'daily' || pricing.price_per_day ? (
                             <>
                               <CalendarDays className="w-4 h-4 inline mr-1" />
@@ -548,16 +610,21 @@ export default function Step2_Pricing({ data, updateData }) {
                           )}
                         </div>
                         <div className="text-xs text-slate-500 mt-1">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs mr-2">
                             {pricing.pricing_type === 'daily' || pricing.price_per_day ? 'Daily Rate' : 'Hourly Rate'}
                           </Badge>
+                          {pricing.start_time && pricing.end_time && (
+                            <span className="text-slate-600">
+                              {pricing.start_time} - {pricing.end_time}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeSpecialPricing(pricing.date)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 hover:text-red-800 ml-3"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -570,6 +637,7 @@ export default function Step2_Pricing({ data, updateData }) {
                   <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-50" /> 
                   <p>No special pricing dates set</p>
                   <p className="text-sm">Select dates on the calendar to add custom hourly or daily pricing</p>
+                  <p className="text-xs mt-1">You can add event names and custom booking times</p>
                 </div>
               )}
             </div>
