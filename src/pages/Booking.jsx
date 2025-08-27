@@ -16,6 +16,8 @@ import { format } from 'date-fns';
 import {
     AlertCircle,
     ArrowLeft,
+    CalendarDays,
+    Clock,
     DollarSign,
     Info,
     Loader2,
@@ -762,7 +764,7 @@ const stripeInstance = await stripeService.getStripe();
             </CardHeader>
             <CardContent className="text-center">
               <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-              <p className="text-slate-700 mb-6">The boat you're trying to book could not be found.</p>
+              <p className="text-slate-700 mb-6">The boat you&apos;re trying to book could not be found.</p>
               <Button onClick={() => navigate(-1)}>
                 Go Back
               </Button>
@@ -779,12 +781,77 @@ const stripeInstance = await stripeService.getStripe();
               {import.meta.env.DEV && (
                 <div className="text-xs text-slate-500 mt-2">
                   Debug: Boat ID {boatId} loaded successfully
+                  {boat.special_pricing && (
+                    <div className="mt-1">
+                      Special Pricing Data: {JSON.stringify(boat.special_pricing, null, 2)}
+                    </div>
+                  )}
                 </div>
               )}
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-8">
               {/* Left Column: Booking Details */}
               <div className="space-y-6">
+                {/* Special Pricing Overview */}
+                {boat.special_pricing && boat.special_pricing.length > 0 && (
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar className="w-5 h-5 text-orange-600" />
+                      <Label className="font-bold text-lg text-orange-800">Special Event Pricing</Label>
+                    </div>
+                    <div className="space-y-2">
+                      {boat.special_pricing
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .map((pricing, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-white rounded border border-orange-100">
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-slate-900">
+                              {new Date(pricing.date).toLocaleDateString('en-AU', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                              {pricing.name && (
+                                <span className="ml-2 text-sm font-normal text-orange-600">
+                                  • {pricing.name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-600">
+                              {pricing.pricing_type === 'daily' || pricing.price_per_day ? (
+                                <>
+                                  <CalendarDays className="w-3 h-3 inline mr-1" />
+                                  ${pricing.price_per_day || pricing.price_per_hour}/day
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="w-3 h-3 inline mr-1" />
+                                  ${pricing.price_per_hour}/hour
+                                </>
+                              )}
+                              {pricing.start_time && pricing.end_time && (
+                                <span className="ml-2">
+                                  ({pricing.start_time} - {pricing.end_time})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className={`text-xs ${
+                            pricing.pricing_type === 'daily' || pricing.price_per_day 
+                              ? 'text-purple-600 border-purple-200' 
+                              : 'text-orange-600 border-orange-200'
+                          }`}>
+                            {pricing.pricing_type === 'daily' || pricing.price_per_day ? 'Daily' : 'Special'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-orange-600 mt-2 text-center">
+                      Select a date above to see special pricing applied to your booking
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <Label className="font-bold text-lg">1. Select Date</Label>
                   <Calendar
@@ -814,6 +881,14 @@ const stripeInstance = await stripeService.getStripe();
                       </span>
                     </div>
                   )}
+                  
+                  {/* Google Calendar Note */}
+                  <div className="mt-2 text-xs text-slate-500">
+                    <span className="inline-flex items-center">
+                      <Info className="w-3 h-3 inline mr-1" />
+                      Calendar integration helps ensure accurate availability
+                    </span>
+                  </div>
                 </div>
                 
                 <div>
@@ -842,13 +917,18 @@ const stripeInstance = await stripeService.getStripe();
                                     Available: {specialPricing.start_time} - {specialPricing.end_time}
                                   </span>
                                 )}
+                                {specialPricing.name && (
+                                  <span className="block mt-1 font-medium text-orange-600">
+                                    🎉 Event: {specialPricing.name}
+                                  </span>
+                                )}
                               </>
                             ) : (
                               <>
                                 ⭐ <strong>Special Rate:</strong> ${pricePerHour.toFixed(2)}/hour
                                 {specialPricing.name && (
-                                  <span className="block mt-1">
-                                    Event: {specialPricing.name}
+                                  <span className="block mt-1 font-medium text-orange-600">
+                                    🎉 Event: {specialPricing.name}
                                   </span>
                                 )}
                               </>
@@ -934,7 +1014,7 @@ const stripeInstance = await stripeService.getStripe();
                         {/* Daily Rate Note */}
                         {specialPricing && pricingType === 'daily' && (
                           <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
-                            🎯 This date has a special daily rate. The time below is automatically set based on the boat owner's availability.
+                            🎯 This date has a special daily rate. The time below is automatically set based on the boat owner&apos;s availability.
                           </div>
                         )}
                         
