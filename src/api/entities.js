@@ -346,6 +346,17 @@ export const Boat = {
       console.log('🔍 Backend query result count:', boats.length);
       console.log('🔍 Backend boat types found:', [...new Set(boats.map(b => b.boat_type))]);
       
+      // Debug: Check what's actually returned from Supabase
+      if (boats.length > 0 && params && params.id) {
+        console.log('🔍 Raw Supabase data for boat:', boats[0]);
+        console.log('🔍 Special pricing from Supabase:', boats[0].special_pricing);
+        console.log('🔍 Special pricing type:', typeof boats[0].special_pricing);
+        if (boats[0].special_pricing && boats[0].special_pricing.length > 0) {
+          console.log('🔍 First special pricing entry:', boats[0].special_pricing[0]);
+          console.log('🔍 First entry keys:', Object.keys(boats[0].special_pricing[0]));
+        }
+      }
+      
       // If we have a date parameter, filter by availability
       if (params && params.date) {
         try {
