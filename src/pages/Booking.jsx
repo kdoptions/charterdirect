@@ -794,7 +794,7 @@ const stripeInstance = await stripeService.getStripe();
               <div className="space-y-6">
                 {/* Special Pricing Overview */}
                 {boat.special_pricing && boat.special_pricing.length > 0 && (
-                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg relative z-10">
+                  <div className="p-4 bg-orange-100 border-2 border-orange-300 rounded-lg relative z-50" style={{ zIndex: 50, position: 'relative', backgroundColor: '#fed7aa' }}>
                     <div className="flex items-center gap-2 mb-3">
                       <Calendar className="w-5 h-5 text-orange-600" />
                       <Label className="font-bold text-lg text-orange-800">Special Event Pricing</Label>
@@ -891,9 +891,9 @@ const stripeInstance = await stripeService.getStripe();
                   </div>
                 )}
 
-                <div className="relative z-0">
+                <div className="relative" style={{ zIndex: 1 }}>
                   <Label className="font-bold text-lg">1. Select Date</Label>
-                  <div className="mt-2 p-4 bg-white border border-slate-200 rounded-lg">
+                  <div className="mt-2 p-4 bg-white border border-slate-200 rounded-lg relative" style={{ zIndex: 1, position: 'relative' }}>
                     <Calendar
                       mode="single"
                       selected={selectedDate}
