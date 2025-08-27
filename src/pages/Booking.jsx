@@ -1,6 +1,7 @@
 import { Boat, Booking as BookingEntity, mockBoats } from "@/api/entities";
 import StripeService from "@/api/stripeService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -247,6 +248,17 @@ const stripeInstance = await stripeService.getStripe();
     setAvailableSlots([]);
     
     if (date && boat) {
+      // Check if this date has special daily pricing
+      const pricingInfo = getPriceForDate(date);
+      if (pricingInfo.type === 'daily' && pricingInfo.special) {
+        // For daily pricing, automatically set the custom time if available
+        if (pricingInfo.special.start_time && pricingInfo.special.end_time) {
+          setCustomStartTime(pricingInfo.special.start_time);
+          setCustomEndTime(pricingInfo.special.end_time);
+          setShowCustomTime(true);
+        }
+      }
+      
       setCheckingAvailability(true);
       try {
         const dateStr = date.toISOString().split('T')[0];
@@ -374,22 +386,53 @@ const stripeInstance = await stripeService.getStripe();
   };
 
   const getPriceForDate = (date) => {
-    if (!date || !boat) return boat?.price_per_hour || 0;
+    if (!date || !boat) return { price: boat?.price_per_hour || 0, type: 'hourly', special: null };
 
     const dateString = format(date, 'yyyy-MM-dd');
     const dayOfWeek = date.getDay();
 
     const specialPrice = boat.special_pricing?.find(p => p.date === dateString);
-    if (specialPrice) return specialPrice.price_per_hour;
-
-    if ((dayOfWeek === 0 || dayOfWeek === 6) && boat.weekend_price) {
-      return boat.weekend_price;
+    if (specialPrice) {
+      if (specialPrice.pricing_type === 'daily' || specialPrice.price_per_day) {
+        return { 
+          price: specialPrice.price_per_day || specialPrice.price_per_hour, 
+          type: 'daily', 
+          special: specialPrice 
+        };
+      } else {
+        return { 
+          price: specialPrice.price_per_hour, 
+          type: 'hourly', 
+          special: specialPrice 
+        };
+      }
     }
 
-    return boat.price_per_hour;
+    if ((dayOfWeek === 0 || dayOfWeek === 6) && boat.weekend_price) {
+      return { price: boat.weekend_price, type: 'hourly', special: null };
+    }
+
+    return { price: boat.price_per_hour, type: 'hourly', special: null };
+  };
+
+  // Check if a date has special pricing for calendar display
+  const hasSpecialPricing = (date) => {
+    if (!date || !boat) return false;
+    const dateString = format(date, 'yyyy-MM-dd');
+    return boat.special_pricing?.some(p => p.date === dateString) || false;
+  };
+
+  // Get special pricing info for a date
+  const getSpecialPricingInfo = (date) => {
+    if (!date || !boat) return null;
+    const dateString = format(date, 'yyyy-MM-dd');
+    return boat.special_pricing?.find(p => p.date === dateString) || null;
   };
   
-  const pricePerHour = getPriceForDate(selectedDate);
+  const pricingInfo = getPriceForDate(selectedDate);
+  const pricePerHour = pricingInfo.price;
+  const pricingType = pricingInfo.type;
+  const specialPricing = pricingInfo.special;
   
   // Calculate hours for selected block or custom time
   const getTotalHours = () => {
@@ -750,7 +793,27 @@ const stripeInstance = await stripeService.getStripe();
                     onSelect={handleDateSelect}
                     disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                     className="mt-2"
+                    modifiers={{
+                      special: (date) => hasSpecialPricing(date)
+                    }}
+                    modifiersStyles={{
+                      special: { 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        borderRadius: '50%'
+                      }
+                    }}
                   />
+                  {/* Special Pricing Legend */}
+                  {boat.special_pricing && boat.special_pricing.length > 0 && (
+                    <div className="mt-2 text-xs text-slate-600">
+                      <span className="inline-flex items-center">
+                        <span className="w-3 h-3 rounded-full bg-yellow-200 border border-yellow-400 mr-1"></span>
+                        Special pricing available
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -767,6 +830,32 @@ const stripeInstance = await stripeService.getStripe();
                           {availableSlots.length} available slot{availableSlots.length !== 1 ? 's' : ''}
                         </span>
                       </div>
+                      {/* Special Pricing Note */}
+                      {specialPricing && (
+                        <div className="mt-2 pt-2 border-t border-blue-200">
+                          <div className="text-xs text-blue-700">
+                            {pricingType === 'daily' ? (
+                              <>
+                                🎯 <strong>Daily Rate:</strong> ${pricePerHour.toFixed(2)} for the entire day
+                                {specialPricing.start_time && specialPricing.end_time && (
+                                  <span className="block mt-1">
+                                    Available: {specialPricing.start_time} - {specialPricing.end_time}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                ⭐ <strong>Special Rate:</strong> ${pricePerHour.toFixed(2)}/hour
+                                {specialPricing.name && (
+                                  <span className="block mt-1">
+                                    Event: {specialPricing.name}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   
@@ -790,7 +879,7 @@ const stripeInstance = await stripeService.getStripe();
                             setSelectedBlock(JSON.parse(value));
                             setShowCustomTime(false);
                           }}
-                          disabled={!selectedDate || checkingAvailability}
+                          disabled={!selectedDate || checkingAvailability || (specialPricing && pricingType === 'daily')}
                         >
                           <SelectTrigger className="mt-1">
                             <SelectValue placeholder={
@@ -798,9 +887,11 @@ const stripeInstance = await stripeService.getStripe();
                                 ? "Select a date first" 
                                 : checkingAvailability
                                   ? "Checking availability..."
-                                  : availableSlots.length === 0 
-                                    ? "No available slots for this date" 
-                                    : "Choose an available time slot"
+                                  : specialPricing && pricingType === 'daily'
+                                    ? "Daily rate - use custom time below"
+                                    : availableSlots.length === 0 
+                                      ? "No available slots for this date" 
+                                      : "Choose an available time slot"
                             } />
                           </SelectTrigger>
                           <SelectContent>
@@ -819,24 +910,35 @@ const stripeInstance = await stripeService.getStripe();
                       {/* Custom Time Option */}
                       <div className="border-t pt-3">
                         <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm font-medium text-slate-700">Custom Time Request</Label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setShowCustomTime(!showCustomTime);
-                              if (!showCustomTime) {
-                                setSelectedBlock(null);
-                              }
-                            }}
-                            className="text-xs"
-                          >
-                            {showCustomTime ? "Use Standard Slots" : "Request Custom Time"}
-                          </Button>
+                          <Label className="text-sm font-medium text-slate-700">
+                            {specialPricing && pricingType === 'daily' ? 'Daily Rate Time Selection' : 'Custom Time Request'}
+                          </Label>
+                          {!(specialPricing && pricingType === 'daily') && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setShowCustomTime(!showCustomTime);
+                                if (!showCustomTime) {
+                                  setSelectedBlock(null);
+                                }
+                              }}
+                              className="text-xs"
+                            >
+                              {showCustomTime ? "Use Standard Slots" : "Request Custom Time"}
+                            </Button>
+                          )}
                         </div>
                         
-                        {showCustomTime && (
+                        {/* Daily Rate Note */}
+                        {specialPricing && pricingType === 'daily' && (
+                          <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+                            🎯 This date has a special daily rate. The time below is automatically set based on the boat owner's availability.
+                          </div>
+                        )}
+                        
+                        {(showCustomTime || (specialPricing && pricingType === 'daily')) && (
                           <div className="space-y-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
@@ -1158,8 +1260,34 @@ const stripeInstance = await stripeService.getStripe();
                 <div>
                   <h3 className="font-bold text-lg">Price Details</h3>
                   <div className="mt-2 space-y-2 p-4 border rounded-lg bg-slate-50">
+                    {/* Special Pricing Alert */}
+                    {specialPricing && (
+                      <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-orange-800">
+                              {specialPricing.name ? `Special: ${specialPricing.name}` : 'Special Pricing'}
+                            </div>
+                            <div className="text-sm text-orange-600">
+                              {pricingType === 'daily' ? 'Daily Rate' : 'Special Hourly Rate'}
+                            </div>
+                            {specialPricing.start_time && specialPricing.end_time && (
+                              <div className="text-xs text-orange-500 mt-1">
+                                Available: {specialPricing.start_time} - {specialPricing.end_time}
+                              </div>
+                            )}
+                          </div>
+                          <Badge variant="outline" className="text-orange-600 border-orange-200">
+                            {pricingType === 'daily' ? 'Daily' : 'Special'}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between">
-                      <span className="text-slate-600">Price per hour</span>
+                      <span className="text-slate-600">
+                        {pricingType === 'daily' ? 'Daily rate' : 'Price per hour'}
+                      </span>
                       <span>${pricePerHour.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
