@@ -11,18 +11,18 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }) {
-  // Debug logging
-  console.log('Calendar props:', props);
-  console.log('Calendar classNames:', classNames);
+  // Debug logging (commented out to prevent console spam)
+  // console.log('Calendar props:', props);
+  // console.log('Calendar classNames:', classNames);
   
-  // Add useEffect to monitor selection changes
-  React.useEffect(() => {
-    if (props.selected) {
-      console.log('🎯 Date selected:', props.selected);
-      console.log('🎯 Selected date type:', typeof props.selected);
-      console.log('🎯 Selected date value:', props.selected);
-    }
-  }, [props.selected]);
+  // Add useEffect to monitor selection changes (commented out to prevent console spam)
+  // React.useEffect(() => {
+  //   if (props.selected) {
+  //     console.log('🎯 Date selected:', props.selected);
+  //     console.log('🎯 Selected date type:', typeof props.selected);
+  //     console.log('🎯 Selected date value:', props.selected);
+  //   }
+  // }, [props.selected]);
     return (
     <div className="bg-gray-100 rounded-lg p-4 shadow-sm">
       <DayPicker
