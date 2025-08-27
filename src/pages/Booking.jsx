@@ -796,7 +796,6 @@ const stripeInstance = await stripeService.getStripe();
                 {boat.special_pricing && boat.special_pricing.length > 0 && (
                   <div className="p-4 bg-orange-100 border-2 border-orange-300 rounded-lg relative z-50" style={{ zIndex: 50, position: 'relative', backgroundColor: '#fed7aa' }}>
                     <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="w-5 h-5 text-orange-600" />
                       <Label className="font-bold text-lg text-orange-800">Special Event Pricing</Label>
                     </div>
                     
