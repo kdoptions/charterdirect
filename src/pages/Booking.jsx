@@ -799,37 +799,40 @@ const stripeInstance = await stripeService.getStripe();
                       <Label className="font-bold text-lg text-orange-800">Special Event Pricing</Label>
                     </div>
                     
-                    {/* Debug Info - Only in dev mode */}
-                    {import.meta.env.DEV && (
-                      <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                        <strong>Debug - Special Pricing Data:</strong>
-                        <pre className="mt-1 text-xs overflow-auto">
-                          {JSON.stringify(boat.special_pricing, null, 2)}
-                        </pre>
-                        <div className="mt-2">
-                          <strong>Data Analysis:</strong>
-                          <br />• Total special pricing entries: {boat.special_pricing.length}
-                          <br />• Has names: {boat.special_pricing.filter(p => p.name).length}
-                          <br />• Has start/end times: {boat.special_pricing.filter(p => p.start_time && p.end_time).length}
-                          <br />• Daily rates: {boat.special_pricing.filter(p => p.pricing_type === 'daily' || p.price_per_day).length}
-                          <br />• Hourly rates: {boat.special_pricing.filter(p => p.pricing_type === 'hourly' || p.price_per_hour).length}
-                        </div>
-                        <div className="mt-2">
-                          <strong>Field Analysis:</strong>
-                          {boat.special_pricing.map((pricing, index) => (
-                            <div key={index} className="mt-1 p-1 bg-white rounded text-xs">
-                              <strong>Entry {index + 1}:</strong>
-                              <br />• Date: {pricing.date}
-                              <br />• Name: {pricing.name || 'NULL/undefined'}
-                              <br />• Type: {pricing.pricing_type}
-                              <br />• Price: {pricing.price_per_hour || pricing.price_per_day}
-                              <br />• Start: {pricing.start_time || 'NULL'}
-                              <br />• End: {pricing.end_time || 'NULL'}
-                            </div>
-                          ))}
-                        </div>
+                    {/* Debug Info - Always visible for testing */}
+                    <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                      <strong>Debug - Special Pricing Data:</strong>
+                      <div className="mb-2">
+                        <strong>Environment Check:</strong>
+                        <br />• DEV mode: {import.meta.env.DEV ? 'true' : 'false'}
+                        <br />• NODE_ENV: {import.meta.env.MODE}
                       </div>
-                    )}
+                      <pre className="mt-1 text-xs overflow-auto">
+                        {JSON.stringify(boat.special_pricing, null, 2)}
+                      </pre>
+                      <div className="mt-2">
+                        <strong>Data Analysis:</strong>
+                        <br />• Total special pricing entries: {boat.special_pricing.length}
+                        <br />• Has names: {boat.special_pricing.filter(p => p.name).length}
+                        <br />• Has start/end times: {boat.special_pricing.filter(p => p.start_time && p.end_time).length}
+                        <br />• Daily rates: {boat.special_pricing.filter(p => p.pricing_type === 'daily' || p.price_per_day).length}
+                        <br />• Hourly rates: {boat.special_pricing.filter(p => p.pricing_type === 'hourly' || p.price_per_hour).length}
+                      </div>
+                      <div className="mt-2">
+                        <strong>Field Analysis:</strong>
+                        {boat.special_pricing.map((pricing, index) => (
+                          <div key={index} className="mt-1 p-1 bg-white rounded text-xs">
+                            <strong>Entry {index + 1}:</strong>
+                            <br />• Date: {pricing.date}
+                            <br />• Name: {pricing.name || 'NULL/undefined'}
+                            <br />• Type: {pricing.pricing_type}
+                            <br />• Price: {pricing.price_per_hour || pricing.price_per_day}
+                            <br />• Start: {pricing.start_time || 'NULL'}
+                            <br />• End: {pricing.end_time || 'NULL'}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                     
                     <div className="space-y-3">
                       {boat.special_pricing
