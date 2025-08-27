@@ -186,6 +186,15 @@ export default function Step2_Pricing({ data, updateData }) {
     // Remove existing pricing for this date if it exists
     const filteredPricing = newSpecialPricing.filter(p => p.date !== dateString);
     
+    // Get user's local timezone and current time
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date();
+    const localTimeString = now.toLocaleTimeString('en-AU', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+    
     // Add new pricing based on type
     let newPricing;
     if (pricingType === 'hourly') {
@@ -196,7 +205,10 @@ export default function Step2_Pricing({ data, updateData }) {
         price_per_hour: parseFloat(specialPrice) || 0,
         name: specialPricingName || null,
         start_time: specialStartTime,
-        end_time: specialEndTime
+        end_time: specialEndTime,
+        created_at: now.toISOString(),
+        created_at_local: localTimeString,
+        timezone: userTimezone
       };
     } else {
       if (!specialDailyRate) return;
@@ -206,7 +218,10 @@ export default function Step2_Pricing({ data, updateData }) {
         price_per_day: parseFloat(specialDailyRate) || 0,
         name: specialPricingName || null,
         start_time: specialStartTime,
-        end_time: specialEndTime
+        end_time: specialEndTime,
+        created_at: now.toISOString(),
+        created_at_local: localTimeString,
+        timezone: userTimezone
       };
     }
     

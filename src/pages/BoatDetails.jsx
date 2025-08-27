@@ -533,6 +533,11 @@ export default function BoatDetails() {
                             Available: {pricing.start_time} - {pricing.end_time}
                           </div>
                         )}
+                        {pricing.created_at_local && (
+                          <div className="text-xs text-slate-400 mt-1 pt-1 border-t border-slate-100">
+                            📅 Created: {pricing.created_at_local} ({pricing.timezone || 'Local time'})
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

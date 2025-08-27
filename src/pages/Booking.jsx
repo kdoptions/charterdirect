@@ -879,6 +879,11 @@ const stripeInstance = await stripeService.getStripe();
                                   🕐 Available: {pricing.start_time} - {pricing.end_time}
                                 </div>
                               )}
+                              {pricing.created_at_local && (
+                                <div className="text-xs text-slate-400 mt-1">
+                                  📅 Created: {pricing.created_at_local} ({pricing.timezone || 'Local time'})
+                                </div>
+                              )}
                             </div>
                             <Badge variant="outline" className={`text-xs ml-2 ${
                               pricing.pricing_type === 'daily' || pricing.price_per_day 
