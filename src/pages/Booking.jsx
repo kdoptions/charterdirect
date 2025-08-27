@@ -64,17 +64,17 @@ export default function BookingPage() {
   const [customEndTime, setCustomEndTime] = useState("13:00");
   const [selectedServices, setSelectedServices] = useState([]);
 
-  // Debug selectedServices changes
-  useEffect(() => {
-    console.log('🔍 selectedServices changed:', selectedServices);
-    
-    // Test with a hardcoded service to verify pricing calculation
-    if (selectedServices.length > 0) {
-      const testService = { name: 'test', price: 100, description: 'per hour', pricing_type: 'per_hour' };
-      console.log('🔍 Test service calculation:', testService);
-      console.log('🔍 Test service cost for 4 hours:', testService.price * 4);
-    }
-  }, [selectedServices]);
+  // Debug selectedServices changes (commented out to prevent console spam)
+  // useEffect(() => {
+  //   console.log('🔍 selectedServices changed:', selectedServices);
+  //   
+  //   // Test with a hardcoded service to verify pricing calculation
+  //   if (selectedServices.length > 0) {
+  //     const testService = { name: 'test', price: 100, description: 'per hour', pricing_type: 'per_hour' };
+  //     console.log('🔍 Test service calculation:', testService);
+  //     console.log('🔍 Test service cost for 4 hours:', testService.price * 4);
+  //   }
+  // }, [selectedServices]);
 
   const urlParams = new URLSearchParams(location.search);
   const boatId = urlParams.get('id');
@@ -158,9 +158,9 @@ const stripeInstance = await stripeService.getStripe();
         }
 
         // Fetch boat details
-        console.log("🔍 Boat object:", Boat);
-        console.log("🔍 Boat.filter method:", Boat.filter);
-        console.log("🔍 Calling Boat.filter with:", { id: boatId });
+        // console.log("🔍 Boat object:", Boat);
+        // console.log("🔍 Boat.filter method:", Boat.filter);
+        // console.log("🔍 Calling Boat.filter with:", { id: boatId });
         
         let boatData;
         try {
