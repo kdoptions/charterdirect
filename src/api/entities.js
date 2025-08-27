@@ -532,11 +532,25 @@ export const Boat = {
           console.warn('⚠️ special_pricing is not an array, setting to empty array');
           cleanedData.special_pricing = [];
         } else {
-          // Clean each special pricing entry
-          cleanedData.special_pricing = cleanedData.special_pricing.map(pricing => ({
-            date: pricing.date || '',
-            price_per_hour: parseFloat(pricing.price_per_hour) || 0
-          }));
+          // Clean each special pricing entry - preserve all fields
+          cleanedData.special_pricing = cleanedData.special_pricing.map(pricing => {
+            const cleanedPricing = {
+              date: pricing.date || '',
+              pricing_type: pricing.pricing_type || 'hourly',
+              name: pricing.name || null,
+              start_time: pricing.start_time || '09:00',
+              end_time: pricing.end_time || '17:00'
+            };
+            
+            // Add the appropriate price field based on type
+            if (pricing.pricing_type === 'daily') {
+              cleanedPricing.price_per_day = parseFloat(pricing.price_per_day) || 0;
+            } else {
+              cleanedPricing.price_per_hour = parseFloat(pricing.price_per_hour) || 0;
+            }
+            
+            return cleanedPricing;
+          });
         }
       }
       
