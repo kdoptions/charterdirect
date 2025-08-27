@@ -420,14 +420,18 @@ const stripeInstance = await stripeService.getStripe();
   // Check if a date has special pricing for calendar display
   const hasSpecialPricing = (date) => {
     if (!date || !boat) return false;
-    const dateString = format(date, 'yyyy-MM-dd');
+    // Parse date as local date without timezone conversion
+    const [year, month, day] = [date.getFullYear(), date.getMonth() + 1, date.getDate()];
+    const dateString = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     return boat.special_pricing?.some(p => p.date === dateString) || false;
   };
 
   // Get special pricing info for a date
   const getSpecialPricingInfo = (date) => {
     if (!date || !boat) return null;
-    const dateString = format(date, 'yyyy-MM-dd');
+    // Parse date as local date without timezone conversion
+    const [year, month, day] = [date.getFullYear(), date.getMonth() + 1, date.getDate()];
+    const dateString = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     return boat.special_pricing?.find(p => p.date === dateString) || null;
   };
   
