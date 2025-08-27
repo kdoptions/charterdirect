@@ -179,29 +179,42 @@ export default function Step2_Pricing({ data, updateData }) {
     const filteredPricing = newSpecialPricing.filter(p => p.date !== dateString);
     
     // Add new pricing based on type
+    let newPricing;
     if (pricingType === 'hourly') {
       if (!specialPrice) return;
-      filteredPricing.push({
+      newPricing = {
         date: dateString,
         pricing_type: 'hourly',
         price_per_hour: parseFloat(specialPrice) || 0,
         name: specialPricingName || null,
         start_time: specialStartTime,
         end_time: specialEndTime
-      });
+      };
     } else {
       if (!specialDailyRate) return;
-      filteredPricing.push({
+      newPricing = {
         date: dateString,
         pricing_type: 'daily',
         price_per_day: parseFloat(specialDailyRate) || 0,
         name: specialPricingName || null,
         start_time: specialStartTime,
         end_time: specialEndTime
-      });
+      };
     }
     
+    // Debug logging
+    console.log('🔍 Adding special pricing:', newPricing);
+    console.log('🔍 Event name value:', specialPricingName);
+    console.log('🔍 Event name type:', typeof specialPricingName);
+    
+    filteredPricing.push(newPricing);
+    
+    console.log('🔍 Updated special_pricing array:', filteredPricing);
+    
+    console.log('🔍 Calling updateData with:', { special_pricing: filteredPricing });
     updateData({ special_pricing: filteredPricing });
+    
+    // Reset form
     setSelectedDate(null);
     setSpecialPrice('');
     setSpecialDailyRate('');
