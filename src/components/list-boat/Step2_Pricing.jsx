@@ -172,7 +172,15 @@ export default function Step2_Pricing({ data, updateData }) {
   const addSpecialPricing = () => {
     if (!selectedDate) return;
     
+    // Ensure date is handled in local timezone without conversion
     const dateString = format(selectedDate, 'yyyy-MM-dd');
+    console.log('🔍 Selected date object:', selectedDate);
+    console.log('🔍 Formatted date string:', dateString);
+    console.log('🔍 Date timezone info:', {
+      toISOString: selectedDate.toISOString(),
+      toDateString: selectedDate.toDateString(),
+      getTimezoneOffset: selectedDate.getTimezoneOffset()
+    });
     const newSpecialPricing = [...(data.special_pricing || [])];
     
     // Remove existing pricing for this date if it exists
