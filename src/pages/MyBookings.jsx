@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from "react";
-import { Booking, Boat, User } from "@/api/entities";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { Boat, Booking } from "@/api/entities";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Calendar,
-  Ship,
-  MapPin,
-  Clock,
-  Users,
-  DollarSign,
-  Eye,
-  MessageSquare,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Loader2
-} from "lucide-react";
-import { format, isPast, isFuture } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { createPageUrl } from "@/utils";
+import { format, isFuture, isPast } from "date-fns";
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Eye,
+    Loader2,
+    MapPin,
+    MessageSquare,
+    Ship,
+    Users,
+    XCircle
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
@@ -61,7 +62,34 @@ export default function MyBookings() {
           boatIds.map(id => Boat.filter({ id }))
         );
         const flatBoats = boatData.flat();
-        setBoats(flatBoats);
+        
+        // Try to get owner information for each boat
+        const boatsWithOwners = await Promise.all(
+          flatBoats.map(async (boat) => {
+            if (boat.owner_id) {
+              try {
+                const { data: ownerData } = await supabase
+                  .from('users')
+                  .select('email, display_name, full_name')
+                  .eq('id', boat.owner_id)
+                  .single();
+                
+                if (ownerData) {
+                  return {
+                    ...boat,
+                    owner_email: ownerData.email,
+                    owner_name: ownerData.display_name || ownerData.full_name
+                  };
+                }
+              } catch (error) {
+                console.log('Could not get owner info for boat:', boat.id);
+              }
+            }
+            return boat;
+          })
+        );
+        
+        setBoats(boatsWithOwners);
       }
     } catch (err) {
       setError("Failed to load bookings");
@@ -73,6 +101,60 @@ export default function MyBookings() {
 
   const getBoatById = (boatId) => {
     return boats.find(boat => boat.id === boatId);
+  };
+
+  const handleContactHost = async (boat) => {
+    if (!boat) {
+      alert('Boat information not available');
+      return;
+    }
+
+    try {
+      // Try to get the boat owner's information
+      if (boat.owner_id) {
+        const { data: ownerData, error } = await supabase
+          .from('users')
+          .select('email, display_name, full_name')
+          .eq('id', boat.owner_id)
+          .single();
+        
+        if (ownerData && ownerData.email) {
+          // Open email client with pre-filled subject and body
+          const subject = encodeURIComponent(`Charter Inquiry - ${boat.name}`);
+          const body = encodeURIComponent(
+            `Hi there,\n\nI have a confirmed booking for ${boat.name} and would like to get in touch.\n\n` +
+            `Booking Details:\n` +
+            `- Boat: ${boat.name}\n` +
+            `- Date: ${new Date().toLocaleDateString()}\n` +
+            `- Status: Confirmed\n\n` +
+            `Please let me know if you need any additional information from me.\n\n` +
+            `Best regards,\n[Your Name]`
+          );
+          
+          window.open(`mailto:${ownerData.email}?subject=${subject}&body=${body}`, '_blank');
+        } else {
+          // Fallback: show owner email if available in boat data
+          if (boat.owner_email) {
+            const subject = encodeURIComponent(`Charter Inquiry - ${boat.name}`);
+            const body = encodeURIComponent(
+              `Hi there,\n\nI have a confirmed booking for ${boat.name} and would like to get in touch.\n\n` +
+              `Please let me know if you need any additional information from me.\n\n` +
+              `Best regards,\n[Your Name]`
+            );
+            
+            window.open(`mailto:${boat.owner_email}?subject=${subject}&body=${body}`, '_blank');
+          } else {
+            // No owner email available
+            alert('Host contact information is not available. Please contact support for assistance.');
+          }
+        }
+      } else {
+        alert('Host contact information is not available. Please contact support for assistance.');
+      }
+    } catch (error) {
+      console.error('Error getting host information:', error);
+      alert('Unable to get host contact information. Please try again or contact support.');
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -221,10 +303,34 @@ export default function MyBookings() {
               </Button>
             </Link>
             {booking.status === 'confirmed' && (
-              <Button variant="outline" size="sm" className="flex-1" disabled>
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Contact Host
-              </Button>
+              <div className="flex-1">
+                {boat?.owner_email ? (
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleContactHost(boat)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Contact Host
+                    </Button>
+                    <div className="text-xs text-slate-500 text-center">
+                      Host: {boat.owner_name || 'Boat Owner'} ({boat.owner_email})
+                    </div>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => handleContactHost(boat)}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Contact Host
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </CardContent>
