@@ -794,84 +794,125 @@ const stripeInstance = await stripeService.getStripe();
               <div className="space-y-6">
                 {/* Special Pricing Overview */}
                 {boat.special_pricing && boat.special_pricing.length > 0 && (
-                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg relative z-10">
                     <div className="flex items-center gap-2 mb-3">
                       <Calendar className="w-5 h-5 text-orange-600" />
                       <Label className="font-bold text-lg text-orange-800">Special Event Pricing</Label>
                     </div>
-                    <div className="space-y-2">
+                    
+                    {/* Debug Info - Only in dev mode */}
+                    {import.meta.env.DEV && (
+                      <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                        <strong>Debug - Special Pricing Data:</strong>
+                        <pre className="mt-1 text-xs overflow-auto">
+                          {JSON.stringify(boat.special_pricing, null, 2)}
+                        </pre>
+                        <div className="mt-2">
+                          <strong>Data Analysis:</strong>
+                          <br />• Total special pricing entries: {boat.special_pricing.length}
+                          <br />• Has names: {boat.special_pricing.filter(p => p.name).length}
+                          <br />• Has start/end times: {boat.special_pricing.filter(p => p.start_time && p.end_time).length}
+                          <br />• Daily rates: {boat.special_pricing.filter(p => p.pricing_type === 'daily' || p.price_per_day).length}
+                          <br />• Hourly rates: {boat.special_pricing.filter(p => p.pricing_type === 'hourly' || p.price_per_hour).length}
+                        </div>
+                        <div className="mt-2">
+                          <strong>Field Analysis:</strong>
+                          {boat.special_pricing.map((pricing, index) => (
+                            <div key={index} className="mt-1 p-1 bg-white rounded text-xs">
+                              <strong>Entry {index + 1}:</strong>
+                              <br />• Date: {pricing.date}
+                              <br />• Name: {pricing.name || 'NULL/undefined'}
+                              <br />• Type: {pricing.pricing_type}
+                              <br />• Price: {pricing.price_per_hour || pricing.price_per_day}
+                              <br />• Start: {pricing.start_time || 'NULL'}
+                              <br />• End: {pricing.end_time || 'NULL'}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
                       {boat.special_pricing
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
                         .map((pricing, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-white rounded border border-orange-100">
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-slate-900">
-                              {new Date(pricing.date).toLocaleDateString('en-AU', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
-                              {pricing.name && (
-                                <span className="ml-2 text-sm font-normal text-orange-600">
-                                  • {pricing.name}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-slate-600">
-                              {pricing.pricing_type === 'daily' || pricing.price_per_day ? (
-                                <>
-                                  <CalendarDays className="w-3 h-3 inline mr-1" />
-                                  ${pricing.price_per_day || pricing.price_per_hour}/day
-                                </>
-                              ) : (
-                                <>
-                                  <Clock className="w-3 h-3 inline mr-1" />
-                                  ${pricing.price_per_hour}/hour
-                                </>
-                              )}
+                        <div key={index} className="p-3 bg-white rounded-lg border border-orange-200 shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <div className="text-sm font-semibold text-slate-900 mb-1">
+                                {new Date(pricing.date).toLocaleDateString('en-AU', { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric' 
+                                })}
+                                {pricing.name ? (
+                                  <span className="ml-2 text-sm font-normal text-orange-600">
+                                    • {pricing.name}
+                                  </span>
+                                ) : (
+                                  <span className="ml-2 text-xs text-slate-400 italic">
+                                    (No event name)
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-600 mb-2">
+                                {pricing.pricing_type === 'daily' || pricing.price_per_day ? (
+                                  <>
+                                    <CalendarDays className="w-3 h-3 inline mr-1" />
+                                    <span className="font-medium">${pricing.price_per_day || pricing.price_per_hour}/day</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Clock className="w-3 h-3 inline mr-1" />
+                                    <span className="font-medium">${pricing.price_per_hour}/hour</span>
+                                  </>
+                                )}
+                              </div>
                               {pricing.start_time && pricing.end_time && (
-                                <span className="ml-2">
-                                  ({pricing.start_time} - {pricing.end_time})
-                                </span>
+                                <div className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded">
+                                  🕐 Available: {pricing.start_time} - {pricing.end_time}
+                                </div>
                               )}
                             </div>
+                            <Badge variant="outline" className={`text-xs ml-2 ${
+                              pricing.pricing_type === 'daily' || pricing.price_per_day 
+                                ? 'text-purple-600 border-purple-200 bg-purple-50' 
+                                : 'text-orange-600 border-orange-200 bg-orange-50'
+                            }`}>
+                              {pricing.pricing_type === 'daily' || pricing.price_per_day ? 'Daily Rate' : 'Special Rate'}
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className={`text-xs ${
-                            pricing.pricing_type === 'daily' || pricing.price_per_day 
-                              ? 'text-purple-600 border-purple-200' 
-                              : 'text-orange-600 border-orange-200'
-                          }`}>
-                            {pricing.pricing_type === 'daily' || pricing.price_per_day ? 'Daily' : 'Special'}
-                          </Badge>
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-orange-600 mt-2 text-center">
+                    <p className="text-xs text-orange-600 mt-3 text-center">
                       Select a date above to see special pricing applied to your booking
                     </p>
                   </div>
                 )}
 
-                <div>
+                <div className="relative z-0">
                   <Label className="font-bold text-lg">1. Select Date</Label>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                    className="mt-2"
-                    modifiers={{
-                      special: (date) => hasSpecialPricing(date)
-                    }}
-                    modifiersStyles={{
-                      special: { 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontWeight: 'bold',
-                        borderRadius: '50%'
-                      }
-                    }}
-                  />
+                  <div className="mt-2 p-4 bg-white border border-slate-200 rounded-lg">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                      className="w-full"
+                      modifiers={{
+                        special: (date) => hasSpecialPricing(date)
+                      }}
+                      modifiersStyles={{
+                        special: { 
+                          backgroundColor: '#fef3c7', 
+                          color: '#92400e',
+                          fontWeight: 'bold',
+                          borderRadius: '50%'
+                        }
+                      }}
+                    />
+                  </div>
                   {/* Special Pricing Legend */}
                   {boat.special_pricing && boat.special_pricing.length > 0 && (
                     <div className="mt-2 text-xs text-slate-600">
