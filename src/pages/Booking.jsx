@@ -842,11 +842,15 @@ const stripeInstance = await stripeService.getStripe();
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                               <div className="text-sm font-semibold text-slate-900 mb-1">
-                                {new Date(pricing.date).toLocaleDateString('en-AU', { 
-                                  month: 'short', 
-                                  day: 'numeric', 
-                                  year: 'numeric' 
-                                })}
+                                {/* Parse date as local date without timezone conversion */}
+                                {(() => {
+                                  const [year, month, day] = pricing.date.split('-').map(Number);
+                                  return new Date(year, month - 1, day).toLocaleDateString('en-AU', { 
+                                    month: 'short', 
+                                    day: 'numeric', 
+                                    year: 'numeric' 
+                                  });
+                                })()}
                                 {pricing.name ? (
                                   <span className="ml-2 text-sm font-normal text-orange-600">
                                     • {pricing.name}

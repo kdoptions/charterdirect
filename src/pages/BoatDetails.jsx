@@ -489,12 +489,16 @@ export default function BoatDetails() {
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
                             <div className="font-semibold text-slate-900">
-                              {new Date(pricing.date).toLocaleDateString('en-AU', { 
-                                weekday: 'long',
-                                month: 'long', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
+                              {/* Parse date as local date without timezone conversion */}
+                              {(() => {
+                                const [year, month, day] = pricing.date.split('-').map(Number);
+                                return new Date(year, month - 1, day).toLocaleDateString('en-AU', { 
+                                  weekday: 'long',
+                                  month: 'long', 
+                                  day: 'numeric', 
+                                  year: 'numeric' 
+                                });
+                              })()}
                               {pricing.name && (
                                 <span className="ml-2 text-sm font-normal text-orange-600">
                                   • {pricing.name}
