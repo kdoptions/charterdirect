@@ -27,14 +27,14 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse",
-        head_row: "flex",
-        head_cell: "text-gray-600 font-medium text-sm uppercase tracking-wide pb-2 w-9 text-center",
+        table: "w-full border-collapse space-y-1",
+        head_row: "flex mb-2",
+        head_cell: "text-gray-600 rounded-md w-8 font-medium text-sm uppercase tracking-wide",
         row: "flex w-full mt-1",
-        cell: "text-center p-0 relative w-9 h-9",
+        cell: "text-center p-0 relative w-8 h-8",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 rounded-md hover:bg-blue-50 hover:border-blue-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-transparent"
+          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 rounded-md hover:bg-blue-50 hover:border-blue-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-transparent"
         ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
