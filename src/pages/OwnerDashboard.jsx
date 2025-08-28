@@ -690,22 +690,7 @@ export default function OwnerDashboard() {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh Data
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={async () => {
-                const { Booking, Boat } = await import('@/api/entities');
-                const allBookings = await Booking.filter();
-                const userBoats = await Boat.filter({ owner_id: currentUser?.id }); // Use currentUser from AuthContext
-                console.log('🔍 Owner Dashboard Debug:');
-                console.log('User ID:', currentUser?.id);
-                console.log('User boats:', userBoats);
-                console.log('All bookings:', allBookings);
-                alert(`Debug info logged. User has ${userBoats.length} boats and ${allBookings.length} total bookings.`);
-              }}
-              className="flex items-center gap-2"
-            >
-              🔍 Debug
-            </Button>
+
             <Button 
               variant="outline" 
               onClick={async () => {
@@ -1144,17 +1129,14 @@ export default function OwnerDashboard() {
             {/* All Bookings */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle>
                   <span>All Bookings ({bookings.length})</span>
-                  <Badge variant="outline" className="text-xs">
-                    Debug: {bookings.length} total
-                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+                              <CardContent>
                 {bookings.length > 0 ? (
-                  <div className="space-y-4">
-                    {bookings.slice(0, 10).map(booking => {
+                  <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
+                    {bookings.map(booking => {
                       const boat = getBoatById(booking.boat_id);
                       return (
                         <div key={booking.id} className={`flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 ${
@@ -1180,9 +1162,7 @@ export default function OwnerDashboard() {
                                 🎯 Services: {booking.additional_services.map(service => service.name).join(', ')}
                               </p>
                             )}
-                            <p className="text-xs text-slate-400">
-                              ID: {booking.id} | Boat: {booking.boat_id} | Status: {booking.status}
-                            </p>
+
                           </div>
                           <div className="text-right">
                             <Badge className={`
@@ -1204,7 +1184,6 @@ export default function OwnerDashboard() {
                 ) : (
                   <div className="text-slate-500 text-center py-8">
                     <p>No bookings yet</p>
-                    <p className="text-xs mt-2">Debug: Check console for booking data</p>
                   </div>
                 )}
               </CardContent>

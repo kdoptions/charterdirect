@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { isAdmin, hasPermission, getAdminList, addAdmin, removeAdmin } from '@/utils/adminRoles';
 import { 
   CheckCircle, 
@@ -37,6 +38,8 @@ export default function Admin() {
   const [adminList, setAdminList] = useState([]);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [showAdminManagement, setShowAdminManagement] = useState(false);
+  const [selectedBoat, setSelectedBoat] = useState(null);
+  const [showBoatModal, setShowBoatModal] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -452,6 +455,10 @@ export default function Admin() {
                     <Button
                       variant="ghost"
                       className="text-slate-600 hover:text-slate-900"
+                      onClick={() => {
+                        setSelectedBoat(boat);
+                        setShowBoatModal(true);
+                      }}
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       View Details
@@ -463,6 +470,133 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      {/* Boat Details Modal */}
+      <Dialog open={showBoatModal} onOpenChange={setShowBoatModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Boat Details - {selectedBoat?.name}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedBoat && (
+            <div className="space-y-6">
+              {/* Boat Images */}
+              {selectedBoat.images && selectedBoat.images.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-slate-900 mb-3">Boat Images</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {selectedBoat.images.map((image, index) => (
+                      <div key={index} className="aspect-video rounded-lg overflow-hidden">
+                        <img 
+                          src={image} 
+                          alt={`${selectedBoat.name} - Image ${index + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Boat Information */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-slate-900">Boat Details</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">{selectedBoat.location}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">Max {selectedBoat.max_guests} guests</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">${selectedBoat.price_per_hour}/hour</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">
+                        Created {new Date(selectedBoat.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {selectedBoat.description && (
+                    <div>
+                      <h4 className="font-medium text-slate-900 mb-2">Description</h4>
+                      <p className="text-sm text-slate-600">{selectedBoat.description}</p>
+                    </div>
+                  )}
+
+                  {selectedBoat.amenities && selectedBoat.amenities.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-slate-900 mb-2">Amenities</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedBoat.amenities.map((amenity, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {amenity}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Owner Information */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-slate-900">Owner Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">{selectedBoat.owner_name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">{selectedBoat.owner_email}</span>
+                    </div>
+                    {selectedBoat.business_name && (
+                      <div className="flex items-center space-x-2">
+                        <Ship className="w-4 h-4 text-slate-400" />
+                        <span className="text-sm text-slate-600">{selectedBoat.business_name}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <Button
+                  onClick={() => {
+                    handleApprove(selectedBoat.id);
+                    setShowBoatModal(false);
+                  }}
+                  disabled={processing}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {processing ? 'Approving...' : 'Approve'}
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    handleReject(selectedBoat.id);
+                    setShowBoatModal(false);
+                  }}
+                  disabled={processing}
+                  variant="outline"
+                  className="border-red-200 text-red-700 hover:bg-red-50"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  {processing ? 'Rejecting...' : 'Reject'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -358,114 +358,7 @@ export default function Home() {
               </Button>
             </Link>
             
-            {/* Demo Testing Section */}
-            <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4">🧪 Demo Testing</h3>
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Link to={createPageUrl("BoatDetails?id=4")}>
-                  <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50">
-                    🚢 Test Boat Details
-                  </Button>
-                </Link>
-                <Link to={createPageUrl("Booking?id=4")}>
-                  <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50">
-                    📅 Test Booking Flow
-                  </Button>
-                </Link>
-                <Link to={createPageUrl("OwnerDashboard")}>
-                  <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
-                    👨‍💼 Owner Dashboard
-                  </Button>
-                </Link>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
-                  onClick={async () => {
-                    const { Booking, Boat, User } = await import('@/api/entities');
-                    
-                    // Get all data
-                    const allBookings = await Booking.filter();
-                    const allBoats = await Boat.filter();
-                    const testOwner = await User.loginAsOwner();
-                    
-                    console.log('🔍 COMPREHENSIVE DEBUG:');
-                    console.log('Test Owner:', testOwner);
-                    console.log('All Boats:', allBoats);
-                    console.log('All Bookings:', allBookings);
-                    
-                    // Check which boats belong to test owner
-                    const ownerBoats = allBoats.filter(boat => boat.owner_id === testOwner.id);
-                    console.log('Owner Boats:', ownerBoats);
-                    
-                    // Check which bookings belong to owner's boats
-                    const ownerBookings = allBookings.filter(booking => 
-                      ownerBoats.some(boat => boat.id === booking.boat_id)
-                    );
-                    console.log('Owner Bookings:', ownerBookings);
-                    
-                    alert(`Debug complete! Owner has ${ownerBoats.length} boats and ${ownerBookings.length} bookings. Check console.`);
-                  }}
-                >
-                  🔍 Debug Bookings
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-red-300 text-red-700 hover:bg-red-50"
-                  onClick={async () => {
-                    const { Booking, Boat } = await import('@/api/entities');
-                    
-                    // First check what boats exist
-                    const boats = await Boat.filter();
-                    console.log('Available boats:', boats);
-                    
-                    // Find the test boat first
-                    const testBoat = boats.find(boat => boat.owner_id === "test-owner-1");
-                    console.log("Test boat found:", testBoat);
-                    
-                    if (!testBoat) {
-                      alert("No test boat found for test-owner-1!");
-                      return;
-                    }
-                    
-                    const testBooking = await Booking.create({
-                      boat_id: testBoat.id, // Use the actual boat ID
-                      customer_id: "test-customer",
-                      start_date: "2025-09-19",
-                      end_date: "2025-09-19",
-                      start_time: "16:00",
-                      end_time: "20:00",
-                      guests: 6,
-                      total_hours: 4,
-                      base_price: 380,
-                      total_amount: 1520,
-                      down_payment: 1520 * (testBoat.down_payment_percentage / 100), // Calculate based on boat's down payment %
-                      remaining_balance: 1520 - (1520 * (testBoat.down_payment_percentage / 100)),
-                      commission_amount: 1520 * 0.10, // 10% platform fee
-                      payment_status: 'deposit_paid', // Mark as deposit paid for testing
-                      platform_fee_collected: 1520 * 0.10,
-                      customer_name: "Test Customer",
-                      customer_email: "test@example.com",
-                      customer_phone: "+61 400 123 456",
-                      special_requests: "Test booking created via debug button"
-                    });
-                    console.log('✅ Test booking created:', testBooking);
-                    
-                    // Verify the booking was stored
-                    const allBookings = await Booking.filter();
-                    console.log('All bookings after creation:', allBookings);
-                    
-                    alert(`Test booking created! Boat ID: ${testBooking.boat_id}. Total bookings: ${allBookings.length}`);
-                  }}
-                >
-                  🧪 Create Test Booking
-                </Button>
-              </div>
-              <p className="text-sm text-blue-600 mt-3">
-                Use these buttons to test the complete booking and approval workflow
-              </p>
-            </div>
+
           </div>
         </div>
       </section>
@@ -534,7 +427,7 @@ export default function Home() {
               </Button>
             </Link>
             <Link to={createPageUrl("ListBoat")}>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20 px-8 py-4 text-lg">
+              <Button size="lg" variant="outline" className="border-white text-blue-900 bg-white hover:bg-blue-50 px-8 py-4 text-lg">
                 Earn with Your Boat
               </Button>
             </Link>
