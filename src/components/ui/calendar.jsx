@@ -62,6 +62,11 @@ function Calendar({
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
         Day: ({ date, displayMonth, ...props }) => {
+          // Add null check for date parameter
+          if (!date || !(date instanceof Date)) {
+            return null;
+          }
+          
           const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
           const isToday = date.toDateString() === new Date().toDateString();
           
