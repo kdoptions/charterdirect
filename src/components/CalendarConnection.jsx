@@ -3,15 +3,50 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calendar, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, AlertCircle, RefreshCw, LogIn } from 'lucide-react';
 import realGoogleCalendarService from '@/api/realGoogleCalendarService';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function CalendarConnection({ userId, onConnectionChange }) {
+  const { currentUser } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected, error
   const [calendars, setCalendars] = useState([]);
   const [selectedCalendar, setSelectedCalendar] = useState('');
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user is authenticated
+  if (!currentUser) {
+    return (
+      <Card className="border-orange-200 bg-orange-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-orange-800">
+            <LogIn className="w-5 h-5" />
+            Authentication Required
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-orange-700 mb-4">
+            You must be logged in to access calendar integration features.
+          </p>
+          <div className="flex gap-3">
+            <Link to="/login">
+              <Button className="bg-orange-600 hover:bg-orange-700">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/signup">
+              <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
+                Create Account
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   useEffect(() => {
     // Check if user has existing calendar connection
