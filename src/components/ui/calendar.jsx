@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
 
 function Calendar({
   className,
@@ -12,60 +11,262 @@ function Calendar({
   ...props
 }) {
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-4", className)}
-      classNames={{
-        // Container styling - safe to customize
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4 bg-white rounded-xl shadow-lg border-0 p-6",
-        caption: "flex justify-center pt-1 relative items-center mb-4",
-        caption_label: "text-lg font-semibold text-gray-900",
-        
-        // Navigation buttons - safe to customize
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-8 w-8 bg-white border-gray-300 p-0 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        
-        // Grid structure - KEEP DEFAULT (don't override)
-        // table: default
-        // head_row: default  
-        // head_cell: default
-        // row: default
-        // cell: default
-        
-        // Day styling - safe to customize (but don't break grid)
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 rounded-md hover:bg-blue-50 hover:border-blue-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-transparent"
-        ),
-        
-        // Day states - safe to customize
-        day_selected: "!bg-blue-600 !text-white hover:!bg-blue-700 hover:!text-white focus:!bg-blue-600 focus:!text-white font-semibold shadow-md transform scale-105 transition-transform duration-200",
-        day_today: "!bg-blue-100 !text-blue-700 font-semibold border-2 border-blue-400 shadow-sm",
-        day_outside: "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "!text-gray-400 !opacity-70 !bg-gray-100 line-through cursor-not-allowed hover:!bg-gray-100 hover:scale-100 border-gray-200",
-        day_range_start: "day-range-start",
-        day_range_end: "day-range-end",
-        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        
-        ...classNames,
-      }}
-      components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        ),
-      }}
-      {...props}
-    />
+    <div className="bg-white rounded-2xl shadow-xl border-0 p-6">
+      <DayPicker
+        showOutsideDays={showOutsideDays}
+        className={cn("", className)}
+        classNames={{
+          // Minimal styling - let our custom CSS handle everything
+          months: "",
+          month: "",
+          caption: "",
+          caption_label: "",
+          nav: "",
+          nav_button: "",
+          nav_button_previous: "",
+          nav_button_next: "",
+          table: "",
+          head_row: "",
+          head_cell: "",
+          row: "",
+          cell: "",
+          day: "",
+          day_range_start: "",
+          day_range_end: "",
+          day_selected: "",
+          day_today: "",
+          day_outside: "",
+          day_disabled: "",
+          day_range_middle: "",
+          day_hidden: "",
+          ...classNames,
+        }}
+        components={{
+          IconLeft: ({ className, ...props }) => (
+            <ChevronLeft className={cn("h-5 w-5 text-gray-600 hover:text-blue-600 transition-colors", className)} {...props} />
+          ),
+          IconRight: ({ className, ...props }) => (
+            <ChevronRight className={cn("h-5 w-5 text-gray-600 hover:text-blue-600 transition-colors", className)} {...props} />
+          ),
+        }}
+        {...props}
+      />
+      
+      {/* Custom CSS for beautiful styling */}
+      <style jsx>{`
+        /* Container styling */
+        :global(.rdp) {
+          --rdp-cell-size: 40px;
+          --rdp-accent-color: #3b82f6;
+          --rdp-background-color: #f8fafc;
+          --rdp-accent-color-dark: #1d4ed8;
+          --rdp-background-color-dark: #1e293b;
+          --rdp-outline: 2px solid var(--rdp-accent-color);
+          --rdp-outline-selected: 2px solid rgba(0, 0, 0, 0.75);
+          margin: 0;
+          padding: 0;
+        }
+
+        /* Month container */
+        :global(.rdp-months) {
+          display: flex;
+          justify-content: center;
+        }
+
+        :global(.rdp-month) {
+          background: white;
+          border-radius: 16px;
+          padding: 0;
+          margin: 0;
+        }
+
+        /* Caption (month/year header) */
+        :global(.rdp-caption) {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px 0;
+          margin-bottom: 16px;
+          position: relative;
+        }
+
+        :global(.rdp-caption_label) {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1e293b;
+          text-transform: capitalize;
+        }
+
+        /* Navigation buttons */
+        :global(.rdp-nav) {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          gap: 8px;
+        }
+
+        :global(.rdp-nav_button) {
+          width: 32px;
+          height: 32px;
+          border: 1px solid #e2e8f0;
+          background: white;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        :global(.rdp-nav_button:hover) {
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+          transform: scale(1.05);
+        }
+
+        :global(.rdp-nav_button_previous) {
+          left: 0;
+        }
+
+        :global(.rdp-nav_button_next) {
+          right: 0;
+        }
+
+        /* Table structure */
+        :global(.rdp-table) {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        /* Header row */
+        :global(.rdp-head_row) {
+          display: flex;
+          margin-bottom: 8px;
+        }
+
+        :global(.rdp-head_cell) {
+          width: var(--rdp-cell-size);
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 600;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        /* Data rows */
+        :global(.rdp-row) {
+          display: flex;
+          margin-bottom: 4px;
+        }
+
+        :global(.rdp-cell) {
+          width: var(--rdp-cell-size);
+          height: var(--rdp-cell-size);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+
+        /* Day buttons */
+        :global(.rdp-day) {
+          width: 100%;
+          height: 100%;
+          border: none;
+          background: transparent;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #1e293b;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        :global(.rdp-day:hover) {
+          background: #eff6ff;
+          color: #1d4ed8;
+          transform: scale(1.1);
+        }
+
+        :global(.rdp-day:focus) {
+          outline: 2px solid #3b82f6;
+          outline-offset: 2px;
+        }
+
+        /* Selected day */
+        :global(.rdp-day_selected) {
+          background: #3b82f6 !important;
+          color: white !important;
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          transform: scale(1.05);
+        }
+
+        :global(.rdp-day_selected:hover) {
+          background: #2563eb !important;
+          transform: scale(1.1);
+        }
+
+        /* Today */
+        :global(.rdp-day_today) {
+          background: #dbeafe;
+          color: #1d4ed8;
+          font-weight: 600;
+          border: 2px solid #3b82f6;
+        }
+
+        /* Outside month days */
+        :global(.rdp-day_outside) {
+          color: #94a3b8;
+          opacity: 0.6;
+        }
+
+        /* Disabled/past days */
+        :global(.rdp-day_disabled) {
+          color: #cbd5e1;
+          background: #f8fafc;
+          cursor: not-allowed;
+          text-decoration: line-through;
+          opacity: 0.6;
+        }
+
+        :global(.rdp-day_disabled:hover) {
+          background: #f8fafc;
+          transform: none;
+          color: #cbd5e1;
+        }
+
+        /* Range selection */
+        :global(.rdp-day_range_start) {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+
+        :global(.rdp-day_range_end) {
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+        }
+
+        :global(.rdp-day_range_middle) {
+          border-radius: 0;
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+
+        /* Hidden days */
+        :global(.rdp-day_hidden) {
+          visibility: hidden;
+        }
+      `}</style>
+    </div>
   );
 }
 
