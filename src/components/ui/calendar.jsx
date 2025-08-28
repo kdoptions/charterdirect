@@ -39,16 +39,16 @@ function Calendar({
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-8 w-8 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 rounded-md hover:bg-blue-50 hover:border-blue-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-transparent"
         ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
+          "bg-blue-600 text-white hover:bg-blue-700 hover:text-white focus:bg-blue-600 focus:text-white font-semibold shadow-md transform scale-105 transition-transform duration-200",
+        day_today: "bg-blue-100 text-blue-700 font-semibold border-2 border-blue-400 shadow-sm",
         day_outside:
           "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-muted-foreground opacity-30 bg-gray-100 line-through",
+        day_disabled: "text-gray-400 opacity-70 bg-gray-100 line-through cursor-not-allowed hover:bg-gray-100 hover:scale-100 border-gray-200",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
@@ -61,40 +61,6 @@ function Calendar({
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
-        Day: ({ date, displayMonth, ...props }) => {
-          // Add null check for date parameter
-          if (!date || !(date instanceof Date)) {
-            return null;
-          }
-          
-          const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-          const isToday = date.toDateString() === new Date().toDateString();
-          
-          return (
-            <button
-              {...props}
-              className={cn(
-                "relative h-9 w-9 p-0 font-normal transition-all duration-200 rounded-md",
-                "hover:bg-blue-50 hover:border-blue-200 hover:scale-105",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                "border border-transparent",
-                isPast && "bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100 hover:scale-100 border-gray-200",
-                isToday && "bg-blue-100 text-blue-700 font-semibold border-2 border-blue-400 shadow-sm",
-                props.className
-              )}
-              style={{
-                textDecoration: isPast ? 'line-through' : 'none',
-                opacity: isPast ? 0.7 : 1,
-              }}
-              disabled={isPast}
-            >
-              <span className="relative z-10">{date.getDate()}</span>
-              {isPast && (
-                <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-gray-50 opacity-30 rounded-md" />
-              )}
-            </button>
-          );
-        },
       }}
       {...props}
     />
