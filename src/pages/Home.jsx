@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Boat } from "@/api/entities";
+import SmartLink from "@/components/SmartLink";
 
 export default function Home() {
   const [searchLocation, setSearchLocation] = React.useState("");
@@ -426,11 +427,11 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Link to={createPageUrl("ListBoat")}>
+            <SmartLink to={createPageUrl("ListBoat")} requiresAuth={true} authMessage="Please sign in to list your boat">
               <Button size="lg" variant="outline" className="border-white text-blue-900 bg-white hover:bg-blue-50 px-8 py-4 text-lg">
                 Earn with Your Boat
               </Button>
-            </Link>
+            </SmartLink>
           </div>
         </div>
       </section>

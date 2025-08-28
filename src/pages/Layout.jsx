@@ -177,6 +177,8 @@ export default function Layout({ children, currentPageName }) {
                   </Link>
                   <SmartLink 
                     to={createPageUrl("ListBoat")} 
+                    requiresAuth={true}
+                    authMessage="Please sign in to list your boat"
                     className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200"
                   >
                     List Your Boat
