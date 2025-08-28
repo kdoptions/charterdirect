@@ -29,18 +29,21 @@ function Calendar({
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse",
         head_row: "flex",
-        head_cell: "text-gray-600 font-medium text-sm uppercase tracking-wide pb-2 px-1 w-9",
+        head_cell: "text-gray-600 font-medium text-sm uppercase tracking-wide pb-2 w-9 text-center",
         row: "flex w-full mt-1",
         cell: "text-center p-0 relative w-9 h-9",
-        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 rounded-md hover:bg-blue-50 hover:border-blue-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-transparent",
+        day: cn(
+          buttonVariants({ variant: "ghost" }),
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-all duration-200 rounded-md hover:bg-blue-50 hover:border-blue-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-transparent"
+        ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
         day_selected:
-          "bg-blue-600 text-white hover:bg-blue-700 hover:text-white focus:bg-blue-600 focus:text-white font-semibold shadow-md transform scale-105 transition-transform duration-200",
-        day_today: "bg-blue-100 text-blue-700 font-semibold border-2 border-blue-400 shadow-sm",
+          "!bg-blue-600 !text-white hover:!bg-blue-700 hover:!text-white focus:!bg-blue-600 focus:!text-white font-semibold shadow-md transform scale-105 transition-transform duration-200",
+        day_today: "!bg-blue-100 !text-blue-700 font-semibold border-2 border-blue-400 shadow-sm",
         day_outside:
           "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-gray-400 opacity-70 bg-gray-100 line-through cursor-not-allowed hover:bg-gray-100 hover:scale-100 border-gray-200",
+        day_disabled: "!text-gray-400 !opacity-70 !bg-gray-100 line-through cursor-not-allowed hover:!bg-gray-100 hover:scale-100 border-gray-200",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
