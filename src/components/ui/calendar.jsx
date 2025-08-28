@@ -11,7 +11,7 @@ function Calendar({
   ...props
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-0 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <DayPicker
         showOutsideDays={showOutsideDays}
         className={cn("", className)}
@@ -43,28 +43,22 @@ function Calendar({
         }}
         components={{
           IconLeft: ({ className, ...props }) => (
-            <ChevronLeft className={cn("h-5 w-5 text-gray-600 hover:text-blue-600 transition-colors", className)} {...props} />
+            <ChevronLeft className={cn("h-4 w-4 text-gray-600 hover:text-blue-600 transition-colors", className)} {...props} />
           ),
           IconRight: ({ className, ...props }) => (
-            <ChevronRight className={cn("h-5 w-5 text-gray-600 hover:text-blue-600 transition-colors", className)} {...props} />
+            <ChevronRight className={cn("h-4 w-4 text-gray-600 hover:text-blue-600 transition-colors", className)} {...props} />
           ),
         }}
         {...props}
       />
       
-      {/* Custom CSS for beautiful styling */}
+      {/* Custom CSS for clean, grid-based calendar */}
       <style jsx>{`
-        /* Container styling */
+        /* Reset all default styles */
         :global(.rdp) {
-          --rdp-cell-size: 40px;
-          --rdp-accent-color: #3b82f6;
-          --rdp-background-color: #f8fafc;
-          --rdp-accent-color-dark: #1d4ed8;
-          --rdp-background-color-dark: #1e293b;
-          --rdp-outline: 2px solid var(--rdp-accent-color);
-          --rdp-outline-selected: 2px solid rgba(0, 0, 0, 0.75);
           margin: 0;
           padding: 0;
+          font-family: inherit;
         }
 
         /* Month container */
@@ -74,10 +68,7 @@ function Calendar({
         }
 
         :global(.rdp-month) {
-          background: white;
-          border-radius: 16px;
-          padding: 0;
-          margin: 0;
+          width: 100%;
         }
 
         /* Caption (month/year header) */
@@ -85,16 +76,15 @@ function Calendar({
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 16px 0;
+          padding: 0 0 16px 0;
           margin-bottom: 16px;
           position: relative;
         }
 
         :global(.rdp-caption_label) {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
-          color: #1e293b;
-          text-transform: capitalize;
+          color: #374151;
         }
 
         /* Navigation buttons */
@@ -103,26 +93,25 @@ function Calendar({
           top: 50%;
           transform: translateY(-50%);
           display: flex;
-          gap: 8px;
+          gap: 4px;
         }
 
         :global(.rdp-nav_button) {
-          width: 32px;
-          height: 32px;
-          border: 1px solid #e2e8f0;
+          width: 28px;
+          height: 28px;
+          border: 1px solid #d1d5db;
           background: white;
-          border-radius: 8px;
+          border-radius: 4px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
         }
 
         :global(.rdp-nav_button:hover) {
-          background: #f1f5f9;
-          border-color: #cbd5e1;
-          transform: scale(1.05);
+          background: #f9fafb;
+          border-color: #9ca3af;
         }
 
         :global(.rdp-nav_button_previous) {
@@ -133,7 +122,7 @@ function Calendar({
           right: 0;
         }
 
-        /* Table structure */
+        /* Table structure - CRITICAL for grid layout */
         :global(.rdp-table) {
           width: 100%;
           border-collapse: collapse;
@@ -141,32 +130,35 @@ function Calendar({
 
         /* Header row */
         :global(.rdp-head_row) {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 1px;
           margin-bottom: 8px;
         }
 
         :global(.rdp-head_cell) {
-          width: var(--rdp-cell-size);
           height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 600;
-          color: #64748b;
+          color: #6b7280;
           text-transform: uppercase;
           letter-spacing: 0.05em;
+          border-bottom: 1px dotted #d1d5db;
         }
 
         /* Data rows */
         :global(.rdp-row) {
-          display: flex;
-          margin-bottom: 4px;
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 1px;
+          margin-bottom: 1px;
         }
 
         :global(.rdp-cell) {
-          width: var(--rdp-cell-size);
-          height: var(--rdp-cell-size);
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -179,69 +171,64 @@ function Calendar({
           height: 100%;
           border: none;
           background: transparent;
-          border-radius: 8px;
           font-size: 14px;
           font-weight: 500;
-          color: #1e293b;
+          color: #374151;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
           display: flex;
           align-items: center;
           justify-content: center;
+          border-radius: 4px;
         }
 
         :global(.rdp-day:hover) {
-          background: #eff6ff;
-          color: #1d4ed8;
-          transform: scale(1.1);
+          background: #f3f4f6;
         }
 
         :global(.rdp-day:focus) {
           outline: 2px solid #3b82f6;
-          outline-offset: 2px;
+          outline-offset: 1px;
         }
 
-        /* Selected day */
+        /* Selected day - BLUE like in your image */
         :global(.rdp-day_selected) {
           background: #3b82f6 !important;
           color: white !important;
           font-weight: 600;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-          transform: scale(1.05);
         }
 
         :global(.rdp-day_selected:hover) {
           background: #2563eb !important;
-          transform: scale(1.1);
         }
 
         /* Today */
         :global(.rdp-day_today) {
-          background: #dbeafe;
-          color: #1d4ed8;
           font-weight: 600;
-          border: 2px solid #3b82f6;
+          color: #1f2937;
         }
 
-        /* Outside month days */
+        /* Outside month days - light gray */
         :global(.rdp-day_outside) {
-          color: #94a3b8;
-          opacity: 0.6;
+          color: #9ca3af;
+          opacity: 0.7;
+        }
+
+        /* Weekend days - RED like in your image */
+        :global(.rdp-day[aria-label*="Sunday"],
+                .rdp-day[aria-label*="Saturday"]) {
+          color: #dc2626;
         }
 
         /* Disabled/past days */
         :global(.rdp-day_disabled) {
-          color: #cbd5e1;
-          background: #f8fafc;
+          color: #9ca3af;
           cursor: not-allowed;
-          text-decoration: line-through;
           opacity: 0.6;
         }
 
         :global(.rdp-day_disabled:hover) {
-          background: #f8fafc;
-          transform: none;
-          color: #cbd5e1;
+          background: transparent;
         }
 
         /* Range selection */
