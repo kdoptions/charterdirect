@@ -62,6 +62,18 @@ function Calendar({
             console.log('🔥 NO onSelect prop provided!');
           }
         }}
+        // Force ALL dates to be enabled and clickable
+        disabled={false}
+        // Override any internal disabled logic
+        modifiers={{
+          enabled: () => true
+        }}
+        modifiersStyles={{
+          enabled: {
+            cursor: 'pointer',
+            pointerEvents: 'auto'
+          }
+        }}
         {...props}
       />
     </div>
