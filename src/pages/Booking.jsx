@@ -871,7 +871,7 @@ const stripeInstance = await stripeService.getStripe();
                       mode="single"
                       selected={selectedDate}
                       onSelect={handleDateSelect}
-                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                      // All dates are now selectable
                       className="w-full"
                       modifiers={{
                         special: (date) => hasSpecialPricing(date)
