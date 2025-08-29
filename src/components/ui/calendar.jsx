@@ -41,6 +41,25 @@ function Calendar({
           color: white !important;
           font-weight: 600 !important;
         }
+        
+        /* Ensure clickable days are properly interactive */
+        .rdp-day:not(.rdp-day_disabled) {
+          cursor: pointer !important;
+          pointer-events: auto !important;
+        }
+        
+        .rdp-day:not(.rdp-day_disabled):hover {
+          cursor: pointer !important;
+          background-color: #eff6ff !important;
+          color: #1d4ed8 !important;
+        }
+        
+        /* Make sure disabled days are clearly marked */
+        .rdp-day_disabled {
+          cursor: not-allowed !important;
+          opacity: 0.5 !important;
+          pointer-events: none !important;
+        }
       `}</style>
       <DayPicker
         showOutsideDays={showOutsideDays}

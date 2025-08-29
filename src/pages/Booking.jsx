@@ -871,7 +871,16 @@ const stripeInstance = await stripeService.getStripe();
                       mode="single"
                       selected={selectedDate}
                       onSelect={handleDateSelect}
-                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const isDisabled = date < today;
+                        // Debug: log disabled dates
+                        if (isDisabled) {
+                          console.log('Date disabled:', date.toDateString(), 'Today:', today.toDateString());
+                        }
+                        return isDisabled;
+                      }}
                       className="w-full"
                       modifiers={{
                         special: (date) => hasSpecialPricing(date)
