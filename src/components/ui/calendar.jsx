@@ -11,6 +11,21 @@ function Calendar({
 }) {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <style>{`
+        .rdp-day_selected {
+          background-color: #2563eb !important;
+          color: white !important;
+          font-weight: 600 !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        }
+        .rdp-day_selected:hover {
+          background-color: #1d4ed8 !important;
+        }
+        .rdp-day:hover {
+          background-color: #eff6ff !important;
+          color: #1d4ed8 !important;
+        }
+      `}</style>
       <DayPicker
         showOutsideDays={showOutsideDays}
         className={cn("", className)}
@@ -20,13 +35,13 @@ function Calendar({
           month: "space-y-4",
           caption: "flex justify-center pt-1 relative items-center mb-4",
           caption_label: "text-lg font-semibold text-gray-900",
-          nav: "flex items-center gap-2 ml-4",
+          nav: "flex items-center gap-2",
           nav_button: "h-8 w-8 bg-white border border-gray-300 rounded-md p-0 hover:bg-gray-50 hover:border-gray-400 transition-colors",
-          nav_button_previous: "",
-          nav_button_next: "",
+          nav_button_previous: "absolute left-1",
+          nav_button_next: "absolute right-1",
           // DON'T override table, head_row, head_cell, row, cell - let default handle grid
           day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-colors hover:bg-blue-50 hover:text-blue-700 rounded-md",
-          day_selected: "!bg-blue-600 !text-white hover:!bg-blue-700 font-semibold shadow-md",
+          day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-md",
           day_today: "font-bold text-blue-700",
           day_outside: "text-gray-400",
           day_disabled: "text-gray-300 cursor-not-allowed",
