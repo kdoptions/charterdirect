@@ -60,6 +60,28 @@ function Calendar({
           opacity: 0.5 !important;
           pointer-events: none !important;
         }
+        
+        /* Ensure ALL days are clickable by default */
+        .rdp-day {
+          cursor: pointer !important;
+          pointer-events: auto !important;
+          transition: all 0.2s ease !important;
+        }
+        
+        /* Force hover effects on all days */
+        .rdp-day:hover {
+          background-color: #eff6ff !important;
+          color: #1d4ed8 !important;
+          transform: scale(1.05) !important;
+        }
+        
+        /* Override any react-day-picker default disabled styling */
+        .rdp-day[aria-disabled="false"],
+        .rdp-day:not([aria-disabled="true"]) {
+          cursor: pointer !important;
+          pointer-events: auto !important;
+          opacity: 1 !important;
+        }
       `}</style>
       <DayPicker
         showOutsideDays={showOutsideDays}
@@ -99,6 +121,13 @@ function Calendar({
             color: 'white',
             fontWeight: '600',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}
+        onDayClick={(day, modifiers, e) => {
+          console.log('Day clicked:', day.toDateString(), 'Modifiers:', modifiers);
+          // Ensure the click event is properly handled
+          if (props.onSelect) {
+            props.onSelect(day);
           }
         }}
         {...props}
