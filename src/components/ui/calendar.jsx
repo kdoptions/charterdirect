@@ -11,6 +11,14 @@ function Calendar({
 }) {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="mb-4 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-800">
+        DEBUG: Calendar component loaded. Props: {JSON.stringify({
+          mode: props.mode,
+          hasSelected: !!props.selected,
+          hasOnSelect: !!props.onSelect,
+          disabled: props.disabled
+        })}
+      </div>
       <DayPicker
         showOutsideDays={showOutsideDays}
         className={cn("", className)}
@@ -25,7 +33,7 @@ function Calendar({
           nav_button_previous: "",
           nav_button_next: "",
           // DON'T override table, head_row, head_cell, row, cell - let default handle grid
-          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-colors hover:bg-blue-50 hover:text-blue-700 rounded-md",
+          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-colors hover:bg-blue-50 hover:text-blue-700 rounded-md cursor-pointer",
           day_selected: "bg-blue-600 text-white hover:bg-blue-700",
           day_today: "font-bold text-gray-900",
           day_outside: "text-gray-400",
@@ -39,6 +47,20 @@ function Calendar({
           IconRight: ({ className, ...props }) => (
             <ChevronRight className={cn("h-4 w-4", className)} {...props} />
           ),
+        }}
+        onDayClick={(day, modifiers, e) => {
+          console.log('🔥 DAY CLICKED:', {
+            date: day.toDateString(),
+            modifiers,
+            hasOnSelect: !!props.onSelect,
+            event: e
+          });
+          if (props.onSelect) {
+            console.log('🔥 Calling onSelect with:', day);
+            props.onSelect(day);
+          } else {
+            console.log('🔥 NO onSelect prop provided!');
+          }
         }}
         {...props}
       />
