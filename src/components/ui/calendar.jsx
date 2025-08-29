@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
 import { cn } from "@/lib/utils";
 
@@ -12,18 +13,33 @@ function Calendar({
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
       <style>{`
-        .rdp-day_selected {
+        /* Force selected day styling with maximum specificity */
+        .rdp-day_selected,
+        .rdp-day_selected:hover,
+        .rdp-day_selected:focus {
           background-color: #2563eb !important;
           color: white !important;
           font-weight: 600 !important;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
         }
-        .rdp-day_selected:hover {
-          background-color: #1d4ed8 !important;
-        }
-        .rdp-day:hover {
+        
+        /* Force hover effects */
+        .rdp-day:hover:not(.rdp-day_selected) {
           background-color: #eff6ff !important;
           color: #1d4ed8 !important;
+        }
+        
+        /* Override any react-day-picker default styles */
+        .rdp-day_selected.rdp-day {
+          background-color: #2563eb !important;
+          color: white !important;
+        }
+        
+        /* Target the specific day element when selected */
+        div[role="button"].rdp-day_selected {
+          background-color: #2563eb !important;
+          color: white !important;
+          font-weight: 600 !important;
         }
       `}</style>
       <DayPicker
@@ -54,6 +70,17 @@ function Calendar({
           IconRight: ({ className, ...props }) => (
             <ChevronRight className={cn("h-4 w-4", className)} {...props} />
           ),
+        }}
+        modifiers={{
+          selected: (date) => props.selected === date,
+        }}
+        modifiersStyles={{
+          selected: {
+            backgroundColor: '#2563eb',
+            color: 'white',
+            fontWeight: '600',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
         }}
         {...props}
       />
