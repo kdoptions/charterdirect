@@ -1,6 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
 
 import { cn } from "@/lib/utils";
 
@@ -10,9 +9,6 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }) {
-  // Remove any disabled prop to ensure all dates are clickable
-  const { disabled, ...cleanProps } = props;
-  
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
       <DayPicker
@@ -29,10 +25,10 @@ function Calendar({
           nav_button_previous: "",
           nav_button_next: "",
           // DON'T override table, head_row, head_cell, row, cell - let default handle grid
-          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-colors hover:bg-blue-50 hover:text-blue-700 rounded-md cursor-pointer",
-          day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-md",
+          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 transition-colors hover:bg-blue-50 hover:text-blue-700 rounded-md",
+          day_selected: "bg-blue-600 text-white hover:bg-blue-700",
           day_today: "font-bold text-gray-900",
-          day_outside: "text-gray-400 cursor-pointer",
+          day_outside: "text-gray-400",
           day_disabled: "text-gray-300 cursor-not-allowed",
           ...classNames,
         }}
@@ -44,16 +40,7 @@ function Calendar({
             <ChevronRight className={cn("h-4 w-4", className)} {...props} />
           ),
         }}
-        // Force all dates to be selectable by not passing any disabled prop
-        disabled={false}
-        // Add debug logging
-        onDayClick={(day, modifiers) => {
-          console.log('Day clicked:', day.toDateString(), 'Modifiers:', modifiers);
-          if (cleanProps.onSelect) {
-            cleanProps.onSelect(day);
-          }
-        }}
-        {...cleanProps}
+        {...props}
       />
     </div>
   );
