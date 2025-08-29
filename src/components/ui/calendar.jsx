@@ -12,77 +12,6 @@ function Calendar({
 }) {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-      <style>{`
-        /* Force selected day styling with maximum specificity */
-        .rdp-day_selected,
-        .rdp-day_selected:hover,
-        .rdp-day_selected:focus {
-          background-color: #2563eb !important;
-          color: white !important;
-          font-weight: 600 !important;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-        }
-        
-        /* Force hover effects */
-        .rdp-day:hover:not(.rdp-day_selected) {
-          background-color: #eff6ff !important;
-          color: #1d4ed8 !important;
-        }
-        
-        /* Override any react-day-picker default styles */
-        .rdp-day_selected.rdp-day {
-          background-color: #2563eb !important;
-          color: white !important;
-        }
-        
-        /* Target the specific day element when selected */
-        div[role="button"].rdp-day_selected {
-          background-color: #2563eb !important;
-          color: white !important;
-          font-weight: 600 !important;
-        }
-        
-        /* Ensure clickable days are properly interactive */
-        .rdp-day:not(.rdp-day_disabled) {
-          cursor: pointer !important;
-          pointer-events: auto !important;
-        }
-        
-        .rdp-day:not(.rdp-day_disabled):hover {
-          cursor: pointer !important;
-          background-color: #eff6ff !important;
-          color: #1d4ed8 !important;
-        }
-        
-        /* Make sure disabled days are clearly marked */
-        .rdp-day_disabled {
-          cursor: not-allowed !important;
-          opacity: 0.5 !important;
-          pointer-events: none !important;
-        }
-        
-        /* Ensure ALL days are clickable by default */
-        .rdp-day {
-          cursor: pointer !important;
-          pointer-events: auto !important;
-          transition: all 0.2s ease !important;
-        }
-        
-        /* Force hover effects on all days */
-        .rdp-day:hover {
-          background-color: #eff6ff !important;
-          color: #1d4ed8 !important;
-          transform: scale(1.05) !important;
-        }
-        
-        /* Override any react-day-picker default disabled styling */
-        .rdp-day[aria-disabled="false"],
-        .rdp-day:not([aria-disabled="true"]) {
-          cursor: pointer !important;
-          pointer-events: auto !important;
-          opacity: 1 !important;
-        }
-      `}</style>
       <DayPicker
         showOutsideDays={showOutsideDays}
         className={cn("", className)}
@@ -111,24 +40,6 @@ function Calendar({
           IconRight: ({ className, ...props }) => (
             <ChevronRight className={cn("h-4 w-4", className)} {...props} />
           ),
-        }}
-        modifiers={{
-          selected: (date) => props.selected === date,
-        }}
-        modifiersStyles={{
-          selected: {
-            backgroundColor: '#2563eb',
-            color: 'white',
-            fontWeight: '600',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          }
-        }}
-        onDayClick={(day, modifiers, e) => {
-          console.log('Day clicked:', day.toDateString(), 'Modifiers:', modifiers);
-          // Ensure the click event is properly handled
-          if (props.onSelect) {
-            props.onSelect(day);
-          }
         }}
         {...props}
       />
